@@ -1,0 +1,25 @@
+{
+  "name": "@flowforge/kubernetes",
+  "version": "0.0.1",
+  "description": "Kubernetes driver for FlowForge",
+  "main": "kubernetes.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flowforge/flowforge-driver-k8s.git"
+  },
+  "bugs": {
+    "url": "https://github.com/flowforge/flowforge-driver-k8s/issues"
+  },
+  "homepage": "https://github.com/flowforge/flowforge-driver-k8s#readme",
+  "author": {
+    "name": "FlowFlow Inc."
+  },
+  "license": "SEE LICENSE IN ./LICENSE",
+  "dependencies": {
+    "@kubernetes/client-node": "^0.15.1",
+    "got": "^11.8.0"
+  }
+}
