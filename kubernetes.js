@@ -150,7 +150,11 @@ module.exports = {
     this._options = options;
     const kc = new k8s.KubeConfig();
 
-    options.registry = process.env["KUBE_REGISTRY"] || "docker-pi.local:5000"
+    options.registry = process.env["KUBE_REGISTRY"] || "" // use docker hub registry
+
+    if (options.registry !== "" && !options.registry.endsWith('/')) {
+      options.registry += "/"
+    }
 
     // let configFile = process.env.KUBE_CONFIG_FILE || ""
 
@@ -192,7 +196,7 @@ module.exports = {
     localPod.metadata.name = project.name;
     localPod.metadata.labels.name = project.name;
     localPod.metadata.labels.app = project.id;
-    localPod.spec.containers[0].image = `${this._options.registry}/flowforge/node-red` //this._options.containers[project.type];
+    localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red` //this._options.containers[project.type];
     if (options.env) {
       Object.keys(options.env).forEach(k => {
         if (k) {
@@ -211,7 +215,7 @@ module.exports = {
 
     localPod.spec.containers[0].env.push({name: "FORGE_CLIENT_ID", value: authTokens.clientID});
     localPod.spec.containers[0].env.push({name: "FORGE_CLIENT_SECRET", value: authTokens.clientSecret});
-    localPod.spec.containers[0].env.push({name: "FORGE_URL", value: process.env["BASE_URL"]});
+    localPod.spec.containers[0].env.push({name: "FORGE_URL", value: process.env["API_URL"]});
     localPod.spec.containers[0].env.push({name: "BASE_URL", value: projectURL});
     localPod.spec.containers[0].env.push({name: "FORGE_PROJECT_ID", value: project.id});
     localPod.spec.containers[0].env.push({name: "FORGE_PROJECT_TOKEN", value: authTokens.token });
