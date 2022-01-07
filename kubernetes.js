@@ -175,6 +175,8 @@ module.exports = {
     // } else {
     //   kc.loadFromDefault();
     // }
+
+    //need to add code here to check for existing projects and restart if needed
     
     this._k8sApi = kc.makeApiClient(k8s.CoreV1Api);
     this,_k8sAppApi = kc.makeApiClient(k8s.AppsV1Api);
@@ -293,27 +295,44 @@ module.exports = {
    */
   details: async (project) => {
 
-    let infoURL = "http://" + project.name + ".flowforge:2880/flowforge/info"
     try {
-      let info = JSON.parse((await got.get(infoURL)).body)
-      return info
+      let details = await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
+      // console.log(project.name, details.body)
+      // console.log(details.body.status)
+
+      if (details.body.status.phase === "Running") {
+
+        let infoURL = "http://" + project.name + ".flowforge:2880/flowforge/info"
+        try {
+          let info = JSON.parse((await got.get(infoURL)).body)
+          return info
+        } catch (err) {
+          //TODO
+          return
+        }
+      } else if (details.body.status.phase === "Pending") {
+        return {
+          id: project.id,
+          state: "starting",
+          meta: details.body.status
+        }
+      }
+
     } catch (err) {
-      //TODO
-      return
+      console.log(err)
+      return {error: err}
     }
 
+    // let infoURL = "http://" + project.name + ".flowforge:2880/flowforge/info"
     // try {
-    //   let details = await this._k8sApi.readNamespacePod(project.name, 'flowforge')
-    //   console.log(project.name, details)
-    //   //really need to cull this
-    //   return {
-    //     id: project.id,
-    //     state: "running"
-    //     meta: details
-    //   }
+    //   let info = JSON.parse((await got.get(infoURL)).body)
+    //   return info
     // } catch (err) {
-    //   return {error: err}
+    //   //TODO
+    //   return
     // }
+
+    
   },
   /**
    * Returns the settings for the project
