@@ -17,7 +17,7 @@
   "author": {
     "name": "FlowFlow Inc."
   },
-  "license": "SEE LICENSE IN ./LICENSE",
+  "license": "Apache-2.0",
   "dependencies": {
     "@kubernetes/client-node": "^0.15.1",
     "got": "^11.8.0"
