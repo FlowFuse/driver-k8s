@@ -150,13 +150,11 @@ module.exports = {
     this._options = options;
     const kc = new k8s.KubeConfig();
 
-    options.registry = process.env["KUBE_REGISTRY"] || "" // use docker hub registry
+    options.registry = app.config.kubernetes.registry || "" // use docker hub registry
 
     if (options.registry !== "" && !options.registry.endsWith('/')) {
       options.registry += "/"
     }
-
-    // let configFile = process.env.KUBE_CONFIG_FILE || ""
 
     // if (configFile) {
     //   kc.loadFromFile(configFile);
@@ -164,16 +162,6 @@ module.exports = {
       // try and load defaults
       kc.loadFromDefault();
       // else need to log error
-    // }
-
-    // if (this._options.configFile) {
-    //   kc.loadFromFile(this._options.configFile);
-    // else if (this._options.config && typeof ths._options.config === 'string') {
-    //   kc.loadFromString(this._options.config);
-    // else if (this._options.config && typeof ths._options.config === 'Object') {
-    //   kc.loadFromOptions(this._options.config);
-    // } else {
-    //   kc.loadFromDefault();
     // }
 
     //need to add code here to check for existing projects and restart if needed
@@ -217,7 +205,7 @@ module.exports = {
 
     localPod.spec.containers[0].env.push({name: "FORGE_CLIENT_ID", value: authTokens.clientID});
     localPod.spec.containers[0].env.push({name: "FORGE_CLIENT_SECRET", value: authTokens.clientSecret});
-    localPod.spec.containers[0].env.push({name: "FORGE_URL", value: process.env["API_URL"]});
+    localPod.spec.containers[0].env.push({name: "FORGE_URL", value: this._app.config.api_url}); 
     localPod.spec.containers[0].env.push({name: "BASE_URL", value: projectURL});
     localPod.spec.containers[0].env.push({name: "FORGE_PROJECT_ID", value: project.id});
     localPod.spec.containers[0].env.push({name: "FORGE_PROJECT_TOKEN", value: authTokens.token });
@@ -233,14 +221,8 @@ module.exports = {
 
     try {
         await this._k8sApi.createNamespacedPod('flowforge', localPod)
-        // .then(() => {
-          // return 
-          await this._k8sApi.createNamespacedService('flowforge', localService)
-        // })
-        // .then(() => {
-          // return 
-          await this._k8sNetApi.createNamespacedIngress('flowforge', localIngress)
-        // })
+        await this._k8sApi.createNamespacedService('flowforge', localService)
+        await this._k8sNetApi.createNamespacedIngress('flowforge', localIngress)
         
     } catch (err) {
       console.log(err)
@@ -347,7 +329,7 @@ module.exports = {
     settings.rootDir = "/"
     settings.userDir = "data"
     settings.baseURL = project.url
-    settings.forgeURL = "http://forge." + process.env["DOMAIN"] // process.env["BASE_URL"]
+    settings.forgeURL = "http://forge." + this._app.config.domain
 
     return settings
   },
