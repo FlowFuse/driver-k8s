@@ -150,7 +150,7 @@ module.exports = {
     this._options = options;
     const kc = new k8s.KubeConfig();
 
-    options.registry = app.config.kubernetes.registry || "" // use docker hub registry
+    options.registry = app.config.driver.options?.registry || "" // use docker hub registry
 
     if (options.registry !== "" && !options.registry.endsWith('/')) {
       options.registry += "/"
