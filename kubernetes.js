@@ -113,7 +113,12 @@ const ingressTemplate = {
   kind: "Ingress",
   metadata: {
     // name: "k8s-client-test-ingress",
-    namespace: "flowforge"
+    namespace: "flowforge",
+        annotations: {
+            'kubernetes.io/ingress.class': 'alb',
+            'alb.ingress.kubernetes.io/scheme': 'internet-facing',
+            'alb.ingress.kubernetes.io/target-type': 'ip'
+        }
   },
   spec: {
     rules: [
