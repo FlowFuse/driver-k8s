@@ -118,7 +118,8 @@ const ingressTemplate = {
             'kubernetes.io/ingress.class': 'alb',
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
             'alb.ingress.kubernetes.io/target-type': 'ip',
-            'alb.ingress.kubernetes.io/group.name': 'flowforge'
+            'alb.ingress.kubernetes.io/group.name': 'flowforge',
+            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS":443}, {"HTTP":80}]'
         }
     },
     spec: {
@@ -203,8 +204,8 @@ module.exports = {
             })
         }
 
-        // TODO http/https needs to be dynamic (or we just enforce https?)
-        const projectURL = `http://${project.name}.${this._options.domain}`
+        const baseURL = new URL(this._app.config.base_url)
+        const projectURL = `${baseURL.protocol}//${project.name}.${this._options.domain}`
 
         const authTokens = await project.refreshAuthTokens()
 
@@ -323,7 +324,7 @@ module.exports = {
         settings.rootDir = '/'
         settings.userDir = 'data'
         settings.baseURL = project.url
-        settings.forgeURL = 'http://forge.' + this._app.config.domain
+        settings.forgeURL = this._app.config.base_url
 
         return settings
     },
