@@ -192,6 +192,14 @@ module.exports = {
         this._k8sAppApi = kc.makeApiClient(k8s.AppsV1Api)
         this._k8sNetApi = kc.makeApiClient(k8s.NetworkingV1Api)
 
+
+        const projects = await this._app.db.models.Project.findAll()
+        projects.forEach(async (project)=>{
+            const details = await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
+            
+        })
+
+
         // need to work out what we can expose for K8s
         return {
             stack: {
