@@ -403,7 +403,6 @@ module.exports = {
    * @return {forge.Status}
    */
     restart: async (project) => {
-    // This needs the container killing
         await got.post('http://' + project.name + '.flowforge:2880/flowforge/command', {
             json: {
                 cmd: 'restart'
@@ -411,5 +410,11 @@ module.exports = {
         })
 
         return { state: 'okay' }
+    },
+    /**
+     * Shutdown Driver
+     */
+    shutdown: async () => {
+
     }
 }
