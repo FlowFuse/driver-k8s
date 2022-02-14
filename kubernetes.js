@@ -195,8 +195,14 @@ module.exports = {
 
         const projects = await this._app.db.models.Project.findAll()
         projects.forEach(async (project)=>{
-            const details = await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
-            
+            if (project.state === 'running') {
+                try {
+                    await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
+                } catch (err) {
+                    console.log(err.response.body)
+                    this.create(project, {env: JSON.parse(project.getSetting('environmentVariables'))})
+                }
+            }
         })
 
 
@@ -248,6 +254,7 @@ module.exports = {
                     })
                 }
             })
+            project.updateSetting('environmentVariables', JSON.stringify(options.env))
         }
 
         const baseURL = new URL(this._app.config.base_url)
