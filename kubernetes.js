@@ -193,7 +193,28 @@ module.exports = {
         this._k8sNetApi = kc.makeApiClient(k8s.NetworkingV1Api)
 
         // need to work out what we can expose for K8s
-        return {}
+        return {
+            stack: {
+                properties: {
+                    cpu: {
+                        label: 'CPU Cores (%)',
+                        validate: '^[1-9][0-9]|100$',
+                        invalidMessage: 'Invalid value - must be a number between 1 and 100'
+                    },
+                    memory: {
+                        label: 'Memory (MB)',
+                        validate: '^[1-9]\\d*$',
+                        invalidMessage: 'Invalid value - must be a number'
+                    },
+                    container: {
+                        label: 'Container Location',
+                        // taken from https://stackoverflow.com/a/62964157
+                        validate: '^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])(:[0-9]+\\/)?(?:[0-9a-z-]+[/@])(?:([0-9a-z-]+))[/@]?(?:([0-9a-z-]+))?(?::[a-z0-9\\.-]+)?$',
+                        invalidMessage: 'Invalid value - must be a Docker image'
+                    }
+                }
+            }
+        }
     },
     /**
    * Create a new Project
@@ -203,11 +224,13 @@ module.exports = {
    */
     create: async (project, options) => {
         console.log('creating ', project.name, options)
+        const stack = project.ProjectStack.properties
         const localPod = JSON.parse(JSON.stringify(podTemplate))
         localPod.metadata.name = project.name
         localPod.metadata.labels.name = project.name
         localPod.metadata.labels.app = project.id
-        localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red` // this._options.containers[project.type];
+        // localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red` // this._options.containers[project.type];
+        localPod.spec.containers[0].image = stack.container
         if (options.env) {
             Object.keys(options.env).forEach(k => {
                 if (k) {
@@ -230,6 +253,11 @@ module.exports = {
         localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
         localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
         localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
+
+        localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
+        localPod.spec.containers[0].resources.limit.memory = `${stack.memory}Mi`
+        localPod.spec.containers[0].resources.request.cpu = `${stack.cpu * 10}m`
+        localPod.spec.containers[0].resources.limit.cpu = `${stack.cpu * 10}m`
 
         const localService = JSON.parse(JSON.stringify(serviceTemplate))
         localService.metadata.name = project.name
