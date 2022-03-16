@@ -160,6 +160,66 @@ const ingressTemplate = {
     }
 }
 
+const createPod = async (project, options) => {
+    console.log('creating ', project.name, options)
+    const localPod = JSON.parse(JSON.stringify(podTemplate))
+    localPod.metadata.name = project.name
+    localPod.metadata.labels.name = project.name
+    localPod.metadata.labels.app = project.id
+    localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red` // this._options.containers[project.type];
+    if (options.env) {
+        Object.keys(options.env).forEach(k => {
+            if (k) {
+                localPod.spec.containers[0].env.push({
+                    name: k,
+                    value: options.env[k]
+                })
+            }
+        })
+    }
+
+    const baseURL = new URL(this._app.config.base_url)
+    const projectURL = `${baseURL.protocol}//${project.name}.${this._options.domain}`
+
+    const authTokens = await project.refreshAuthTokens()
+
+    localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_ID', value: authTokens.clientID })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_SECRET', value: authTokens.clientSecret })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.api_url })
+    localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
+
+    const localService = JSON.parse(JSON.stringify(serviceTemplate))
+    localService.metadata.name = project.name
+    localService.spec.selector.name = project.name
+
+    const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
+    localIngress.metadata.name = project.name
+    localIngress.spec.rules[0].host = project.name + '.' + this._options.domain
+    localIngress.spec.rules[0].http.paths[0].backend.service.name = project.name
+
+    try {
+        await this._k8sApi.createNamespacedPod('flowforge', localPod)
+        await this._k8sApi.createNamespacedService('flowforge', localService)
+        await this._k8sNetApi.createNamespacedIngress('flowforge', localIngress)
+    } catch (err) {
+        console.log(err)
+        return { error: err }
+    }
+
+    project.url = projectURL
+    await project.save()
+
+    return {
+        id: project.id,
+        status: 'okay',
+        url: projectURL,
+        meta: {}
+    }
+
+}
+
 module.exports = {
     /**
    * Initialises this driver
@@ -192,6 +252,19 @@ module.exports = {
         this._k8sAppApi = kc.makeApiClient(k8s.AppsV1Api)
         this._k8sNetApi = kc.makeApiClient(k8s.NetworkingV1Api)
 
+        const projects = await this._app.db.models.Project.findAll()
+        projects.forEach(async (project)=>{
+            if (project.state === 'running') {
+                try {
+                    await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
+                } catch (err) {
+                    console.log(err.response.body)
+                    const envVars = await project.getSetting('environmentVariables')
+                    await createPod(project, {env: JSON.parse( envVars ? envVars: '{}' )})
+                }
+            }
+        })
+
         // need to work out what we can expose for K8s
         return {}
     },
@@ -202,62 +275,8 @@ module.exports = {
    * @return {forge.containers.Project}
    */
     create: async (project, options) => {
-        console.log('creating ', project.name, options)
-        const localPod = JSON.parse(JSON.stringify(podTemplate))
-        localPod.metadata.name = project.name
-        localPod.metadata.labels.name = project.name
-        localPod.metadata.labels.app = project.id
-        localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red` // this._options.containers[project.type];
-        if (options.env) {
-            Object.keys(options.env).forEach(k => {
-                if (k) {
-                    localPod.spec.containers[0].env.push({
-                        name: k,
-                        value: options.env[k]
-                    })
-                }
-            })
-        }
-
-        const baseURL = new URL(this._app.config.base_url)
-        const projectURL = `${baseURL.protocol}//${project.name}.${this._options.domain}`
-
-        const authTokens = await project.refreshAuthTokens()
-
-        localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_ID', value: authTokens.clientID })
-        localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_SECRET', value: authTokens.clientSecret })
-        localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.api_url })
-        localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
-        localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
-        localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
-
-        const localService = JSON.parse(JSON.stringify(serviceTemplate))
-        localService.metadata.name = project.name
-        localService.spec.selector.name = project.name
-
-        const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
-        localIngress.metadata.name = project.name
-        localIngress.spec.rules[0].host = project.name + '.' + this._options.domain
-        localIngress.spec.rules[0].http.paths[0].backend.service.name = project.name
-
-        try {
-            await this._k8sApi.createNamespacedPod('flowforge', localPod)
-            await this._k8sApi.createNamespacedService('flowforge', localService)
-            await this._k8sNetApi.createNamespacedIngress('flowforge', localIngress)
-        } catch (err) {
-            console.log(err)
-            return { error: err }
-        }
-
-        project.url = projectURL
-        await project.save()
-
-        return {
-            id: project.id,
-            status: 'okay',
-            url: projectURL,
-            meta: {}
-        }
+        const ret = await createPod(project, options)
+        return ret
     },
     /**
    * Removes a Project
