@@ -1,3 +1,10 @@
+#### 0.3.0: Release
+
+ - Restart missing projects (#12) @hardillb
+ - Add stack support (#16) @hardillb
+ - Stop driver setting baseURL/forgeURL (#17) @knolleary
+ - Automate npm publish on release (#15) @hardillb
+
 #### 0.2.0: Release
 
  - Bump kube client version to pick up deps (#13) @hardillb
