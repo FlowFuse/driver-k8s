@@ -1,31 +1,31 @@
 {
-  "name": "@flowforge/kubernetes",
-  "version": "0.2.0",
-  "description": "Kubernetes driver for FlowForge",
-  "main": "kubernetes.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint -c .eslintrc *.js",
-    "lint:fix": "eslint -c .eslintrc *.js --fix"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/flowforge/flowforge-driver-k8s.git"
-  },
-  "bugs": {
-    "url": "https://github.com/flowforge/flowforge-driver-k8s/issues"
-  },
-  "homepage": "https://github.com/flowforge/flowforge-driver-k8s#readme",
-  "author": {
-    "name": "FlowFlow Inc."
-  },
-  "license": "Apache-2.0",
-  "dependencies": {
-    "@kubernetes/client-node": "^0.16.3",
-    "got": "^11.8.0"
-  },
-  "devDependencies": {
-    "eslint": "^7.32.0",
-    "eslint-config-standard": "^16.0.3"
-  }
+    "name": "@flowforge/kubernetes",
+    "version": "0.3.0",
+    "description": "Kubernetes driver for FlowForge",
+    "main": "kubernetes.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "lint": "eslint -c .eslintrc *.js",
+        "lint:fix": "eslint -c .eslintrc *.js --fix"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/flowforge/flowforge-driver-k8s.git"
+    },
+    "bugs": {
+        "url": "https://github.com/flowforge/flowforge-driver-k8s/issues"
+    },
+    "homepage": "https://github.com/flowforge/flowforge-driver-k8s#readme",
+    "author": {
+        "name": "FlowFlow Inc."
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@kubernetes/client-node": "^0.16.3",
+        "got": "^11.8.0"
+    },
+    "devDependencies": {
+        "eslint": "^7.32.0",
+        "eslint-config-standard": "^16.0.3"
+    }
 }
