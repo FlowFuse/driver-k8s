@@ -130,7 +130,7 @@ const ingressTemplate = {
     // name: "k8s-client-test-ingress",
         namespace: 'flowforge',
         annotations: {
-            'kubernetes.io/ingress.class': 'alb',
+            //'kubernetes.io/ingress.class': 'alb',
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
             'alb.ingress.kubernetes.io/target-type': 'ip',
             'alb.ingress.kubernetes.io/group.name': 'flowforge',
@@ -198,6 +198,10 @@ const createPod = async (project, options) => {
     localIngress.metadata.name = project.name
     localIngress.spec.rules[0].host = project.name + '.' + this._options.domain
     localIngress.spec.rules[0].http.paths[0].backend.service.name = project.name
+
+    if (process.env['FLOWFORGE_CLOUD_PROVIDER'] === 'aws') {
+        localIngress.annotations['kubernetes.io/ingress.class'] = 'alb'
+    }
 
     try {
         await this._k8sApi.createNamespacedPod('flowforge', localPod)
