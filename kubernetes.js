@@ -127,8 +127,8 @@ const ingressTemplate = {
     apiVersion: 'networking.k8s.io/v1',
     kind: 'Ingress',
     metadata: {
-    // name: "k8s-client-test-ingress",
-        namespace: 'flowforge',
+        // name: "k8s-client-test-ingress",
+        // namespace: 'flowforge',
         annotations: {}
     },
     spec: {
@@ -156,6 +156,8 @@ const ingressTemplate = {
 
 const createPod = async (project, options) => {
     console.log('creating ', project.name, options)
+    const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
+
     const localPod = JSON.parse(JSON.stringify(podTemplate))
     localPod.metadata.name = project.name
     localPod.metadata.labels.name = project.name
@@ -183,6 +185,9 @@ const createPod = async (project, options) => {
     localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
+    if (this._app.config.driver.options.projectSelector) {
+        localPod.spec.nodeSelector = this._app.config.driver.options.projectSelector
+    }
 
     const localService = JSON.parse(JSON.stringify(serviceTemplate))
     localService.metadata.name = project.name
@@ -193,7 +198,7 @@ const createPod = async (project, options) => {
     localIngress.spec.rules[0].host = project.name + '.' + this._options.domain
     localIngress.spec.rules[0].http.paths[0].backend.service.name = project.name
 
-    if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws') {
+    if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
         localIngress.annotations = {
             'kubernetes.io/ingress.class': 'alb',
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
@@ -204,9 +209,9 @@ const createPod = async (project, options) => {
     }
 
     try {
-        await this._k8sApi.createNamespacedPod('flowforge', localPod)
-        await this._k8sApi.createNamespacedService('flowforge', localService)
-        await this._k8sNetApi.createNamespacedIngress('flowforge', localIngress)
+        await this._k8sApi.createNamespacedPod(namespace, localPod)
+        await this._k8sApi.createNamespacedService(namespace, localService)
+        await this._k8sNetApi.createNamespacedIngress(namespace, localIngress)
     } catch (err) {
         console.log(err)
         return { error: err }
@@ -316,10 +321,11 @@ module.exports = {
     // let project = await this._app.db.models.Project.byId(id)
 
         const promises = []
+        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
 
-        promises.push(this._k8sNetApi.deleteNamespacedIngress(project.name, 'flowforge'))
-        promises.push(this._k8sApi.deleteNamespacedService(project.name, 'flowforge'))
-        promises.push(this._k8sApi.deleteNamespacedPod(project.name, 'flowforge'))
+        promises.push(this._k8sNetApi.deleteNamespacedIngress(project.name, namespace))
+        promises.push(this._k8sApi.deleteNamespacedService(project.name, namespace))
+        promises.push(this._k8sApi.deleteNamespacedPod(project.name, namespace))
 
         try {
             await Promise.all(promises)
