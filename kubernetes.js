@@ -158,6 +158,7 @@ const createPod = async (project, options) => {
     console.log('creating ', project.name, options)
     const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
     const stack = project.ProjectStack.properties
+
     const localPod = JSON.parse(JSON.stringify(podTemplate))
     localPod.metadata.name = project.name
     localPod.metadata.labels.name = project.name
@@ -361,7 +362,6 @@ module.exports = {
             const details = await this._k8sApi.readNamespacedPodStatus(project.name, namespace)
             // console.log(project.name, details.body)
             // console.log(details.body.status)
-
 
             if (details.body.status.phase === 'Running') {
                 const infoURL = `http://${project.name}.${namespace}:2880/flowforge/info`
