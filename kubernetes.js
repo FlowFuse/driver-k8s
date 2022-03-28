@@ -31,12 +31,12 @@ const podTemplate = {
                 resources: {
                     request: {
                         // 10th of a core
-                        cpu: "100m",
-                        memory: "128Mi"
+                        cpu: '100m',
+                        memory: '128Mi'
                     },
                     limits: {
-                        cpu: "125m",
-                        memory: "192Mi"
+                        cpu: '125m',
+                        memory: '192Mi'
                     }
                 },
                 name: 'node-red',
@@ -51,7 +51,7 @@ const podTemplate = {
             }
         ],
         nodeSelector: {
-            role: "projects"
+            role: 'projects'
         }
 
     },
@@ -129,13 +129,7 @@ const ingressTemplate = {
     metadata: {
     // name: "k8s-client-test-ingress",
         namespace: 'flowforge',
-        annotations: {
-            //'kubernetes.io/ingress.class': 'alb',
-            'alb.ingress.kubernetes.io/scheme': 'internet-facing',
-            'alb.ingress.kubernetes.io/target-type': 'ip',
-            'alb.ingress.kubernetes.io/group.name': 'flowforge',
-            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS":443}, {"HTTP":80}]'
-        }
+        annotations: {}
     },
     spec: {
         rules: [
@@ -199,8 +193,14 @@ const createPod = async (project, options) => {
     localIngress.spec.rules[0].host = project.name + '.' + this._options.domain
     localIngress.spec.rules[0].http.paths[0].backend.service.name = project.name
 
-    if (process.env['FLOWFORGE_CLOUD_PROVIDER'] === 'aws') {
-        localIngress.annotations['kubernetes.io/ingress.class'] = 'alb'
+    if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws') {
+        localIngress.annotations = {
+            'kubernetes.io/ingress.class': 'alb',
+            'alb.ingress.kubernetes.io/scheme': 'internet-facing',
+            'alb.ingress.kubernetes.io/target-type': 'ip',
+            'alb.ingress.kubernetes.io/group.name': 'flowforge',
+            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS":443}, {"HTTP":80}]'
+        }
     }
 
     try {
@@ -262,18 +262,17 @@ module.exports = {
                 }
             ]
         })
-        projects.forEach(async (project)=>{
+        projects.forEach(async (project) => {
             if (project.state === 'running') {
                 try {
                     await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
                 } catch (err) {
                     console.log(err.response.body)
-                    const envVars =  await project.getSetting('environmentVariables')
-                    await createPod(project, {env: JSON.parse( envVars ? envVars: '{}' )})
+                    const envVars = await project.getSetting('environmentVariables') || {}
+                    await createPod(project, { env: JSON.parse(envVars) })
                 }
             }
         })
-
 
         // need to work out what we can expose for K8s
         return {
