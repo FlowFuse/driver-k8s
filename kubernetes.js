@@ -284,7 +284,7 @@ module.exports = {
                     await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
                 } catch (err) {
                     console.log(err.response.body)
-                    const envVars = await project.getSetting('environmentVariables') || {}
+                    const envVars = await project.getSetting('environmentVariables') || '{}'
                     await createPod(project, { env: JSON.parse(envVars) })
                 }
             }
