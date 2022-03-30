@@ -193,7 +193,7 @@ const createPod = async (project, options) => {
     localIngress.spec.rules[0].host = project.name + '.' + this._options.domain
     localIngress.spec.rules[0].http.paths[0].backend.service.name = project.name
 
-    if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws') {
+    if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
         localIngress.annotations = {
             'kubernetes.io/ingress.class': 'alb',
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
