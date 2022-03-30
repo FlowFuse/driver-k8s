@@ -127,8 +127,8 @@ const ingressTemplate = {
     apiVersion: 'networking.k8s.io/v1',
     kind: 'Ingress',
     metadata: {
-    // name: "k8s-client-test-ingress",
-        namespace: 'flowforge',
+        // name: "k8s-client-test-ingress",
+        // namespace: 'flowforge',
         annotations: {}
     },
     spec: {
@@ -156,11 +156,18 @@ const ingressTemplate = {
 
 const createPod = async (project, options) => {
     console.log('creating ', project.name, options)
+    const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
+    const stack = project.ProjectStack.properties
+
     const localPod = JSON.parse(JSON.stringify(podTemplate))
     localPod.metadata.name = project.name
     localPod.metadata.labels.name = project.name
     localPod.metadata.labels.app = project.id
-    localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red` // this._options.containers[project.type];
+    if (stack.container) {
+        localPod.spec.containers[0].image = stack.container
+    } else {
+        localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red`
+    }
     if (options.env) {
         Object.keys(options.env).forEach(k => {
             if (k) {
@@ -183,6 +190,16 @@ const createPod = async (project, options) => {
     localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
+    if (this._app.config.driver.options.projectSelector) {
+        localPod.spec.nodeSelector = this._app.config.driver.options.projectSelector
+    }
+
+    if (stack.memory && stack.cpu) {
+        localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
+        localPod.spec.containers[0].resources.limit.memory = `${stack.memory}Mi`
+        localPod.spec.containers[0].resources.request.cpu = `${stack.cpu * 10}m`
+        localPod.spec.containers[0].resources.limit.cpu = `${stack.cpu * 10}m`
+    }
 
     const localService = JSON.parse(JSON.stringify(serviceTemplate))
     localService.metadata.name = project.name
@@ -204,9 +221,9 @@ const createPod = async (project, options) => {
     }
 
     try {
-        await this._k8sApi.createNamespacedPod('flowforge', localPod)
-        await this._k8sApi.createNamespacedService('flowforge', localService)
-        await this._k8sNetApi.createNamespacedIngress('flowforge', localIngress)
+        await this._k8sApi.createNamespacedPod(namespace, localPod)
+        await this._k8sApi.createNamespacedService(namespace, localService)
+        await this._k8sNetApi.createNamespacedIngress(namespace, localIngress)
     } catch (err) {
         console.log(err)
         return { error: err }
@@ -316,10 +333,11 @@ module.exports = {
     // let project = await this._app.db.models.Project.byId(id)
 
         const promises = []
+        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
 
-        promises.push(this._k8sNetApi.deleteNamespacedIngress(project.name, 'flowforge'))
-        promises.push(this._k8sApi.deleteNamespacedService(project.name, 'flowforge'))
-        promises.push(this._k8sApi.deleteNamespacedPod(project.name, 'flowforge'))
+        promises.push(this._k8sNetApi.deleteNamespacedIngress(project.name, namespace))
+        promises.push(this._k8sApi.deleteNamespacedService(project.name, namespace))
+        promises.push(this._k8sApi.deleteNamespacedPod(project.name, namespace))
 
         try {
             await Promise.all(promises)
@@ -340,12 +358,13 @@ module.exports = {
    */
     details: async (project) => {
         try {
-            const details = await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
+            const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
+            const details = await this._k8sApi.readNamespacedPodStatus(project.name, namespace)
             // console.log(project.name, details.body)
             // console.log(details.body.status)
 
             if (details.body.status.phase === 'Running') {
-                const infoURL = 'http://' + project.name + '.flowforge:2880/flowforge/info'
+                const infoURL = `http://${project.name}.${namespace}:2880/flowforge/info`
                 try {
                     const info = JSON.parse((await got.get(infoURL)).body)
                     return info
@@ -407,7 +426,8 @@ module.exports = {
    */
     start: async (project) => {
     // there is no concept of start/stop in Kubernetes
-        await got.post('http://' + project.name + '.flowforge:2880/flowforge/command', {
+        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
+        await got.post(`http://${project.name}.${namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'start'
             }
@@ -425,7 +445,8 @@ module.exports = {
    */
     stop: async (project) => {
     // there is no concept of start/stop in Kubernetes
-        await got.post('http://' + project.name + '.flowforge:2880/flowforge/command', {
+        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
+        await got.post(`http://${project.name}.${namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'stop'
             }
@@ -435,8 +456,9 @@ module.exports = {
         return Promise.resolve({ status: 'okay' })
     },
     logs: async (project) => {
+        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
         try {
-            const result = await got.get('http://' + project.name + '.flowforge:2880/flowforge/logs').json()
+            const result = await got.get(`http://${project.name}.${namespace}:2880/flowforge/logs`).json()
             return result
         } catch (err) {
             console.log(err)
@@ -449,7 +471,8 @@ module.exports = {
    * @return {forge.Status}
    */
     restart: async (project) => {
-        await got.post('http://' + project.name + '.flowforge:2880/flowforge/command', {
+        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
+        await got.post(`http://${project.name}.${namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'restart'
             }
