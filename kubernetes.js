@@ -193,6 +193,15 @@ const createPod = async (project, options) => {
     if (this._app.config.driver.options.projectSelector) {
         localPod.spec.nodeSelector = this._app.config.driver.options.projectSelector
     }
+    if (this._app.config.driver.options.registrySecrets) {
+        localPod.spec.imagePullSecrets = []
+        this._app.config.driver.options.registrySecrets.forEach(sec => {
+            const entry = {
+                name: sec
+            }
+            localPod.spec.imagePullSecrets.push(entry)
+        })
+    }
 
     if (stack.memory && stack.cpu) {
         localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
@@ -297,7 +306,7 @@ module.exports = {
                 properties: {
                     cpu: {
                         label: 'CPU Cores (%)',
-                        validate: '^[1-9][0-9]|100$',
+                        validate: '^([1-9][0-9]?|100)$',
                         invalidMessage: 'Invalid value - must be a number between 1 and 100'
                     },
                     memory: {
