@@ -1,3 +1,7 @@
+#### 0.3.1: Maintence Release
+
+ - Fix stack support @hardillb
+
 #### 0.3.0: Release
 
  - Restart missing projects (#12) @hardillb
