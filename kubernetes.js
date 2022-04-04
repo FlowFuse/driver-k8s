@@ -197,9 +197,9 @@ const createPod = async (project, options) => {
 
     if (stack.memory && stack.cpu) {
         localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
-        localPod.spec.containers[0].resources.limit.memory = `${stack.memory}Mi`
+        localPod.spec.containers[0].resources.limits.memory = `${stack.memory}Mi`
         localPod.spec.containers[0].resources.request.cpu = `${stack.cpu * 10}m`
-        localPod.spec.containers[0].resources.limit.cpu = `${stack.cpu * 10}m`
+        localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
 
     const localService = JSON.parse(JSON.stringify(serviceTemplate))
