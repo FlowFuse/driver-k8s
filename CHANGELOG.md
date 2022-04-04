@@ -1,4 +1,8 @@
-#### 0.3.1: Maintence Release
+#### 0.3.2: Maintenance Release 
+
+ - Fix typo in pod limits (#26) @hardillb
+
+#### 0.3.1: Maintenance Release
 
  - Fix stack support (#24) @hardillb
 
