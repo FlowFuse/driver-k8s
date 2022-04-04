@@ -31,12 +31,12 @@ const podTemplate = {
                 resources: {
                     request: {
                         // 10th of a core
-                        cpu: "100m",
-                        memory: "128Mi"
+                        cpu: '100m',
+                        memory: '128Mi'
                     },
                     limits: {
-                        cpu: "125m",
-                        memory: "192Mi"
+                        cpu: '125m',
+                        memory: '192Mi'
                     }
                 },
                 name: 'node-red',
@@ -162,11 +162,16 @@ const ingressTemplate = {
 
 const createPod = async (project, options) => {
     console.log('creating ', project.name, options)
+    const stack = project.ProjectStack.properties
     const localPod = JSON.parse(JSON.stringify(podTemplate))
     localPod.metadata.name = project.name
     localPod.metadata.labels.name = project.name
     localPod.metadata.labels.app = project.id
-    localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red` // this._options.containers[project.type];
+    if (stack.container) {
+        localPod.spec.containers[0].image = stack.container
+    } else {
+        localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red`
+    }
     if (options.env) {
         Object.keys(options.env).forEach(k => {
             if (k) {
@@ -189,6 +194,13 @@ const createPod = async (project, options) => {
     localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
+
+    if (stack.memory && stack.cpu) {
+        localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
+        localPod.spec.containers[0].resources.limit.memory = `${stack.memory}Mi`
+        localPod.spec.containers[0].resources.request.cpu = `${stack.cpu * 10}m`
+        localPod.spec.containers[0].resources.limit.cpu = `${stack.cpu * 10}m`
+    }
 
     const localService = JSON.parse(JSON.stringify(serviceTemplate))
     localService.metadata.name = project.name
@@ -277,7 +289,7 @@ module.exports = {
                 properties: {
                     cpu: {
                         label: 'CPU Cores (%)',
-                        validate: '^[1-9][0-9]|100$',
+                        validate: '^([1-9][0-9]?|100)$',
                         invalidMessage: 'Invalid value - must be a number between 1 and 100'
                     },
                     memory: {
