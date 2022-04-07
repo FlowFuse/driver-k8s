@@ -395,7 +395,7 @@ module.exports = {
 
         // Remember, this call is used for both creating a new project as well as
         // restarting an existing project
-        return await createPod(project)
+        return createPod(project)
     },
 
     /**
