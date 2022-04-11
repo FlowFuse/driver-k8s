@@ -168,16 +168,6 @@ const createPod = async (project, options) => {
     } else {
         localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red`
     }
-    if (options.env) {
-        Object.keys(options.env).forEach(k => {
-            if (k) {
-                localPod.spec.containers[0].env.push({
-                    name: k,
-                    value: options.env[k]
-                })
-            }
-        })
-    }
 
     const baseURL = new URL(this._app.config.base_url)
     const projectURL = `${baseURL.protocol}//${project.name}.${this._options.domain}`
@@ -229,24 +219,54 @@ const createPod = async (project, options) => {
         }
     }
 
-    try {
-        await this._k8sApi.createNamespacedPod(namespace, localPod)
-        await this._k8sApi.createNamespacedService(namespace, localService)
-        await this._k8sNetApi.createNamespacedIngress(namespace, localIngress)
-    } catch (err) {
-        console.log(err)
-        return { error: err }
-    }
 
     project.url = projectURL
     await project.save()
 
-    return {
-        id: project.id,
-        status: 'okay',
-        url: projectURL,
-        meta: {}
-    }
+
+    const promises = []
+    promises.push(this._k8sApi.createNamespacedPod(namespace, localPod).catch(err => {
+        console.log(err)
+        this._app.log.error(`[k8s] Project ${project.id} - error creating pod: ${err.toString()}`)
+        // rethrow the error so the wrapper knows this hasn't worked
+        throw err
+    }))
+    promises.push(this._k8sApi.createNamespacedService(namespace, localService).catch(err => {
+        // TODO: This will fail if the service already exists. Which it okay if
+        // we're restarting a suspended project. As we don't know if we're restarting
+        // or not, we don't know if this is fatal or not.
+
+        // Once we can know if this is a restart or create, then we can decide
+        // whether to throw this error or not. For now, this will silently
+        // let it pass
+        //
+        //this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
+        //throw err
+    }))
+
+    promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
+        // TODO: This will fail if the service already exists. Which it okay if
+        // we're restarting a suspended project. As we don't know if we're restarting
+        // or not, we don't know if this is fatal or not.
+
+        // Once we can know if this is a restart or create, then we can decide
+        // whether to throw this error or not. For now, this will silently
+        // let it pass
+        //
+        //this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+        //throw err
+    }))
+
+    return Promise.all(promises).then(async () => {
+        this._app.log.debug(`[k8s] Container ${project.id} started`)
+        project.state = 'running'
+        await project.save()
+        setTimeout(() => {
+            // Give the container a few seconds to get the launcher process started
+            this._projects[project.id].state = 'started'
+            // TODO: how long should this be for a k8s setup?
+        }, 4000)
+    })
 }
 
 module.exports = {
@@ -258,7 +278,11 @@ module.exports = {
    */
     init: async (app, options) => {
         this._app = app
+        this._projects = {}
         this._options = options
+
+        this._namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
+
         const kc = new k8s.KubeConfig()
 
         options.registry = app.config.driver.options?.registry || '' // use docker hub registry
@@ -281,24 +305,43 @@ module.exports = {
         this._k8sAppApi = kc.makeApiClient(k8s.AppsV1Api)
         this._k8sNetApi = kc.makeApiClient(k8s.NetworkingV1Api)
 
-        const projects = await this._app.db.models.Project.findAll({
-            include: [
-                {
-                    model: this._app.db.models.ProjectStack
-                }
+        // Get a list of all projects - with the absolute minimum of fields returned
+        const projects = await app.db.models.Project.findAll({
+            attributes: [
+                'id',
+                'name',
+                'state',
+                'ProjectStackId'
             ]
         })
         projects.forEach(async (project) => {
-            if (project.state === 'running') {
-                try {
-                    await this._k8sApi.readNamespacedPodStatus(project.name, 'flowforge')
-                } catch (err) {
-                    console.log(err.response.body)
-                    const envVars = await project.getSetting('environmentVariables') || '{}'
-                    await createPod(project, { env: JSON.parse(envVars) })
+            if (this._projects[project.id] === undefined) {
+                this._projects[project.id] = {
+                    state: 'unknown'
                 }
             }
         })
+
+        this._initialCheckTimeout = setTimeout(() => {
+            this._app.log.debug('[k8s] Restarting projects')
+            projects.forEach(async (project) => {
+                try {
+                    if (project.state === 'suspended') {
+                        // Do not restart suspended projects
+                        return
+                    }
+                    try {
+                        await this._k8sApi.readNamespacedPodStatus(project.name, this._namespace)
+                    } catch (err) {
+                        this._app.log.debug(`[k8s] Project ${project.id} - recreating container`)
+                        const fullProject = await this._app.db.models.Project.byId(project.id)
+                        await createPod(fullProject)
+                    }
+                } catch (err) {
+                    this._app.log.error(`[k8s] Project ${project.id} - error resuming project: ${err.stack}`)
+                }
+            })
+        }, 1000)
 
         // need to work out what we can expose for K8s
         return {
@@ -325,63 +368,113 @@ module.exports = {
         }
     },
     /**
-   * Create a new Project
-   * @param {string} id - id for the project
-   * @param {forge.containers.Options} options - options for the project
-   * @return {forge.containers.Project}
-   */
-    create: async (project, options) => {
-        return await createPod(project, options)
+     * Start a Project
+     * @param {Project} project - the project model instance
+     * @return {forge.containers.Project}
+     */
+    start: async (project) => {
+        this._projects[project.id] = {
+            state: 'starting'
+        }
+
+        // Rather than await this promise, we return it. That allows the wrapper
+        // to respond to the create request much quicker and the create can happen
+        // asynchronously.
+        // If the create fails, the Project still exists but will be put in suspended
+        // state (and taken out of billing if enabled).
+
+        // Remember, this call is used for both creating a new project as well as
+        // restarting an existing project
+        return createPod(project)
     },
+
     /**
-   * Removes a Project
-   * @param {string} id - id of project to remove
-   * @return {Object}
-   */
+     * Stop a Project
+     * @param {Project} project - the project model instance
+     */
+    stop: async (project) => {
+        // Stop the project, but don't remove all of its resources.
+        this._projects[project.id].state = 'stopping'
+        // For now, we just want to remove the pod
+        await this._k8sApi.deleteNamespacedPod(project.name, this._namespace)
+        this._projects[project.id].state = 'suspended'
+        return new Promise(resolve => {
+            const pollInterval = setInterval(async () => {
+                try {
+                    await this._k8sApi.readNamespacedPodStatus(project.name, this._namespace)
+                } catch (err) {
+                    clearInterval(pollInterval)
+                    resolve()
+                }
+            }, 1000)
+        })
+    },
+
+    /**
+     * Removes a Project
+     * @param {Project} project - the project model instance
+     * @return {Object}
+     */
     remove: async (project) => {
     // let project = await this._app.db.models.Project.byId(id)
 
-        const promises = []
-        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
-
-        promises.push(this._k8sNetApi.deleteNamespacedIngress(project.name, namespace))
-        promises.push(this._k8sApi.deleteNamespacedService(project.name, namespace))
-        promises.push(this._k8sApi.deleteNamespacedPod(project.name, namespace))
-
         try {
-            await Promise.all(promises)
-
-            return {
-                status: 'okay'
-            }
+            await this._k8sNetApi.deleteNamespacedIngress(project.name, this._namespace)
         } catch (err) {
-            return {
-                error: err
+            this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
+        }
+        try {
+            await this._k8sApi.deleteNamespacedService(project.name, this._namespace)
+        } catch (err) {
+            this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
+        }
+        try {
+            // A suspended project won't have a pod to delete - but try anyway
+            // just in case state has got out of sync
+            await this._k8sApi.deleteNamespacedPod(project.name, this._namespace)
+        } catch (err) {
+            if (project.state !== 'suspended') {
+                // A suspended project is expected to error here - so only log
+                // if the state is anything else
+                this._app.log.error(`[k8s] Project ${project.id} - error deleting pod: ${err.toString()}`)
             }
         }
+        delete this._projects[project.id]
     },
     /**
-   * Retrieves details of a project's container
-   * @param {string} id - id of project to query
-   * @return {Object}
-   */
+     * Retrieves details of a project's container
+     * @param {Project} project - the project model instance
+     * @return {Object}
+     */
     details: async (project) => {
+        // this._app.log.debug(`checking state of ${project.id}, ${this._projects[project.id].state}`)
+        if (this._projects[project.id].state !== 'unknown' && this._projects[project.id].state !== 'started') {
+            // We should only poll the launcher if we think it is running.
+            // Otherwise, return our cached state
+            return {
+                state: this._projects[project.id].state
+            }
+        }
+        // this._app.log.debug('checking actual pod, not cache')
         try {
-            const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
-            const details = await this._k8sApi.readNamespacedPodStatus(project.name, namespace)
+            const details = await this._k8sApi.readNamespacedPodStatus(project.name, this._namespace)
             // console.log(project.name, details.body)
-            // console.log(details.body.status)
+            // this._app.log.debug(`details: ${details.body.status}`)
 
             if (details.body.status.phase === 'Running') {
-                const infoURL = `http://${project.name}.${namespace}:2880/flowforge/info`
+                const infoURL = `http://${project.name}.${this._namespace}:2880/flowforge/info`
                 try {
                     const info = JSON.parse((await got.get(infoURL)).body)
+                    // this._app.log.debug(`info: ${JSON.stringify(info)}`)
+                    this._projects[project.id].state = info.state
                     return info
                 } catch (err) {
                     // TODO
+                    this._app.log.debug(`err getting state from ${project.id}: ${err}`)
                     return
                 }
             } else if (details.body.status.phase === 'Pending') {
+                this._projects[project.id].state = 'starting'
                 return {
                     id: project.id,
                     state: 'starting',
@@ -392,23 +485,13 @@ module.exports = {
             console.log(err)
             return { error: err }
         }
-
-        // let infoURL = "http://" + project.name + ".flowforge:2880/flowforge/info"
-        // try {
-        //   let info = JSON.parse((await got.get(infoURL)).body)
-        //   return info
-        // } catch (err) {
-        //   //TODO
-        //   return
-        // }
     },
+
     /**
-   * Returns the settings for the project
-  */
+     * Returns the settings for the project
+     * @param {Project} project - the project model instance
+     */
     settings: async (project) => {
-    // let project = await this._app.db.models.DockerProject.byId(id)
-        // const projectSettings = await project.getAllSettings()
-        // let options = JSON.parse(project.options)
         const settings = {}
         settings.projectID = project.id
         settings.port = 1880
@@ -417,82 +500,68 @@ module.exports = {
 
         return settings
     },
+
     /**
-   * Lists all containers
-   * @param {string} filter - rules to filter the containers
-   * @return {Object}
-   */
-    list: async (filter) => {
-        this._k8sApi.listNamespacedPod('flowforge', undefined, undefined, undefined, undefined, 'nodered=true')
-            .then((pods) => {
-                // Turn this into a standard form
-            })
-    },
-    /**
-   * Starts a Project's container
-   * @param {string} id - id of project to start
-   * @return {forge.Status}
-   */
-    start: async (project) => {
-    // there is no concept of start/stop in Kubernetes
-        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
-        await got.post(`http://${project.name}.${namespace}:2880/flowforge/command`, {
+     * Starts the flows
+     * @param {Project} project - the project model instance
+     * @return {forge.Status}
+     */
+    startFlows: async (project) => {
+        await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'start'
             }
         })
-
-        project.state = 'starting'
-        project.save()
-
-        return { status: 'okey' }
+        return { status: 'okay' }
     },
+
     /**
-   * Stops a Proejct's container
-   * @param {string} id - id of project to stop
-   * @return {forge.Status}
-   */
-    stop: async (project) => {
-    // there is no concept of start/stop in Kubernetes
-        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
-        await got.post(`http://${project.name}.${namespace}:2880/flowforge/command`, {
+     * Stops the flows
+     * @param {Project} project - the project model instance
+     * @return {forge.Status}
+     */
+    stopFlows: async (project) => {
+        await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'stop'
             }
         })
-        project.state = 'stopped'
-        project.save()
         return Promise.resolve({ status: 'okay' })
     },
+
+    /**
+     * Get a Project's logs
+     * @param {Project} project - the project model instance
+     * @return {array} logs
+     */
     logs: async (project) => {
-        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
         try {
-            const result = await got.get(`http://${project.name}.${namespace}:2880/flowforge/logs`).json()
+            const result = await got.get(`http://${project.name}.${this._namespace}:2880/flowforge/logs`).json()
             return result
         } catch (err) {
             console.log(err)
             return ''
         }
     },
+
     /**
-   * Restarts a Project's container
-   * @param {string} id - id of project to restart
-   * @return {forge.Status}
-   */
-    restart: async (project) => {
-        const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
-        await got.post(`http://${project.name}.${namespace}:2880/flowforge/command`, {
+     * Restarts the flows
+     * @param {Project} project - the project model instance
+     * @return {forge.Status}
+     */
+    restartFlows: async (project) => {
+        await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'restart'
             }
         })
-
         return { state: 'okay' }
     },
+
     /**
      * Shutdown Driver
      */
     shutdown: async () => {
-
+        clearTimeout(this._initialCheckTimeout)
     }
 }
