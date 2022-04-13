@@ -219,10 +219,8 @@ const createPod = async (project, options) => {
         }
     }
 
-
     project.url = projectURL
     await project.save()
-
 
     const promises = []
     promises.push(this._k8sApi.createNamespacedPod(namespace, localPod).catch(err => {
@@ -447,14 +445,19 @@ module.exports = {
      * @return {Object}
      */
     details: async (project) => {
-        // this._app.log.debug(`checking state of ${project.id}, ${this._projects[project.id].state}`)
+        // this._app.log.debug(`checking state of ${project.id}, ${this._projects[project.id]}`)
+        if (!this._projects[project.id]) {
+            this._projects[project.id] = {
+                state: 'unknown'
+            }
+        }
         if (this._projects[project.id].state !== 'unknown' && this._projects[project.id].state !== 'started') {
             // We should only poll the launcher if we think it is running.
             // Otherwise, return our cached state
             return {
                 state: this._projects[project.id].state
             }
-        }
+        } 
         // this._app.log.debug('checking actual pod, not cache')
         try {
             const details = await this._k8sApi.readNamespacedPodStatus(project.name, this._namespace)
@@ -483,6 +486,7 @@ module.exports = {
             }
         } catch (err) {
             console.log(err)
+            this._app.log.debug(`Failed to load pod status for ${project.id}`)
             return { error: err }
         }
     },
