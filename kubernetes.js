@@ -210,7 +210,7 @@ const createPod = async (project, options) => {
     localIngress.spec.rules[0].http.paths[0].backend.service.name = project.name
 
     if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
-        localIngress.annotations = {
+        localIngress.metadata.annotations = {
             'kubernetes.io/ingress.class': 'alb',
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
             'alb.ingress.kubernetes.io/target-type': 'ip',
@@ -263,7 +263,7 @@ const createPod = async (project, options) => {
             // Give the container a few seconds to get the launcher process started
             this._projects[project.id].state = 'started'
             // TODO: how long should this be for a k8s setup?
-        }, 4000)
+        }, 3000)
     })
 }
 
@@ -445,19 +445,13 @@ module.exports = {
      * @return {Object}
      */
     details: async (project) => {
-        // this._app.log.debug(`checking state of ${project.id}, ${this._projects[project.id]}`)
-        if (!this._projects[project.id]) {
-            this._projects[project.id] = {
-                state: 'unknown'
-            }
-        }
-        if (this._projects[project.id].state !== 'unknown' && this._projects[project.id].state !== 'started') {
+        if (this._projects[project.id].state === 'suspended') {
             // We should only poll the launcher if we think it is running.
             // Otherwise, return our cached state
             return {
                 state: this._projects[project.id].state
             }
-        } 
+        }
         // this._app.log.debug('checking actual pod, not cache')
         try {
             const details = await this._k8sApi.readNamespacedPodStatus(project.name, this._namespace)
@@ -485,9 +479,9 @@ module.exports = {
                 }
             }
         } catch (err) {
-            console.log(err)
+            // console.log(err)
             this._app.log.debug(`Failed to load pod status for ${project.id}`)
-            return { error: err }
+            return { error: err, state: 'unknown' }
         }
     },
 
