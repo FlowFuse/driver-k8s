@@ -1,5 +1,13 @@
 #### 0.4.0: Release
 
+ - Fix ingress annotations on AWS (#30) @hardillb
+ - Deal with project not in internal cache (#29) @hardillb
+ - Update to new driver api and lifecycle (#27) @knolleary
+ - Update project automation (#28) @knolleary
+ - Fix typo in pod limits (#25) @hardillb
+ - Fix CPU % Validator regex (#23) @hardillb
+ - Allow Node selectors to be set in flowforge.yml (#22) @hardillb
+ - Only add AWS Ingress annotation on AWS (#21) @hardillb
 
 #### 0.3.0: Release
 
