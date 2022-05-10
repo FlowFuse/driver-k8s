@@ -41,6 +41,7 @@ const podTemplate = {
                 },
                 name: 'node-red',
                 // image: "docker-pi.local:5000/bronze-node-red",
+                imagePullPolicy: 'Always',
                 env: [
                     // {name: "APP_NAME", value: "test"},
                     { name: 'TZ', value: 'Europe/London' }
