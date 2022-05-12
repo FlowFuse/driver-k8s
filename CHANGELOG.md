@@ -1,5 +1,8 @@
 #### 0.5.0: Release
 
+ - Update version to 0.5.0
+ - Update CHANGELOG for 0.5.0
+ - Ensure latest version of contianer is always pulled (#33) @hardillb
 
 #### 0.4.0: Release
 
