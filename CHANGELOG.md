@@ -1,3 +1,7 @@
+#### 0.5.0: Release
+
+ - Ensure latest version of contianer is always pulled (#33) @hardillb
+
 #### 0.4.0: Release
 
  - Fix ingress annotations on AWS (#30) @hardillb
