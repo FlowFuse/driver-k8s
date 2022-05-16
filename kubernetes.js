@@ -230,6 +230,7 @@ const createPod = async (project, options) => {
         // rethrow the error so the wrapper knows this hasn't worked
         throw err
     }))
+    /* eslint node/handle-callback-err: "off" */ 
     promises.push(this._k8sApi.createNamespacedService(namespace, localService).catch(err => {
         // TODO: This will fail if the service already exists. Which it okay if
         // we're restarting a suspended project. As we don't know if we're restarting
@@ -239,8 +240,8 @@ const createPod = async (project, options) => {
         // whether to throw this error or not. For now, this will silently
         // let it pass
         //
-        //this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
-        //throw err
+        // this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
+        // throw err
     }))
 
     promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
@@ -252,8 +253,8 @@ const createPod = async (project, options) => {
         // whether to throw this error or not. For now, this will silently
         // let it pass
         //
-        //this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
-        //throw err
+        // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+        // throw err
     }))
 
     return Promise.all(promises).then(async () => {
@@ -349,18 +350,21 @@ module.exports = {
                     cpu: {
                         label: 'CPU Cores (%)',
                         validate: '^([1-9][0-9]?|100)$',
-                        invalidMessage: 'Invalid value - must be a number between 1 and 100'
+                        invalidMessage: 'Invalid value - must be a number between 1 and 100',
+                        description: 'How much of a single CPU core each Project should receive'
                     },
                     memory: {
                         label: 'Memory (MB)',
                         validate: '^[1-9]\\d*$',
-                        invalidMessage: 'Invalid value - must be a number'
+                        invalidMessage: 'Invalid value - must be a number',
+                        description: 'How much memory the container for each Project will be granted, recommended value 256'
                     },
                     container: {
                         label: 'Container Location',
                         // taken from https://stackoverflow.com/a/62964157
                         validate: '^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])(:[0-9]+\\/)?(?:[0-9a-z-]+[/@])(?:([0-9a-z-]+))[/@]?(?:([0-9a-z-]+))?(?::[a-z0-9\\.-]+)?$',
-                        invalidMessage: 'Invalid value - must be a Docker image'
+                        invalidMessage: 'Invalid value - must be a Docker image',
+                        description: 'Container image location, can include a tag'
                     }
                 }
             }
