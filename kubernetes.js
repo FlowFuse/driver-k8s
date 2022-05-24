@@ -174,13 +174,18 @@ const createPod = async (project, options) => {
     const projectURL = `${baseURL.protocol}//${project.name}.${this._options.domain}`
 
     const authTokens = await project.refreshAuthTokens()
-
     localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_ID', value: authTokens.clientID })
     localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_SECRET', value: authTokens.clientSecret })
     localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.api_url })
     localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
+
+    const credentialSecret = await project.getSetting('credentialSecret')
+    if (credentialSecret) {
+        localPod.spec.containers[0].env.push({ name: 'FORGE_NR_SECRET', value: credentialSecret })
+    }
+
     if (this._app.config.driver.options.projectSelector) {
         localPod.spec.nodeSelector = this._app.config.driver.options.projectSelector
     }
