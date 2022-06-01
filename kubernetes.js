@@ -571,7 +571,7 @@ module.exports = {
    * @param {string} token - the node-red token to revoke
    * @return {forge.Status}
    */
-    logoutNodeRED: async (project, token) => { // logout:nodered(step-3)
+    revokeUserToken: async (project, token) => { // logout:nodered(step-3)
         try {
             this._app.log.debug(`[k8s] Project ${project.id} - logging out node-red instance`)
             await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
@@ -581,7 +581,7 @@ module.exports = {
                 }
             })
         } catch (error) {
-            this._app.log.error(`[k8s] Project ${project.id} - error in 'logoutNodeRED': ${error.stack}`)
+            this._app.log.error(`[k8s] Project ${project.id} - error in 'revokeUserToken': ${error.stack}`)
         }
     },
     /**
