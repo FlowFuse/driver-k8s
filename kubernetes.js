@@ -455,6 +455,9 @@ module.exports = {
      * @return {Object}
      */
     details: async (project) => {
+        if (this._projects[project.id] === undefined) {
+            return { state: 'unknown' }
+        }
         if (this._projects[project.id].state === 'suspended') {
             // We should only poll the launcher if we think it is running.
             // Otherwise, return our cached state
@@ -515,6 +518,9 @@ module.exports = {
      * @return {forge.Status}
      */
     startFlows: async (project) => {
+        if (this._projects[project.id] === undefined) {
+            return { state: 'unknown' }
+        }
         await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'start'
@@ -529,6 +535,9 @@ module.exports = {
      * @return {forge.Status}
      */
     stopFlows: async (project) => {
+        if (this._projects[project.id] === undefined) {
+            return { state: 'unknown' }
+        }
         await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'stop'
@@ -543,13 +552,11 @@ module.exports = {
      * @return {array} logs
      */
     logs: async (project) => {
-        try {
-            const result = await got.get(`http://${project.name}.${this._namespace}:2880/flowforge/logs`).json()
-            return result
-        } catch (err) {
-            console.log(err)
-            return ''
+        if (this._projects[project.id] === undefined) {
+            return { state: 'unknown' }
         }
+        const result = await got.get(`http://${project.name}.${this._namespace}:2880/flowforge/logs`).json()
+        return result
     },
 
     /**
@@ -558,6 +565,9 @@ module.exports = {
      * @return {forge.Status}
      */
     restartFlows: async (project) => {
+        if (this._projects[project.id] === undefined) {
+            return { state: 'unknown' }
+        }
         await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'restart'
