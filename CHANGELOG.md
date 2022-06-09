@@ -1,3 +1,6 @@
+#### 0.6.0: Release
+
+
 #### 0.5.0: Release
 
  - Ensure latest version of contianer is always pulled (#33) @hardillb
