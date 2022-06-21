@@ -180,6 +180,10 @@ const createPod = async (project, options) => {
     localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
+    if (authTokens.broker) {
+        localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_USERNAME', value: authTokens.broker.username })
+        localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_PASSWORD', value: authTokens.broker.password })
+    }
 
     const credentialSecret = await project.getSetting('credentialSecret')
     if (credentialSecret) {
