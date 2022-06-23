@@ -472,16 +472,38 @@ module.exports = {
             // this._app.log.debug(`details: ${details.body.status}`)
 
             if (details.body.status.phase === 'Running') {
-                const infoURL = `http://${project.name}.${this._namespace}:2880/flowforge/info`
-                try {
-                    const info = JSON.parse((await got.get(infoURL)).body)
-                    // this._app.log.debug(`info: ${JSON.stringify(info)}`)
-                    this._projects[project.id].state = info.state
-                    return info
-                } catch (err) {
-                    // TODO
-                    this._app.log.debug(`err getting state from ${project.id}: ${err}`)
-                    return
+                if (this._projects[project.id].state === 'starting') {
+                    const redURL = `http://${project.name}.${this._namespace}:1880/`
+                    try {
+                        await got.get(redURL, {
+                            timeout: {
+                                request: 500
+                            }
+                        })
+                        this._projects[project.id].state = 'running'
+                        return {
+                            id: project.id,
+                            state: 'running'
+                        }
+                    } catch (err) {
+                        return {
+                            id: project.id,
+                            state: 'starting',
+                            meta: details.body.status
+                        }
+                    }
+                } else {
+                    const infoURL = `http://${project.name}.${this._namespace}:2880/flowforge/info`
+                    try {
+                        const info = JSON.parse((await got.get(infoURL)).body)
+                        // this._app.log.debug(`info: ${JSON.stringify(info)}`)
+                        this._projects[project.id].state = info.state
+                        return info
+                    } catch (err) {
+                        // TODO
+                        this._app.log.debug(`err getting state from ${project.id}: ${err}`)
+                        return
+                    }
                 }
             } else if (details.body.status.phase === 'Pending') {
                 this._projects[project.id].state = 'starting'
