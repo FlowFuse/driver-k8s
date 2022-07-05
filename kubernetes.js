@@ -235,7 +235,7 @@ const createPod = async (project, options) => {
         // rethrow the error so the wrapper knows this hasn't worked
         throw err
     }))
-    /* eslint node/handle-callback-err: "off" */ 
+    /* eslint node/handle-callback-err: "off" */
     promises.push(this._k8sApi.createNamespacedService(namespace, localService).catch(err => {
         // TODO: This will fail if the service already exists. Which it okay if
         // we're restarting a suspended project. As we don't know if we're restarting
@@ -266,11 +266,7 @@ const createPod = async (project, options) => {
         this._app.log.debug(`[k8s] Container ${project.id} started`)
         project.state = 'running'
         await project.save()
-        setTimeout(() => {
-            // Give the container a few seconds to get the launcher process started
-            this._projects[project.id].state = 'started'
-            // TODO: how long should this be for a k8s setup?
-        }, 3000)
+        this._projects[project.id].state = 'starting'
     })
 }
 
@@ -472,16 +468,38 @@ module.exports = {
             // this._app.log.debug(`details: ${details.body.status}`)
 
             if (details.body.status.phase === 'Running') {
-                const infoURL = `http://${project.name}.${this._namespace}:2880/flowforge/info`
-                try {
-                    const info = JSON.parse((await got.get(infoURL)).body)
-                    // this._app.log.debug(`info: ${JSON.stringify(info)}`)
-                    this._projects[project.id].state = info.state
-                    return info
-                } catch (err) {
-                    // TODO
-                    this._app.log.debug(`err getting state from ${project.id}: ${err}`)
-                    return
+                if (this._projects[project.id].state === 'starting') {
+                    const redURL = `http://${project.name}.${this._namespace}:1880/`
+                    try {
+                        await got.get(redURL, {
+                            timeout: {
+                                request: 500
+                            }
+                        })
+                        this._projects[project.id].state = 'running'
+                        return {
+                            id: project.id,
+                            state: 'running'
+                        }
+                    } catch (err) {
+                        return {
+                            id: project.id,
+                            state: 'starting',
+                            meta: details.body.status
+                        }
+                    }
+                } else {
+                    const infoURL = `http://${project.name}.${this._namespace}:2880/flowforge/info`
+                    try {
+                        const info = JSON.parse((await got.get(infoURL)).body)
+                        // this._app.log.debug(`info: ${JSON.stringify(info)}`)
+                        this._projects[project.id].state = info.state
+                        return info
+                    } catch (err) {
+                        // TODO
+                        this._app.log.debug(`err getting state from ${project.id}: ${err}`)
+                        return
+                    }
                 }
             } else if (details.body.status.phase === 'Pending') {
                 this._projects[project.id].state = 'starting'
