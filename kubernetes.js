@@ -266,11 +266,7 @@ const createPod = async (project, options) => {
         this._app.log.debug(`[k8s] Container ${project.id} started`)
         project.state = 'running'
         await project.save()
-        setTimeout(() => {
-            // Give the container a few seconds to get the launcher process started
-            this._projects[project.id].state = 'started'
-            // TODO: how long should this be for a k8s setup?
-        }, 3000)
+        this._projects[project.id].state = 'starting'
     })
 }
 
