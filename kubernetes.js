@@ -172,12 +172,13 @@ const createPod = async (project, options) => {
 
     const baseURL = new URL(this._app.config.base_url)
     const projectURL = `${baseURL.protocol}//${project.name}.${this._options.domain}`
-
+    const teamID = this._app.db.models.Team.encodeHashid(project.TeamId)
     const authTokens = await project.refreshAuthTokens()
     localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_ID', value: authTokens.clientID })
     localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_SECRET', value: authTokens.clientSecret })
     localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.api_url })
     localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: teamID })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
 
@@ -312,7 +313,8 @@ module.exports = {
                 'id',
                 'name',
                 'state',
-                'ProjectStackId'
+                'ProjectStackId',
+                'TeamId'
             ]
         })
         projects.forEach(async (project) => {
