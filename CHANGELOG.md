@@ -1,3 +1,9 @@
+#### 0.8.0: Release
+
+ - Add licenseType to launcher env (#48) @knolleary
+ - Add FORGE_BROKER_* credentials to launcher env (#44) @knolleary
+ - add env var FORGE_TEAM_ID (#47) @Steve-Mcl
+
 #### 0.7.0: Release
 
  - Add startup check for status (#45) @hardillb
