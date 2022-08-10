@@ -1,5 +1,6 @@
 const got = require('got')
 const k8s = require('@kubernetes/client-node')
+const humanFormat = require('human-format')
 
 /**
  * Kubernates Container driver
@@ -494,6 +495,19 @@ module.exports = {
                         const info = JSON.parse((await got.get(infoURL)).body)
                         // this._app.log.debug(`info: ${JSON.stringify(info)}`)
                         this._projects[project.id].state = info.state
+
+                        const metrics = await this._metricsClient.getPodMetrics('flowforge') //, project.name)
+                        let usedMemory = -1
+                        // this whole loop can be removed once https://github.com/kubernetes-client/javascript/pull/848 ships 
+                        for (let i = 0; i < metrics.items.length; i++) {
+                            if (metrics.items[i].meta.name === project.name) {
+                                usedMemory = humanFormat.parse(metrics.items[i].usage.memory, { scale: 'binary' })
+                            }
+                        }
+                        info.memory = {
+                            used: usedMemory,
+                            limit: humanFormat.parse(details.body.spec.containers[0].resources.limits.memory, { scale: 'binary' })
+                        }
                         return info
                     } catch (err) {
                         // TODO
