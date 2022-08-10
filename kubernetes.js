@@ -498,7 +498,7 @@ module.exports = {
 
                         const metrics = await this._metricsClient.getPodMetrics('flowforge') //, project.name)
                         let usedMemory = -1
-                        // this whole loop can be removed once https://github.com/kubernetes-client/javascript/pull/848 ships 
+                        // this whole loop can be removed once https://github.com/kubernetes-client/javascript/pull/848 ships
                         for (let i = 0; i < metrics.items.length; i++) {
                             if (metrics.items[i].meta.name === project.name) {
                                 usedMemory = humanFormat.parse(metrics.items[i].usage.memory, { scale: 'binary' })
