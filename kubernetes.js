@@ -161,8 +161,8 @@ const createPod = async (project, options) => {
     const stack = project.ProjectStack.properties
 
     const localPod = JSON.parse(JSON.stringify(podTemplate))
-    localPod.metadata.name = project.name
-    localPod.metadata.labels.name = project.name
+    localPod.metadata.name = project.safeName
+    localPod.metadata.labels.name = project.safeName
     localPod.metadata.labels.app = project.id
     if (stack.container) {
         localPod.spec.containers[0].image = stack.container
@@ -171,7 +171,7 @@ const createPod = async (project, options) => {
     }
 
     const baseURL = new URL(this._app.config.base_url)
-    const projectURL = `${baseURL.protocol}//${project.name}.${this._options.domain}`
+    const projectURL = `${baseURL.protocol}//${project.safeName}.${this._options.domain}`
     const teamID = this._app.db.models.Team.encodeHashid(project.TeamId)
     const authTokens = await project.refreshAuthTokens()
     localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_ID', value: authTokens.clientID })
@@ -216,13 +216,13 @@ const createPod = async (project, options) => {
     }
 
     const localService = JSON.parse(JSON.stringify(serviceTemplate))
-    localService.metadata.name = project.name
-    localService.spec.selector.name = project.name
+    localService.metadata.name = project.safeName
+    localService.spec.selector.name = project.safeName
 
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
-    localIngress.metadata.name = project.name
-    localIngress.spec.rules[0].host = project.name + '.' + this._options.domain
-    localIngress.spec.rules[0].http.paths[0].backend.service.name = project.name
+    localIngress.metadata.name = project.safeName
+    localIngress.spec.rules[0].host = project.safeName + '.' + this._options.domain
+    localIngress.spec.rules[0].http.paths[0].backend.service.name = project.safeName
 
     if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
         localIngress.metadata.annotations = {
@@ -342,7 +342,7 @@ module.exports = {
                         return
                     }
                     try {
-                        await this._k8sApi.readNamespacedPodStatus(project.name, this._namespace)
+                        await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
                     } catch (err) {
                         this._app.log.debug(`[k8s] Project ${project.id} - recreating container`)
                         const fullProject = await this._app.db.models.Project.byId(project.id)
@@ -410,12 +410,12 @@ module.exports = {
         // Stop the project, but don't remove all of its resources.
         this._projects[project.id].state = 'stopping'
         // For now, we just want to remove the pod
-        await this._k8sApi.deleteNamespacedPod(project.name, this._namespace)
+        await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
         this._projects[project.id].state = 'suspended'
         return new Promise(resolve => {
             const pollInterval = setInterval(async () => {
                 try {
-                    await this._k8sApi.readNamespacedPodStatus(project.name, this._namespace)
+                    await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
                 } catch (err) {
                     clearInterval(pollInterval)
                     resolve()
@@ -433,19 +433,19 @@ module.exports = {
     // let project = await this._app.db.models.Project.byId(id)
 
         try {
-            await this._k8sNetApi.deleteNamespacedIngress(project.name, this._namespace)
+            await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
         }
         try {
-            await this._k8sApi.deleteNamespacedService(project.name, this._namespace)
+            await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
         }
         try {
             // A suspended project won't have a pod to delete - but try anyway
             // just in case state has got out of sync
-            await this._k8sApi.deleteNamespacedPod(project.name, this._namespace)
+            await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
         } catch (err) {
             if (project.state !== 'suspended') {
                 // A suspended project is expected to error here - so only log
@@ -473,13 +473,13 @@ module.exports = {
         }
         // this._app.log.debug('checking actual pod, not cache')
         try {
-            const details = await this._k8sApi.readNamespacedPodStatus(project.name, this._namespace)
+            const details = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
             // console.log(project.name, details.body)
             // this._app.log.debug(`details: ${details.body.status}`)
 
             if (details.body.status.phase === 'Running') {
                 if (this._projects[project.id].state === 'starting') {
-                    const redURL = `http://${project.name}.${this._namespace}:1880/`
+                    const redURL = `http://${project.safeName}.${this._namespace}:1880/`
                     try {
                         await got.get(redURL, {
                             timeout: {
@@ -499,7 +499,7 @@ module.exports = {
                         }
                     }
                 } else {
-                    const infoURL = `http://${project.name}.${this._namespace}:2880/flowforge/info`
+                    const infoURL = `http://${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
                         const info = JSON.parse((await got.get(infoURL)).body)
                         // this._app.log.debug(`info: ${JSON.stringify(info)}`)
@@ -549,7 +549,7 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
+        await got.post(`http://${project.safeName}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'start'
             }
@@ -566,7 +566,7 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
+        await got.post(`http://${project.safeName}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'stop'
             }
@@ -583,7 +583,7 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        const result = await got.get(`http://${project.name}.${this._namespace}:2880/flowforge/logs`).json()
+        const result = await got.get(`http://${project.safeName}.${this._namespace}:2880/flowforge/logs`).json()
         return result
     },
 
@@ -596,7 +596,7 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, {
+        await got.post(`http://${project.safeName}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'restart'
             }
@@ -612,7 +612,7 @@ module.exports = {
     revokeUserToken: async (project, token) => { // logout:nodered(step-3)
         try {
             this._app.log.debug(`[k8s] Project ${project.id} - logging out node-red instance`)
-            await got.post(`http://${project.name}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
+            await got.post(`http://${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
                 json: {
                     cmd: 'logout',
                     token: token
