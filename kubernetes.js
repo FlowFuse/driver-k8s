@@ -215,22 +215,16 @@ const createPod = async (project, options) => {
         localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
 
+    const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+
     const localService = JSON.parse(JSON.stringify(serviceTemplate))
-    if (project.safeName.match(/^[0-9]/)) {
-        localService.metadata.name = 'srv-' + project.safeName
-    } else {
-        localService.metadata.name = project.safeName
-    }
+    localService.metadata.name = `${prefix}${project.safeName}`
     localService.spec.selector.name = project.safeName
 
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
     localIngress.metadata.name = project.safeName
     localIngress.spec.rules[0].host = project.safeName + '.' + this._options.domain
-    if (project.safeName.match(/^[0-9]/)) {
-        localIngress.spec.rules[0].http.paths[0].backend.service.name = 'srv-' + project.safeName
-    } else {
-        localIngress.spec.rules[0].http.paths[0].backend.service.name = project.safeName
-    }
+    localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
     if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
         localIngress.metadata.annotations = {
