@@ -143,7 +143,7 @@ const ingressTemplate = {
                             path: '/',
                             backend: {
                                 service: {
-                                    name: 'k8s-client-test-service',
+                                    // name: 'k8s-client-test-service',
                                     port: { number: 1880 }
                                 }
                             }
@@ -215,14 +215,16 @@ const createPod = async (project, options) => {
         localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
 
+    const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+
     const localService = JSON.parse(JSON.stringify(serviceTemplate))
-    localService.metadata.name = project.safeName
+    localService.metadata.name = `${prefix}${project.safeName}`
     localService.spec.selector.name = project.safeName
 
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
     localIngress.metadata.name = project.safeName
     localIngress.spec.rules[0].host = project.safeName + '.' + this._options.domain
-    localIngress.spec.rules[0].http.paths[0].backend.service.name = project.safeName
+    localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
     if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
         localIngress.metadata.annotations = {
@@ -438,7 +440,11 @@ module.exports = {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
         }
         try {
-            await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
+            if (project.safeName.match(/^[0-9]/)) {
+                await this._k8sApi.deleteNamespacedService('srv-' + project.safeName, this._namespace)
+            } else {
+                await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
+            }
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
         }
@@ -471,6 +477,7 @@ module.exports = {
                 state: this._projects[project.id].state
             }
         }
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         // this._app.log.debug('checking actual pod, not cache')
         try {
             const details = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
@@ -479,7 +486,7 @@ module.exports = {
 
             if (details.body.status.phase === 'Running') {
                 if (this._projects[project.id].state === 'starting') {
-                    const redURL = `http://${project.safeName}.${this._namespace}:1880/`
+                    const redURL = `http://${prefix}${project.safeName}.${this._namespace}:1880/`
                     try {
                         await got.get(redURL, {
                             timeout: {
@@ -499,7 +506,7 @@ module.exports = {
                         }
                     }
                 } else {
-                    const infoURL = `http://${project.safeName}.${this._namespace}:2880/flowforge/info`
+                    const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
                         const info = JSON.parse((await got.get(infoURL)).body)
                         // this._app.log.debug(`info: ${JSON.stringify(info)}`)
@@ -549,7 +556,8 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        await got.post(`http://${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'start'
             }
@@ -566,7 +574,8 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        await got.post(`http://${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'stop'
             }
@@ -583,7 +592,8 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        const result = await got.get(`http://${project.safeName}.${this._namespace}:2880/flowforge/logs`).json()
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`).json()
         return result
     },
 
@@ -596,7 +606,8 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        await got.post(`http://${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
             json: {
                 cmd: 'restart'
             }
@@ -610,9 +621,10 @@ module.exports = {
    * @return {forge.Status}
    */
     revokeUserToken: async (project, token) => { // logout:nodered(step-3)
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         try {
             this._app.log.debug(`[k8s] Project ${project.id} - logging out node-red instance`)
-            await got.post(`http://${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
+            await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
                 json: {
                     cmd: 'logout',
                     token: token
