@@ -1,3 +1,7 @@
+#### 0.10.0: Release
+
+ - Prefix service names if they start with a number (#53) @hardillb
+
 #### 0.9.0: Release
 
  - Make use of project.safename (#51) @hardillb
