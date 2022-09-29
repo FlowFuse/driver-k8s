@@ -1,3 +1,6 @@
+#### 0.1.0: Release
+
+
 #### 0.9.0: Release
 
  - Make use of project.safename (#51) @hardillb
