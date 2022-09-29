@@ -1,6 +1,6 @@
 {
     "name": "@flowforge/kubernetes",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "description": "Kubernetes driver for FlowForge",
     "main": "kubernetes.js",
     "scripts": {
