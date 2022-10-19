@@ -254,7 +254,7 @@ const createPod = async (project, options) => {
         // rethrow the error so the wrapper knows this hasn't worked
         throw err
     }))
-    /* eslint node/handle-callback-err: "off" */
+    /* eslint n/handle-callback-err: "off" */
     promises.push(this._k8sApi.createNamespacedService(namespace, localService).catch(err => {
         // TODO: This will fail if the service already exists. Which it okay if
         // we're restarting a suspended project. As we don't know if we're restarting
@@ -635,7 +635,7 @@ module.exports = {
             await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
                 json: {
                     cmd: 'logout',
-                    token: token
+                    token
                 }
             })
         } catch (error) {
