@@ -499,7 +499,7 @@ module.exports = {
                 return {
                     id: project.id,
                     state: 'starting',
-                    meta: podDetails.body.status
+                    meta: {}//podDetails.body.status
                 }
             } else if (podDetails.body.status?.phase === 'Running') {
                 const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
@@ -516,7 +516,7 @@ module.exports = {
                     id: project.id,
                     state: 'starting',
                     error: `Unexpected pod status '${podDetails.body.status?.phase}'`,
-                    meta: podDetails.body.status
+                    meta: {} //podDetails.body.status
                 }
             }
         } catch (err) {
@@ -525,7 +525,7 @@ module.exports = {
             return {
                 id: project?.id,
                 error: err,
-                state: 'unknown',
+                state: 'starting',
                 meta: podDetails?.body?.status
             }
         }
