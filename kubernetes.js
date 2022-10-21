@@ -476,6 +476,7 @@ module.exports = {
      */
     details: async (project) => {
         if (this._projects[project.id] === undefined) {
+	    console.log('NO LOCAL STATE!')
             return { state: 'unknown' }
         }
         if (this._projects[project.id].state === 'suspended') {
