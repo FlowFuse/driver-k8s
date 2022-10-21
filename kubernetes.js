@@ -487,57 +487,47 @@ module.exports = {
         }
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         // this._app.log.debug('checking actual pod, not cache')
-        try {
-            const details = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
-            // console.log(project.name, details.body)
-            // this._app.log.debug(`details: ${details.body.status}`)
 
-            if (details.body.status.phase === 'Running') {
-                if (this._projects[project.id].state === 'starting') {
-                    const redURL = `http://${prefix}${project.safeName}.${this._namespace}:1880/`
-                    try {
-                        await got.get(redURL, {
-                            timeout: {
-                                request: 500
-                            }
-                        })
-                        this._projects[project.id].state = 'running'
-                        return {
-                            id: project.id,
-                            state: 'running'
-                        }
-                    } catch (err) {
-                        return {
-                            id: project.id,
-                            state: 'starting',
-                            meta: details.body.status
-                        }
-                    }
-                } else {
-                    const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
-                    try {
-                        const info = JSON.parse((await got.get(infoURL)).body)
-                        // this._app.log.debug(`info: ${JSON.stringify(info)}`)
-                        this._projects[project.id].state = info.state
-                        return info
-                    } catch (err) {
-                        // TODO
-                        this._app.log.debug(`err getting state from ${project.id}: ${err}`)
-                        return
-                    }
-                }
-            } else if (details.body.status.phase === 'Pending') {
+        /** @type { { response: IncomingMessage, body: k8s.V1Pod } } */
+        let podDetails
+        try {
+            podDetails = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+            // console.log(project.name, details.body)
+            if (podDetails.body.status?.phase === 'Pending') {
+                // return "starting" status until pod it running
                 this._projects[project.id].state = 'starting'
                 return {
                     id: project.id,
                     state: 'starting',
-                    meta: details.body.status
+                    meta: podDetails.body.status
+                }
+            } else if (podDetails.body.status?.phase === 'Running') {
+                const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
+                try {
+                    const info = JSON.parse((await got.get(infoURL)).body)
+                    this._projects[project.id].state = info.state
+                    return info
+                } catch (err) {
+                    this._app.log.debug(`error getting state from project ${project.id}: ${err}`)
+                    return
+                }
+            } else {
+                return {
+                    id: project.id,
+                    state: 'unknown',
+                    error: `Unexpected pod status '${podDetails.body.status?.phase}'`,
+                    meta: podDetails.body.status
                 }
             }
         } catch (err) {
             // console.log(err)
-            this._app.log.debug(`Failed to load pod status for ${project.id}`)
-            return { error: err, state: 'unknown' }
+            this._app.log.debug(`error getting pod status for project ${project.id}: ${err}`)
+            return {
+                id: project?.id,
+                error: err,
+                state: 'unknown',
+                meta: podDetails?.body?.status
+            }
         }
     },
 
