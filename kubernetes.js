@@ -514,7 +514,7 @@ module.exports = {
             } else {
                 return {
                     id: project.id,
-                    state: 'unknown',
+                    state: 'starting',
                     error: `Unexpected pod status '${podDetails.body.status?.phase}'`,
                     meta: podDetails.body.status
                 }
