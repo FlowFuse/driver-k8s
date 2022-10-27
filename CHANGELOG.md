@@ -1,3 +1,9 @@
+#### 1.0.0: Release
+
+ - Improve project status & detail reporting to frontend (#58) @Steve-Mcl
+ - Update eslint rules (#57) @knolleary
+ - Force container to run as UID 1000 (#56) @hardillb
+
 #### 0.10.0: Release
 
  - Prefix service names if they start with a number (#53) @hardillb
