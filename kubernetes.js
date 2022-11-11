@@ -58,10 +58,10 @@ const podTemplate = {
                     allowPrivilegeEscalation: false
                 }
             }
-        ],
-        nodeSelector: {
-            role: 'projects'
-        }
+        ]
+        // nodeSelector: {
+        //     role: 'projects'
+        // }
 
     },
     enableServiceLinks: false
