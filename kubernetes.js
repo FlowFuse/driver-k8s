@@ -189,6 +189,9 @@ const createPod = async (project, options) => {
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: teamID })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
     localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
+    // Inbound connections for k8s disabled by default
+    localPod.spec.containers[0].env.push({ name: 'FORGE_NR_NO_TCP_IN', value: true }) // MVP. Future iteration could present this to YML or UI
+    localPod.spec.containers[0].env.push({ name: 'FORGE_NR_NO_UDP_IN', value: true }) // MVP. Future iteration could present this to YML or UI
     if (authTokens.broker) {
         localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_URL', value: authTokens.broker.url })
         localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_USERNAME', value: authTokens.broker.username })
