@@ -649,6 +649,7 @@ module.exports = {
      * getDefaultStackProperties
      */
     getDefaultStackProperties: () => {
+        // need to work out what the right container tag is
         const properties = {
             cpu: 10,
             memory: 256,
