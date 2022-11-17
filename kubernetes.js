@@ -644,5 +644,18 @@ module.exports = {
      */
     shutdown: async () => {
         clearTimeout(this._initialCheckTimeout)
+    },
+    /**
+     * getDefaultStackProperties
+     */
+    getDefaultStackProperties: () => {
+        const properties = {
+            cpu: 10,
+            memory: 256,
+            container: 'flowforge/node-red',
+            ...this._app.config.driver.options?.default_stack
+        }
+
+        return properties
     }
 }
