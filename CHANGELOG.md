@@ -1,3 +1,10 @@
+#### 1.1.0: Release
+
+ - Add getDefaultStackProperies (#63) @hardillb
+ - Env Var values must be strings (#64) @hardillb
+ - Add flags to inhibit TCP/UDP inbound connections (#60) @Steve-Mcl
+ - Only set the nodeSelector if in options (#62) @hardillb
+
 #### 1.0.0: Release
 
  - Improve project status & detail reporting to frontend (#58) @Steve-Mcl
