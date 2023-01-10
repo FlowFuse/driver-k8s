@@ -113,6 +113,7 @@ const deploymentTemplate = {
                         },
                         name: 'node-red',
                         // image: "docker-pi.local:5000/bronze-node-red",
+                        imagePullPolicy: 'Always',
                         env: [
                             // {name: "APP_NAME", value: "test"},
                             { name: 'TZ', value: 'Europe/London' }
@@ -120,7 +121,10 @@ const deploymentTemplate = {
                         ports: [
                             { name: 'web', containerPort: 1880, protocol: 'TCP' },
                             { name: 'management', containerPort: 2880, protocol: 'TCP' }
-                        ]
+                        ],
+                        securityContext: {
+                            allowPrivilegeEscalation: false
+                        }
                     }
                 ]
             },
@@ -600,7 +604,7 @@ module.exports = {
                     // need to upgrade bare pods to deployments
 
                     try {
-                        this._app.log.info(`Testing ${project.safeName} in ${namespace} is bare pod`)
+                        this._app.log.info(`Testing ${project.id} in ${namespace} is bare pod`)
                         await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
                         // should only get here is a bare pod exists
                         this._app.log.info(`[k8s] upgrading ${project.id} to deployment`)
@@ -612,15 +616,17 @@ module.exports = {
                             })
                             .catch(err => {
                                 this._app.log.error(`[k8s] failed to upgrade ${project.id} to deployment`)
+                                console.log(err)
                             })
                     } catch (err) {
                         // bare pod not found can move on
                     }
 
                     try {
-                        await this._k8sAppApi.readNamespacedDeploymentStatus(project.safeName, this._namespace)
+                        await this._k8sAppApi.readNamespacedDeploymentStatus(project.safeName, namespace)
+                        this._app.log.info(`[k8s] deployment ${project.id} found`)
                     } catch (err) {
-                        this._app.log.debug(`[k8s] Project ${project.id} - recreating container`)
+                        this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
                         const fullProject = await this._app.db.models.Project.byId(project.id)
                         // await createPod(fullProject)
                         await createProject(fullProject, options)
