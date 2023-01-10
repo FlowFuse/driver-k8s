@@ -771,8 +771,9 @@ module.exports = {
         try {
             // podDetails = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
             podDetails = await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
-            // console.log(project.name, podDetails.body)
-            if (podDetails.body.status?.phase === 'Pending') {
+            console.log(project.name, podDetails.body)
+            if (podDetails.body.status?.conditions[0].status === 'False') {
+            // if (podDetails.body.status?.phase === 'Pending') {
                 // return "starting" status until pod it running
                 this._projects[project.id].state = 'starting'
                 return {
@@ -780,7 +781,8 @@ module.exports = {
                     state: 'starting',
                     meta: {}
                 }
-            } else if (podDetails.body.status?.phase === 'Running') {
+            } else if (podDetails.body.status?.conditions[0].status === 'True' && podDetails.body.status?.conditions[0].type === 'Available') {
+            // } else if (podDetails.body.status?.phase === 'Running') {
                 const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                 try {
                     const info = JSON.parse((await got.get(infoURL)).body)
