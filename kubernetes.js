@@ -395,7 +395,7 @@ const createProject = async (project, options) => {
         // whether to throw this error or not. For now, this will silently
         // let it pass
         //
-        // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+        this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
         // throw err
     }))
 
@@ -771,7 +771,7 @@ module.exports = {
         try {
             // podDetails = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
             podDetails = await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
-            console.log(project.name, podDetails.body)
+            // console.log(project.name, podDetails.body)
             if (podDetails.body.status?.conditions[0].status === 'False') {
             // if (podDetails.body.status?.phase === 'Pending') {
                 // return "starting" status until pod it running
