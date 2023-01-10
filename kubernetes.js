@@ -192,6 +192,7 @@ const createDeployment = async (project, options) => {
     localDeployment.metadata.labels.app = project.id
     localDeployment.spec.selector.matchLabels.app = project.id
     localPod.metadata.labels.app = project.id
+    localPod.metadata.labels.name = project.safeName
 
     if (stack.container) {
         localPod.spec.containers[0].image = stack.container
@@ -694,12 +695,14 @@ module.exports = {
         // Stop the project, but don't remove all of its resources.
         this._projects[project.id].state = 'stopping'
         // For now, we just want to remove the pod
-        await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
+        // await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
+        await this._k8sAppApi.deleteNamespacedDeployment(project.safeName, this._namespace)
         this._projects[project.id].state = 'suspended'
         return new Promise(resolve => {
             const pollInterval = setInterval(async () => {
                 try {
-                    await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+                    // await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+                    await this._k8sAppApi.readNamespacedDeploymentStatus(project.safeName, this._namespace)
                 } catch (err) {
                     clearInterval(pollInterval)
                     resolve()
@@ -766,8 +769,9 @@ module.exports = {
         /** @type { { response: IncomingMessage, body: k8s.V1Pod } } */
         let podDetails
         try {
-            podDetails = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
-            // console.log(project.name, details.body)
+            // podDetails = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+            podDetails = await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+            // console.log(project.name, podDetails.body)
             if (podDetails.body.status?.phase === 'Pending') {
                 // return "starting" status until pod it running
                 this._projects[project.id].state = 'starting'
