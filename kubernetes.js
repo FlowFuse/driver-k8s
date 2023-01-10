@@ -100,6 +100,17 @@ const deploymentTemplate = {
                 },
                 containers: [
                     {
+                        resources: {
+                            request: {
+                                // 10th of a core
+                                cpu: '100m',
+                                memory: '128Mi'
+                            },
+                            limits: {
+                                cpu: '125m',
+                                memory: '192Mi'
+                            }
+                        },
                         name: 'node-red',
                         // image: "docker-pi.local:5000/bronze-node-red",
                         env: [
