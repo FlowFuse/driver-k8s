@@ -609,8 +609,8 @@ module.exports = {
                         // should only get here is a bare pod exists
                         this._app.log.info(`[k8s] upgrading ${project.id} to deployment`)
                         const fullProject = await this._app.db.models.Project.byId(project.id)
-                        const localDeployment = createDeployment(fullProject, options)
-                        this._k8sAppApi.createNamespacedDeployment(localDeployment, namespace)
+                        const localDeployment = await createDeployment(fullProject, options)
+                        this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment)
                             .then(() => {
                                 return this._k8sApi.deleteNamespacedPod(project.safeName, namespace)
                             })
