@@ -619,8 +619,11 @@ module.exports = {
                                 this._app.log.error(`[k8s] failed to upgrade ${project.id} to deployment`)
                                 // console.log(err)
                             })
+                        // it's just been created, not need to check if it still exists
+                        return
                     } catch (err) {
                         // bare pod not found can move on
+                        this._app.log.info(`[k8s] ${project.id} in ${namespace} is not bare pod`)
                     }
 
                     // look for missing projects
@@ -628,13 +631,14 @@ module.exports = {
                     try {
                         this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} deployment exists`)
                         await this._k8sAppApi.readNamespacedDeploymentStatus(project.safeName, namespace)
-                        this._app.log.info(`[k8s] deployment ${project.id} found`)
+                        this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
                     } catch (err) {
+                        console.log(`failed to read deployment for ${project.safeName}`)
                         console.log(err)
                         this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
                         const fullProject = await this._app.db.models.Project.byId(project.id)
                         // await createPod(fullProject)
-                        await createProject(fullProject, options)
+                        // await createProject(fullProject, options)
                     }
                 } catch (err) {
                     this._app.log.error(`[k8s] Project ${project.id} - error resuming project: ${err.stack}`)
