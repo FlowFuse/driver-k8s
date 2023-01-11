@@ -395,9 +395,7 @@ const createProject = async (project, options) => {
         // whether to throw this error or not. For now, this will silently
         // let it pass
         //
-        this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
-        console.log(err)
-        console.log(localIngress)
+        // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
         // throw err
     }))
 
@@ -607,7 +605,7 @@ module.exports = {
                     // need to upgrade bare pods to deployments
 
                     try {
-                        this._app.log.info(`Testing ${project.id} in ${namespace} is bare pod`)
+                        this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} is bare pod`)
                         await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
                         // should only get here is a bare pod exists
                         this._app.log.info(`[k8s] upgrading ${project.id} to deployment`)
@@ -619,16 +617,20 @@ module.exports = {
                             })
                             .catch(err => {
                                 this._app.log.error(`[k8s] failed to upgrade ${project.id} to deployment`)
-                                console.log(err)
+                                // console.log(err)
                             })
                     } catch (err) {
                         // bare pod not found can move on
                     }
 
+                    // look for missing projects
+
                     try {
+                        this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} deployment exists`)
                         await this._k8sAppApi.readNamespacedDeploymentStatus(project.safeName, namespace)
                         this._app.log.info(`[k8s] deployment ${project.id} found`)
                     } catch (err) {
+                        console.log(err)
                         this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
                         const fullProject = await this._app.db.models.Project.byId(project.id)
                         // await createPod(fullProject)
