@@ -336,7 +336,7 @@ const createIngress = async (project, options) => {
 
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
     localIngress.metadata.name = project.safeName
-    localIngress.spec.rules[0].host = project.safeName + '.' + this._options.domain
+    localIngress.spec.rules[0].host = project.safeName + '.' + options.domain
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
     if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
@@ -396,6 +396,8 @@ const createProject = async (project, options) => {
         // let it pass
         //
         this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+        console.log(err)
+        console.log(localIngress)
         // throw err
     }))
 
