@@ -248,78 +248,10 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
 
-    // const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-
-    // const localService = JSON.parse(JSON.stringify(serviceTemplate))
-    // localService.metadata.name = `${prefix}${project.safeName}`
-    // localService.spec.selector.name = project.safeName
-
-    // const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
-    // localIngress.metadata.name = project.safeName
-    // localIngress.spec.rules[0].host = project.safeName + '.' + this._options.domain
-    // localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
-
-    // if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
-    //     localIngress.metadata.annotations = {
-    //         'kubernetes.io/ingress.class': 'alb',
-    //         'alb.ingress.kubernetes.io/scheme': 'internet-facing',
-    //         'alb.ingress.kubernetes.io/target-type': 'ip',
-    //         'alb.ingress.kubernetes.io/group.name': 'flowforge',
-    //         'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS":443}, {"HTTP":80}]'
-    //     }
-    // }
-
     project.url = projectURL
     await project.save()
 
     return localDeployment
-
-    // const promises = []
-    // promises.push(this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment).catch(err => {
-    //     console.log(err)
-    //     this._app.log.error(`[k8s] Project ${project.id} - error creating deployment: ${err.toString()}`)
-    //     // rethrow the error so the wrapper knows this hasn't worked
-    //     throw err
-    // }))
-    // // promises.push(this._k8sApi.createNamespacedPod(namespace, localPod).catch(err => {
-    // //     console.log(err)
-    // //     this._app.log.error(`[k8s] Project ${project.id} - error creating pod: ${err.toString()}`)
-    // //     // rethrow the error so the wrapper knows this hasn't worked
-    // //     throw err
-    // // }))
-    // /* eslint n/handle-callback-err: "off" */
-    // promises.push(this._k8sApi.createNamespacedService(namespace, localService).catch(err => {
-    //     // TODO: This will fail if the service already exists. Which it okay if
-    //     // we're restarting a suspended project. As we don't know if we're restarting
-    //     // or not, we don't know if this is fatal or not.
-
-    //     // Once we can know if this is a restart or create, then we can decide
-    //     // whether to throw this error or not. For now, this will silently
-    //     // let it pass
-    //     //
-    //     // this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
-    //     // throw err
-    // }))
-
-    // promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
-    //     // TODO: This will fail if the service already exists. Which it okay if
-    //     // we're restarting a suspended project. As we don't know if we're restarting
-    //     // or not, we don't know if this is fatal or not.
-
-    //     // Once we can know if this is a restart or create, then we can decide
-    //     // whether to throw this error or not. For now, this will silently
-    //     // let it pass
-    //     //
-    //     // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
-    //     // throw err
-    // }))
-
-    // return Promise.all(promises).then(async () => {
-    //     this._app.log.debug(`[k8s] Container ${project.id} started`)
-    //     project.state = 'running'
-    //     await project.save()
-    //     this._projects[project.id].state = 'starting'
-    // })
 }
 
 const createService = async (project, options) => {
@@ -361,17 +293,10 @@ const createProject = async (project, options) => {
 
     const promises = []
     promises.push(this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment).catch(err => {
-        console.log(err)
         this._app.log.error(`[k8s] Project ${project.id} - error creating deployment: ${err.toString()}`)
         // rethrow the error so the wrapper knows this hasn't worked
         throw err
     }))
-    // promises.push(this._k8sApi.createNamespacedPod(namespace, localPod).catch(err => {
-    //     console.log(err)
-    //     this._app.log.error(`[k8s] Project ${project.id} - error creating pod: ${err.toString()}`)
-    //     // rethrow the error so the wrapper knows this hasn't worked
-    //     throw err
-    // }))
     /* eslint n/handle-callback-err: "off" */
     promises.push(this._k8sApi.createNamespacedService(namespace, localService).catch(err => {
         // TODO: This will fail if the service already exists. Which it okay if
@@ -407,8 +332,8 @@ const createProject = async (project, options) => {
     })
 }
 
+// eslint-disable-next-line no-unused-vars
 const createPod = async (project, options) => {
-    console.log('creating ', project.name, options)
     // const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
     const stack = project.ProjectStack.properties
 
@@ -470,72 +395,10 @@ const createPod = async (project, options) => {
         localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
 
-    // const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-
-    // const localService = JSON.parse(JSON.stringify(serviceTemplate))
-    // localService.metadata.name = `${prefix}${project.safeName}`
-    // localService.spec.selector.name = project.safeName
-
-    // const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
-    // localIngress.metadata.name = project.safeName
-    // localIngress.spec.rules[0].host = project.safeName + '.' + this._options.domain
-    // localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
-
-    // if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
-    //     localIngress.metadata.annotations = {
-    //         'kubernetes.io/ingress.class': 'alb',
-    //         'alb.ingress.kubernetes.io/scheme': 'internet-facing',
-    //         'alb.ingress.kubernetes.io/target-type': 'ip',
-    //         'alb.ingress.kubernetes.io/group.name': 'flowforge',
-    //         'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS":443}, {"HTTP":80}]'
-    //     }
-    // }
-
     project.url = projectURL
     await project.save()
 
     return localPod
-
-    // const promises = []
-    // promises.push(this._k8sApi.createNamespacedPod(namespace, localPod).catch(err => {
-    //     console.log(err)
-    //     this._app.log.error(`[k8s] Project ${project.id} - error creating pod: ${err.toString()}`)
-    //     // rethrow the error so the wrapper knows this hasn't worked
-    //     throw err
-    // }))
-    // /* eslint n/handle-callback-err: "off" */
-    // promises.push(this._k8sApi.createNamespacedService(namespace, localService).catch(err => {
-    //     // TODO: This will fail if the service already exists. Which it okay if
-    //     // we're restarting a suspended project. As we don't know if we're restarting
-    //     // or not, we don't know if this is fatal or not.
-
-    //     // Once we can know if this is a restart or create, then we can decide
-    //     // whether to throw this error or not. For now, this will silently
-    //     // let it pass
-    //     //
-    //     // this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
-    //     // throw err
-    // }))
-
-    // promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
-    //     // TODO: This will fail if the service already exists. Which it okay if
-    //     // we're restarting a suspended project. As we don't know if we're restarting
-    //     // or not, we don't know if this is fatal or not.
-
-    //     // Once we can know if this is a restart or create, then we can decide
-    //     // whether to throw this error or not. For now, this will silently
-    //     // let it pass
-    //     //
-    //     // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
-    //     // throw err
-    // }))
-
-    // return Promise.all(promises).then(async () => {
-    //     this._app.log.debug(`[k8s] Container ${project.id} started`)
-    //     project.state = 'running'
-    //     await project.save()
-    //     this._projects[project.id].state = 'starting'
-    // })
 }
 
 module.exports = {
@@ -617,9 +480,8 @@ module.exports = {
                             })
                             .catch(err => {
                                 this._app.log.error(`[k8s] failed to upgrade ${project.id} to deployment`)
-                                // console.log(err)
                             })
-                        // it's just been created, not need to check if it still exists
+                        // it's just been created, not need to check if it still exists in the next block
                         return
                     } catch (err) {
                         // bare pod not found can move on
@@ -630,15 +492,13 @@ module.exports = {
 
                     try {
                         this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} deployment exists`)
-                        await this._k8sAppApi.readNamespacedDeploymentStatus(project.safeName, namespace)
+                        await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
                         this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
                     } catch (err) {
-                        console.log(`failed to read deployment for ${project.safeName}`)
-                        console.log(err)
                         this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
                         const fullProject = await this._app.db.models.Project.byId(project.id)
                         // await createPod(fullProject)
-                        // await createProject(fullProject, options)
+                        await createProject(fullProject, options)
                     }
                 } catch (err) {
                     this._app.log.error(`[k8s] Project ${project.id} - error resuming project: ${err.stack}`)
@@ -710,7 +570,7 @@ module.exports = {
             const pollInterval = setInterval(async () => {
                 try {
                     // await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
-                    await this._k8sAppApi.readNamespacedDeploymentStatus(project.safeName, this._namespace)
+                    await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
                 } catch (err) {
                     clearInterval(pollInterval)
                     resolve()
@@ -779,9 +639,7 @@ module.exports = {
         try {
             // podDetails = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
             podDetails = await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
-            // console.log(project.name, podDetails.body)
             if (podDetails.body.status?.conditions[0].status === 'False') {
-            // if (podDetails.body.status?.phase === 'Pending') {
                 // return "starting" status until pod it running
                 this._projects[project.id].state = 'starting'
                 return {
@@ -790,7 +648,6 @@ module.exports = {
                     meta: {}
                 }
             } else if (podDetails.body.status?.conditions[0].status === 'True' && podDetails.body.status?.conditions[0].type === 'Available') {
-            // } else if (podDetails.body.status?.phase === 'Running') {
                 const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                 try {
                     const info = JSON.parse((await got.get(infoURL)).body)
@@ -813,7 +670,6 @@ module.exports = {
                 }
             }
         } catch (err) {
-            // console.log(err)
             this._app.log.debug(`error getting pod status for project ${project.id}: ${err}`)
             return {
                 id: project?.id,
