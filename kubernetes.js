@@ -665,7 +665,7 @@ module.exports = {
                 return {
                     id: project.id,
                     state: 'starting',
-                    error: `Unexpected pod status '${podDetails.body.status?.phase}'`,
+                    error: `Unexpected pod status '${podDetails.body.status?.conditions[0]?.status}'`,
                     meta: {}
                 }
             }
