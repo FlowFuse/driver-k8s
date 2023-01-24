@@ -634,7 +634,7 @@ module.exports = {
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         // this._app.log.debug('checking actual pod, not cache')
 
-        /** @type { { response: IncomingMessage, body: k8s.V1Pod } } */
+        /** @type { { response: IncomingMessage, body: k8s.V1Deployment } } */
         let podDetails
         try {
             // podDetails = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
