@@ -467,26 +467,26 @@ module.exports = {
 
                     // need to upgrade bare pods to deployments
 
-                    try {
-                        this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} is bare pod`)
-                        await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
-                        // should only get here is a bare pod exists
-                        this._app.log.info(`[k8s] upgrading ${project.id} to deployment`)
-                        const fullProject = await this._app.db.models.Project.byId(project.id)
-                        const localDeployment = await createDeployment(fullProject, options)
-                        this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment)
-                            .then(() => {
-                                return this._k8sApi.deleteNamespacedPod(project.safeName, namespace)
-                            })
-                            .catch(err => {
-                                this._app.log.error(`[k8s] failed to upgrade ${project.id} to deployment`)
-                            })
-                        // it's just been created, not need to check if it still exists in the next block
-                        return
-                    } catch (err) {
-                        // bare pod not found can move on
-                        this._app.log.info(`[k8s] ${project.id} in ${namespace} is not bare pod`)
-                    }
+                    // try {
+                    //     this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} is bare pod`)
+                    //     await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
+                    //     // should only get here is a bare pod exists
+                    //     this._app.log.info(`[k8s] upgrading ${project.id} to deployment`)
+                    //     const fullProject = await this._app.db.models.Project.byId(project.id)
+                    //     const localDeployment = await createDeployment(fullProject, options)
+                    //     this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment)
+                    //         .then(() => {
+                    //             return this._k8sApi.deleteNamespacedPod(project.safeName, namespace)
+                    //         })
+                    //         .catch(err => {
+                    //             this._app.log.error(`[k8s] failed to upgrade ${project.id} to deployment`)
+                    //         })
+                    //     // it's just been created, not need to check if it still exists in the next block
+                    //     return
+                    // } catch (err) {
+                    //     // bare pod not found can move on
+                    //     this._app.log.info(`[k8s] ${project.id} in ${namespace} is not bare pod`)
+                    // }
 
                     // look for missing projects
 
@@ -563,14 +563,29 @@ module.exports = {
         // Stop the project, but don't remove all of its resources.
         this._projects[project.id].state = 'stopping'
         // For now, we just want to remove the pod
-        // await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
-        await this._k8sAppApi.deleteNamespacedDeployment(project.safeName, this._namespace)
+        let pod = true
+        try {
+            await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
+        } catch (e) {
+            // ignore because it might not exists
+            pod = false
+        }
+        // or the deployment
+        try {
+            await this._k8sAppApi.deleteNamespacedDeployment(project.safeName, this._namespace)
+        } catch (e) {
+            // likewise
+            pod = true
+        }
         this._projects[project.id].state = 'suspended'
         return new Promise(resolve => {
             const pollInterval = setInterval(async () => {
                 try {
-                    // await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
-                    await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                    if (pod) {
+                        await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+                    } else {
+                        await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                    }
                 } catch (err) {
                     clearInterval(pollInterval)
                     resolve()
@@ -604,13 +619,22 @@ module.exports = {
         try {
             // A suspended project won't have a pod to delete - but try anyway
             // just in case state has got out of sync
+            await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
+        } catch (err) {
+            if (project.state !== 'suspended') {
+                this._app.log.error(`[k8s] Project ${project.id} - error deleting pod: ${err.toString()}`)
+            }
+        }
+        try {
+            // A suspended project won't have a deployment to delete - but try anyway
+            // just in case state has got out of sync
             // await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
             await this._k8sAppApi.deleteNamespacedDeployment(project.safeName, this._namespace)
         } catch (err) {
             if (project.state !== 'suspended') {
                 // A suspended project is expected to error here - so only log
                 // if the state is anything else
-                this._app.log.error(`[k8s] Project ${project.id} - error deleting pod: ${err.toString()}`)
+                this._app.log.error(`[k8s] Project ${project.id} - error deleting deployment: ${err.toString()}`)
             }
         }
         delete this._projects[project.id]
@@ -635,38 +659,80 @@ module.exports = {
         // this._app.log.debug('checking actual pod, not cache')
 
         /** @type { { response: IncomingMessage, body: k8s.V1Deployment } } */
-        let podDetails
+        let details
+        let pod = true
         try {
-            // podDetails = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
-            podDetails = await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
-            if (podDetails.body.status?.conditions[0].status === 'False') {
-                // return "starting" status until pod it running
-                this._projects[project.id].state = 'starting'
-                return {
-                    id: project.id,
-                    state: 'starting',
-                    meta: {}
-                }
-            } else if (podDetails.body.status?.conditions[0].status === 'True' && podDetails.body.status?.conditions[0].type === 'Available') {
-                const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
-                try {
-                    const info = JSON.parse((await got.get(infoURL)).body)
-                    this._projects[project.id].state = info.state
-                    return info
-                } catch (err) {
-                    this._app.log.debug(`error getting state from project ${project.id}: ${err}`)
+            try {
+                details = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+            } catch (err) {
+
+            }
+            if (!details) {
+                details = await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                pod = false
+            }
+            if (pod) {
+                if (details.body.status?.phase === 'Pending') {
+                    // return "starting" status until pod it running
+                    this._projects[project.id].state = 'starting'
                     return {
                         id: project.id,
                         state: 'starting',
                         meta: {}
                     }
+                } else if (details.body.status?.phase === 'Running') {
+                    const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
+                    try {
+                        const info = JSON.parse((await got.get(infoURL)).body)
+                        this._projects[project.id].state = info.state
+                        return info
+                    } catch (err) {
+                        this._app.log.debug(`error getting state from project ${project.id}: ${err}`)
+                        return {
+                            id: project.id,
+                            state: 'starting',
+                            meta: {}
+                        }
+                    }
+                } else {
+                    return {
+                        id: project.id,
+                        state: 'starting',
+                        error: `Unexpected pod status '${details.body.status?.phase}'`,
+                        meta: {}
+                    }
                 }
             } else {
-                return {
-                    id: project.id,
-                    state: 'starting',
-                    error: `Unexpected pod status '${podDetails.body.status?.phase}'`,
-                    meta: {}
+                // deployment
+                if (details.body.status?.conditions[0].status === 'False') {
+                    // return "starting" status until pod it running
+                    this._projects[project.id].state = 'starting'
+                    return {
+                        id: project.id,
+                        state: 'starting',
+                        meta: {}
+                    }
+                } else if (details.body.status?.conditions[0].status === 'True' && details.body.status?.conditions[0].type === 'Available') {
+                    const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
+                    try {
+                        const info = JSON.parse((await got.get(infoURL)).body)
+                        this._projects[project.id].state = info.state
+                        return info
+                    } catch (err) {
+                        this._app.log.debug(`error getting state from project ${project.id}: ${err}`)
+                        return {
+                            id: project.id,
+                            state: 'starting',
+                            meta: {}
+                        }
+                    }
+                } else {
+                    return {
+                        id: project.id,
+                        state: 'starting',
+                        error: `Unexpected pod status '${details.body.status?.conditions[0]?.status}'`,
+                        meta: {}
+                    }
                 }
             }
         } catch (err) {
@@ -675,7 +741,7 @@ module.exports = {
                 id: project?.id,
                 error: err,
                 state: 'starting',
-                meta: podDetails?.body?.status
+                meta: details?.body?.status
             }
         }
     },
