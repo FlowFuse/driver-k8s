@@ -495,6 +495,13 @@ module.exports = {
                         await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
                         this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
                     } catch (err) {
+                        try {
+                            // pod already running
+                            await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
+                            return
+                        } catch (err) {
+
+                        }
                         this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
                         const fullProject = await this._app.db.models.Project.byId(project.id)
                         // await createPod(fullProject)
