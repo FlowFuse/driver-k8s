@@ -425,15 +425,7 @@ module.exports = {
             options.registry += '/'
         }
 
-        // if (configFile) {
-        //   kc.loadFromFile(configFile);
-        // } else {
-        // try and load defaults
         kc.loadFromDefault()
-        // else need to log error
-        // }
-
-        // need to add code here to check for existing projects and restart if needed
 
         this._k8sApi = kc.makeApiClient(k8s.CoreV1Api)
         this._k8sAppApi = kc.makeApiClient(k8s.AppsV1Api)
@@ -491,23 +483,28 @@ module.exports = {
                     // }
 
                     // look for missing projects
-
-                    try {
-                        this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} deployment exists`)
-                        await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
-                        this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
-                    } catch (err) {
+                    const currentType = await project.getSetting('k8sType')
+                    if (currentType === 'deployment') {
+                        try {
+                            this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} deployment exists`)
+                            await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
+                            this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
+                        } catch (err) {
+                            this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
+                            const fullProject = await this._app.db.models.Project.byId(project.id)
+                            await createProject(fullProject, options)
+                        }
+                    } else {
                         try {
                             // pod already running
+                            this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} pod exists`)
                             await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
-                            return
+                            this._app.log.info(`[k8s] pod ${project.id} in ${namespace} found`)
                         } catch (err) {
-
+                            this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
+                            const fullProject = await this._app.db.models.Project.byId(project.id)
+                            await createProject(fullProject, options)
                         }
-                        this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
-                        const fullProject = await this._app.db.models.Project.byId(project.id)
-                        // await createPod(fullProject)
-                        await createProject(fullProject, options)
                     }
                 } catch (err) {
                     this._app.log.error(`[k8s] Project ${project.id} - error resuming project: ${err.stack}`)
