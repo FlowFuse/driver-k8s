@@ -670,7 +670,8 @@ module.exports = {
                         state: 'starting',
                         meta: {}
                     }
-                } else if (details.body.status?.conditions[0].status === 'True' && details.body.status?.conditions[0].type === 'Available') {
+                } else if (details.body.status?.conditions[0].status === 'True' &&
+                (details.body.status?.conditions[0].type === 'Available' || details.body.status?.conditions[0].type === 'Progressing')) {
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
                         const info = JSON.parse((await got.get(infoURL)).body)
