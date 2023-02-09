@@ -271,16 +271,6 @@ const createIngress = async (project, options) => {
     localIngress.spec.rules[0].host = project.safeName + '.' + options.domain
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
-    if (process.env.FLOWFORGE_CLOUD_PROVIDER === 'aws' || this._app.config.driver.options.cloudProvider === 'aws') {
-        localIngress.metadata.annotations = {
-            'kubernetes.io/ingress.class': 'alb',
-            'alb.ingress.kubernetes.io/scheme': 'internet-facing',
-            'alb.ingress.kubernetes.io/target-type': 'ip',
-            'alb.ingress.kubernetes.io/group.name': 'flowforge',
-            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS":443}, {"HTTP":80}]'
-        }
-    }
-
     return localIngress
 }
 
