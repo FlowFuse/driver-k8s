@@ -1,3 +1,7 @@
+#### 1.3.3: Release
+
+ - Remove AWS ALB specific annotations (#74) @hardillb
+
 #### 1.3.0: Release
 
 
