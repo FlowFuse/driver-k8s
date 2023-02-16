@@ -1,3 +1,9 @@
+#### 1.4.0: Release
+
+ - Fix deployment state (#72) @hardillb
+ - Remove ALB annotations (#74) @hardillb
+ - Pod to deployment gradual (#71) @hardillb
+
 #### 1.3.0: Release
 
 
