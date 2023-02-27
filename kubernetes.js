@@ -242,16 +242,16 @@ const createDeployment = async (project, options) => {
     }
 
     if (this._app.config.driver.options.privateCA) {
-        localPod.spec.container[0].volumeMounts = [
+        localPod.spec.containers[0].volumeMounts = [
             {
-                name: 'caCert',
+                name: 'cacert',
                 mountPath: '/usr/local/ssl-certs',
                 readOnly: true
             }
         ]
         localPod.spec.volumes = [
             {
-                name: 'caCert',
+                name: 'cacert',
                 configMap: {
                     name: this._app.config.driver.privateCA
                 }
