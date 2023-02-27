@@ -241,6 +241,25 @@ const createDeployment = async (project, options) => {
         })
     }
 
+    if (this._app.config.driver.options.privateCA) {
+        localPod.spec.container[0].volumeMounts = [
+            {
+                name: 'caCert',
+                mountPath: '/usr/local/ssl-certs',
+                readOnly: true
+            }
+        ]
+        localPod.spec.volumes = [
+            {
+                name: 'caCert',
+                configMap: {
+                    name: this._app.config.driver.privateCA
+                }
+            }
+        ]
+        localPod.spec.containers[0].env.push({ name: 'NODE_EXTRA_CA_CERTS', value: '/usr/local/ssl-certs/chain.pem' })
+    }
+
     if (stack.memory && stack.cpu) {
         localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
         localPod.spec.containers[0].resources.limits.memory = `${stack.memory}Mi`
