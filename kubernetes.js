@@ -253,7 +253,7 @@ const createDeployment = async (project, options) => {
             {
                 name: 'cacert',
                 configMap: {
-                    name: this._app.config.driver.privateCA
+                    name: this._app.config.driver.options.privateCA
                 }
             }
         ]
