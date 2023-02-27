@@ -303,6 +303,8 @@ const createProject = async (project, options) => {
     const promises = []
     promises.push(this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment).catch(err => {
         this._app.log.error(`[k8s] Project ${project.id} - error creating deployment: ${err.toString()}`)
+        this._app.log.error(`[k8s] deployment ${JSON.stringify(localDeployment, undefined, 2)}`)
+        this._app.log.error(err)
         // rethrow the error so the wrapper knows this hasn't worked
         throw err
     }))
