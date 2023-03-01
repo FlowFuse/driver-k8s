@@ -16,6 +16,7 @@ driver:
       role: projects
     projectNamespace: flowforge
     cloudProvider: aws
+    privateCA: ff-ca-certs
 ```
 
 - `registry` is the Docker Registry to load Stack Containers from
@@ -24,5 +25,6 @@ driver:
 should run on
 - `cloudProvider` can be left unset for none `aws` deployments. This triggers the adding of
 AWS EKS specific annotation for ALB Ingress.
+- `privateCA` name of ConfigMap holding PEM CA Cert Bundle (file name `certs.pem`) Optional
 
 Expects to pick up K8s credentials from the environment
