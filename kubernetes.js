@@ -241,6 +241,25 @@ const createDeployment = async (project, options) => {
         })
     }
 
+    if (this._app.config.driver.options.privateCA) {
+        localPod.spec.containers[0].volumeMounts = [
+            {
+                name: 'cacert',
+                mountPath: '/usr/local/ssl-certs',
+                readOnly: true
+            }
+        ]
+        localPod.spec.volumes = [
+            {
+                name: 'cacert',
+                configMap: {
+                    name: this._app.config.driver.options.privateCA
+                }
+            }
+        ]
+        localPod.spec.containers[0].env.push({ name: 'NODE_EXTRA_CA_CERTS', value: '/usr/local/ssl-certs/chain.pem' })
+    }
+
     if (stack.memory && stack.cpu) {
         localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
         localPod.spec.containers[0].resources.limits.memory = `${stack.memory}Mi`
@@ -284,6 +303,8 @@ const createProject = async (project, options) => {
     const promises = []
     promises.push(this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment).catch(err => {
         this._app.log.error(`[k8s] Project ${project.id} - error creating deployment: ${err.toString()}`)
+        this._app.log.error(`[k8s] deployment ${JSON.stringify(localDeployment, undefined, 2)}`)
+        this._app.log.error(err)
         // rethrow the error so the wrapper knows this hasn't worked
         throw err
     }))
