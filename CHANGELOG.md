@@ -1,3 +1,7 @@
+#### 1.5.0: Release
+
+ - Add Support for Private Certificate Authorities (#78) @hardillb
+
 #### 1.4.0: Release
 
  - Fix deployment state (#72) @hardillb
