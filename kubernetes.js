@@ -157,11 +157,10 @@ const ingressTemplate = {
     metadata: {
         // name: "k8s-client-test-ingress",
         // namespace: 'flowforge',
-        // annotations: {}
-        annotations: JSON.parse(process.env.INGRESS_ANNOTATIONS)
+        annotations: process.env.INGRESS_ANNOTATIONS ? JSON.parse(process.env.INGRESS_ANNOTATIONS) : {}
     },
     spec: {
-        ingressClassName: process.env.INGRESS_CLASS_NAME,
+        ingressClassName: process.env.INGRESS_CLASS_NAME ? process.env.INGRESS_CLASS_NAME : null,
         rules: [
             {
                 // host: "k8s-client-test" + "." + "ubuntu.local",
