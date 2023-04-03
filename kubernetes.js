@@ -220,7 +220,6 @@ const createDeployment = async (project, options) => {
     // operator: Equal
     // value: skills
     // effect: NoSchedule
-    //if (proc.env.POD_AFFINITY !== undefined && proc.env.POD_TOLERATIONS !== undefined){
     if (process.env.DEPLOYMENT_TOLERATIONS !== undefined){
         // TOLERATIONS
         try {

@@ -28,3 +28,11 @@ AWS EKS specific annotation for ALB Ingress.
 - `privateCA` name of ConfigMap holding PEM CA Cert Bundle (file name `certs.pem`) Optional
 
 Expects to pick up K8s credentials from the environment
+
+### Configuration via environment variables
+
+Next variables are read from flowforge process environment in runtime:
+
+* `INGRESS_CLASS_NAME` - `Ingress` class name for editor instances
+* `INGRESS_ANNOTATIONS` - `Ingress` annotations for editor instances as JSON-encoded object
+* `DEPLOYMENT_TOLERATIONS` - Editor `Deployment` tolerations as JSON-encoded object
