@@ -157,9 +157,11 @@ const ingressTemplate = {
     metadata: {
         // name: "k8s-client-test-ingress",
         // namespace: 'flowforge',
-        annotations: {}
+        // annotations: {}
+        annotations: JSON.parse(process.env.INGRESS_ANNOTATIONS)
     },
     spec: {
+        ingressClassName: process.env.INGRESS_CLASS_NAME,
         rules: [
             {
                 // host: "k8s-client-test" + "." + "ubuntu.local",
@@ -191,6 +193,47 @@ const createDeployment = async (project, options) => {
     localDeployment.metadata.labels.name = project.safeName
     localDeployment.metadata.labels.app = project.id
     localDeployment.spec.selector.matchLabels.app = project.id
+
+    // Examples:
+    // 1. With this affinity definitions we can skip toarations
+    // affinity:
+    //     nodeAffinity:
+    //         requiredDuringSchedulingIgnoredDuringExecution:
+    //             nodeSelectorTerms:
+    //                 - matchExpressions:
+    // - key: node-owner
+    // operator: In
+    // values:
+    //     - streaming-services-transcribe
+
+    // 2. With this affinity
+    // preferredDuringSchedulingIgnoredDuringExecution:
+    //     - weight: 100
+    // preference:
+    //     matchExpressions:
+    //         - key: purpose
+    // operator: In
+    // values:
+    //     - skills
+    // ---> we need these tolerations
+    // tolerations:
+    //     - key: purpose
+    // operator: Equal
+    // value: skills
+    // effect: NoSchedule
+    //if (proc.env.POD_AFFINITY !== undefined && proc.env.POD_TOLERATIONS !== undefined){
+    if (process.env.DEPLOYMENT_TOLERATIONS !== undefined){
+        // TOLERATIONS
+        try {
+            localPod.spec.tolerations = JSON.parse(process.env.DEPLOYMENT_TOLERATIONS)
+            console.log(`DEPLOYMENT TOLERATIONS loaded: ${localPod.spec.tolerations}`)
+        }
+        catch (err){
+            console.log(`TOLERATIONS load error: ${err}`)
+        }
+
+    }
+
     localPod.metadata.labels.app = project.id
     localPod.metadata.labels.name = project.safeName
 
@@ -285,7 +328,10 @@ const createService = async (project, options) => {
 const createIngress = async (project, options) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
 
+    console.log("K8S DRIVER: start parse ingress template");
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
+    console.log("K8S DRIVER: done parse ingress template");
+    console.log(`K8S DRIVER: INGRESS TEMPLATE V2\n ${JSON.stringify(localIngress)}`);
     localIngress.metadata.name = project.safeName
     localIngress.spec.rules[0].host = project.safeName + '.' + options.domain
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
@@ -323,6 +369,8 @@ const createProject = async (project, options) => {
     }))
 
     promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
+        this._app.log.warn(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+        console.log(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`);
         // TODO: This will fail if the service already exists. Which it okay if
         // we're restarting a suspended project. As we don't know if we're restarting
         // or not, we don't know if this is fatal or not.
@@ -333,11 +381,15 @@ const createProject = async (project, options) => {
         //
         // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
         // throw err
+    }).then(async () => {
+        this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`);
+        console.log(`[k8s] Ingress creation completed for project ${project.id}`);
     }))
 
     await project.updateSetting('k8sType', 'deployment')
 
     return Promise.all(promises).then(async () => {
+        console.log(`[k8s] PROJECT ${project.id} initiated`);
         this._app.log.debug(`[k8s] Container ${project.id} started`)
         project.state = 'running'
         await project.save()
