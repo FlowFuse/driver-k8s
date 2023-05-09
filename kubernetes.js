@@ -157,9 +157,10 @@ const ingressTemplate = {
     metadata: {
         // name: "k8s-client-test-ingress",
         // namespace: 'flowforge',
-        annotations: {}
+        annotations: process.env.INGRESS_ANNOTATIONS ? JSON.parse(process.env.INGRESS_ANNOTATIONS) : {}
     },
     spec: {
+        ingressClassName: process.env.INGRESS_CLASS_NAME ? process.env.INGRESS_CLASS_NAME : null,
         rules: [
             {
                 // host: "k8s-client-test" + "." + "ubuntu.local",
@@ -191,6 +192,44 @@ const createDeployment = async (project, options) => {
     localDeployment.metadata.labels.name = project.safeName
     localDeployment.metadata.labels.app = project.id
     localDeployment.spec.selector.matchLabels.app = project.id
+
+    // Examples:
+    // 1. With this affinity definitions we can skip toarations
+    // affinity:
+    //     nodeAffinity:
+    //         requiredDuringSchedulingIgnoredDuringExecution:
+    //             nodeSelectorTerms:
+    //                 - matchExpressions:
+    // - key: node-owner
+    // operator: In
+    // values:
+    //     - streaming-services-transcribe
+
+    // 2. With this affinity
+    // preferredDuringSchedulingIgnoredDuringExecution:
+    //     - weight: 100
+    // preference:
+    //     matchExpressions:
+    //         - key: purpose
+    // operator: In
+    // values:
+    //     - skills
+    // ---> we need these tolerations
+    // tolerations:
+    //     - key: purpose
+    // operator: Equal
+    // value: skills
+    // effect: NoSchedule
+    if (process.env.DEPLOYMENT_TOLERATIONS !== undefined) {
+        // TOLERATIONS
+        try {
+            localPod.spec.tolerations = JSON.parse(process.env.DEPLOYMENT_TOLERATIONS)
+            this._app.log.info(`DEPLOYMENT TOLERATIONS loaded: ${localPod.spec.tolerations}`)
+        } catch (err) {
+            this._app.log.error(`TOLERATIONS load error: ${err}`)
+        }
+    }
+
     localPod.metadata.labels.app = project.id
     localPod.metadata.labels.name = project.safeName
 
@@ -285,6 +324,7 @@ const createService = async (project, options) => {
 const createIngress = async (project, options) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
 
+    this._app.log.info('K8S DRIVER: start parse ingress template')
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
     localIngress.metadata.name = project.safeName
     localIngress.spec.rules[0].host = project.safeName + '.' + options.domain
@@ -333,6 +373,8 @@ const createProject = async (project, options) => {
         //
         // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
         // throw err
+    }).then(async () => {
+        this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
     }))
 
     await project.updateSetting('k8sType', 'deployment')
