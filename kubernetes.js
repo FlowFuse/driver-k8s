@@ -368,7 +368,6 @@ const createProject = async (project, options) => {
 
     promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
         this._app.log.warn(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
-        console.log(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`);
         // TODO: This will fail if the service already exists. Which it okay if
         // we're restarting a suspended project. As we don't know if we're restarting
         // or not, we don't know if this is fatal or not.
