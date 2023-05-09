@@ -225,8 +225,7 @@ const createDeployment = async (project, options) => {
         try {
             localPod.spec.tolerations = JSON.parse(process.env.DEPLOYMENT_TOLERATIONS)
             console.log(`DEPLOYMENT TOLERATIONS loaded: ${localPod.spec.tolerations}`)
-        }
-        catch (err){
+        } catch (err) {
             console.log(`TOLERATIONS load error: ${err}`)
         }
     }
