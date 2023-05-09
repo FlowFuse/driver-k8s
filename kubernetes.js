@@ -377,7 +377,7 @@ const createProject = async (project, options) => {
         // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
         // throw err
     }).then(async () => {
-        this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`);
+        this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
     }))
 
     await project.updateSetting('k8sType', 'deployment')
