@@ -229,7 +229,6 @@ const createDeployment = async (project, options) => {
         catch (err){
             console.log(`TOLERATIONS load error: ${err}`)
         }
-
     }
 
     localPod.metadata.labels.app = project.id
