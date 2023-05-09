@@ -385,7 +385,6 @@ const createProject = async (project, options) => {
     await project.updateSetting('k8sType', 'deployment')
 
     return Promise.all(promises).then(async () => {
-        console.log(`[k8s] PROJECT ${project.id} initiated`);
         this._app.log.debug(`[k8s] Container ${project.id} started`)
         project.state = 'running'
         await project.save()
