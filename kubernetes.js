@@ -220,7 +220,7 @@ const createDeployment = async (project, options) => {
     // operator: Equal
     // value: skills
     // effect: NoSchedule
-    if (process.env.DEPLOYMENT_TOLERATIONS !== undefined){
+    if (process.env.DEPLOYMENT_TOLERATIONS !== undefined) {
         // TOLERATIONS
         try {
             localPod.spec.tolerations = JSON.parse(process.env.DEPLOYMENT_TOLERATIONS)
