@@ -328,8 +328,6 @@ const createIngress = async (project, options) => {
 
     console.log("K8S DRIVER: start parse ingress template");
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
-    console.log("K8S DRIVER: done parse ingress template");
-    console.log(`K8S DRIVER: INGRESS TEMPLATE V2\n ${JSON.stringify(localIngress)}`);
     localIngress.metadata.name = project.safeName
     localIngress.spec.rules[0].host = project.safeName + '.' + options.domain
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
