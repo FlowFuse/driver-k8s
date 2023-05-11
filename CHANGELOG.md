@@ -1,3 +1,7 @@
+#### 1.7.0: Release
+
+ - Editor configuration from process environment (#80) @andreikop
+
 #### 1.6.0: Release
 
 
