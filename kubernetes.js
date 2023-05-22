@@ -309,7 +309,7 @@ const createDeployment = async (project, options) => {
     const ha = await project.getSetting('ha')
     console.log(ha)
     if (ha?.replicas > 1) {
-        localPod.spec.replicas = ha.replicas
+        localDeployment.spec.replicas = ha.replicas
     }
 
     project.url = projectURL
