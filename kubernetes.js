@@ -306,6 +306,12 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
 
+    const ha = project.getSetting('ha')
+    console.log(ha)
+    if (ha?.replicas > 1) {
+        localPod.spec.replicas = ha.replicas
+    }
+
     project.url = projectURL
     await project.save()
 
