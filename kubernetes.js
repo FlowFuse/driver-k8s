@@ -860,9 +860,12 @@ module.exports = {
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         if (await project.getSetting('ha')) {
             const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+            this._app.log.info(JSON.stringify(endpoints))
             const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+            this._app.log.info(addresses)
             const logRequests = []
-            for (address in addresses) {
+            for (const address in addresses) {
+                this._app.log.info(address)
                 logRequests.push(got.get(`http://${address}:2880/flowforge/logs`).json())
             }
             const results = await Promise.all(logRequests)
