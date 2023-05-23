@@ -866,7 +866,7 @@ module.exports = {
                 logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`).json())
             }
             const results = await Promise.all(logRequests)
-            return results
+            return results.flat(1)
         } else {
             const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`).json()
             return result
