@@ -866,7 +866,9 @@ module.exports = {
                 logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`).json())
             }
             const results = await Promise.all(logRequests)
-            return results.flat(1)
+            const combinedResults = results.flat(1)
+            combinedResults.sort((a, b) => { return b.ts - a.ts })
+            return combinedResults
         } else {
             const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`).json()
             return result
