@@ -950,7 +950,7 @@ module.exports = {
             const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
             const commands = []
             for (const address in addresses) {
-                commands.push(got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
+                commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, { // logout:nodered(step-4)
                     json: {
                         cmd: 'logout',
                         token
