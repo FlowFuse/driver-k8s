@@ -733,6 +733,7 @@ module.exports = {
                 (details.body.status?.conditions[0].type === 'Available' ||
                     (details.body.status?.conditions[0].type === 'Progressing' && details.body.status?.conditions[0].reason === 'NewReplicaSetAvailable')
                 )) {
+                    // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
                         const info = JSON.parse((await got.get(infoURL)).body)
@@ -765,6 +766,7 @@ module.exports = {
                         meta: {}
                     }
                 } else if (details.body.status?.phase === 'Running') {
+                    // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
                         const info = JSON.parse((await got.get(infoURL)).body)
@@ -822,11 +824,25 @@ module.exports = {
             return { state: 'unknown' }
         }
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-        await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
-            json: {
-                cmd: 'start'
+        if (await project.getSetting('ha')) {
+            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+            const commands = []
+            for (const address in addresses) {
+                commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
+                    json: {
+                        cmd: 'start'
+                    }
+                }))
             }
-        })
+            await Promise.all(commands)
+        } else {
+            await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+                json: {
+                    cmd: 'start'
+                }
+            })
+        }
         return { status: 'okay' }
     },
 
@@ -840,11 +856,25 @@ module.exports = {
             return { state: 'unknown' }
         }
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-        await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
-            json: {
-                cmd: 'stop'
+        if (await project.getSetting('ha')) {
+            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+            const commands = []
+            for (const address in addresses) {
+                commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
+                    json: {
+                        cmd: 'stop'
+                    }
+                }))
             }
-        })
+            await Promise.all(commands)
+        } else {
+            await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+                json: {
+                    cmd: 'stop'
+                }
+            })
+        }
         return Promise.resolve({ status: 'okay' })
     },
 
@@ -885,11 +915,25 @@ module.exports = {
             return { state: 'unknown' }
         }
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-        await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
-            json: {
-                cmd: 'restart'
+        if (project.getSetting('ha')) {
+            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+            const commands = []
+            for (const address in addresses) {
+                commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
+                    json: {
+                        cmd: 'restart'
+                    }
+                }))
             }
-        })
+            await Promise.all(commands)
+        } else {
+            await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+                json: {
+                    cmd: 'restart'
+                }
+            })
+        }
         return { state: 'okay' }
     },
     /**
@@ -900,16 +944,33 @@ module.exports = {
    */
     revokeUserToken: async (project, token) => { // logout:nodered(step-3)
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-        try {
-            this._app.log.debug(`[k8s] Project ${project.id} - logging out node-red instance`)
-            await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
-                json: {
-                    cmd: 'logout',
-                    token
-                }
+        this._app.log.debug(`[k8s] Project ${project.id} - logging out node-red instance`)
+        if (project.getSetting('ha')) {
+            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+            const commands = []
+            for (const address in addresses) {
+                commands.push(got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
+                    json: {
+                        cmd: 'logout',
+                        token
+                    }
+                }))
+            }
+            Promise.all(commands).catch(error => {
+                this._app.log.error(`[k8s] Project ${project.id} - error in 'revokeUserToken': ${error.stack}`)
             })
-        } catch (error) {
-            this._app.log.error(`[k8s] Project ${project.id} - error in 'revokeUserToken': ${error.stack}`)
+        } else {
+            try {
+                await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
+                    json: {
+                        cmd: 'logout',
+                        token
+                    }
+                })
+            } catch (error) {
+                this._app.log.error(`[k8s] Project ${project.id} - error in 'revokeUserToken': ${error.stack}`)
+            }
         }
     },
     /**
