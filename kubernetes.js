@@ -922,10 +922,8 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         if (await project.getSetting('ha')) {
-            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
-            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+            const addresses = await getEndpoints(project)
             const logRequests = []
             for (const address in addresses) {
                 logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`).json())
@@ -935,6 +933,7 @@ module.exports = {
             combinedResults.sort((a, b) => { return a.ts - b.ts })
             return combinedResults
         } else {
+            const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
             const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`).json()
             return result
         }
