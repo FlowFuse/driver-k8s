@@ -358,7 +358,9 @@ const createProject = async (project, options) => {
         // whether to throw this error or not. For now, this will silently
         // let it pass
         //
-        // this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
+        if (project.state !== 'suspended') {
+            this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
+        }
         // throw err
     }))
 
@@ -371,7 +373,9 @@ const createProject = async (project, options) => {
         // whether to throw this error or not. For now, this will silently
         // let it pass
         //
-        // this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+        if (project.state !== 'suspended') {
+            this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+        }
         // throw err
     }).then(async () => {
         this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
