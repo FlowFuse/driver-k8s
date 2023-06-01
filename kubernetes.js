@@ -462,6 +462,21 @@ const createPod = async (project, options) => {
     return localPod
 }
 
+const getEndpoints = async (project) => {
+    const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+    if (await project.getSetting('ha')) {
+        const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+        const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+        const hosts = []
+        for (const address in addresses) {
+            hosts.push(addresses[address])
+        }
+        return hosts
+    } else {
+        return [`${prefix}${project.safeName}.${this._namespace}`]
+    }
+}
+
 module.exports = {
     /**
    * Initialises this driver
@@ -823,26 +838,36 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-        if (await project.getSetting('ha')) {
-            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
-            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
-            const commands = []
-            for (const address in addresses) {
-                commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
-                    json: {
-                        cmd: 'start'
-                    }
-                }))
-            }
-            await Promise.all(commands)
-        } else {
-            await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        // const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        // if (await project.getSetting('ha')) {
+        //     const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+        //     const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+        //     const commands = []
+        //     for (const address in addresses) {
+        //         commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
+        //             json: {
+        //                 cmd: 'start'
+        //             }
+        //         }))
+        //     }
+        //     await Promise.all(commands)
+        // } else {
+        //     await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        //         json: {
+        //             cmd: 'start'
+        //         }
+        //     })
+        // }
+        const endpoints = await getEndpoints(project)
+        const commands = []
+        for (const address in endpoints) {
+            commands.push(got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
                 json: {
                     cmd: 'start'
                 }
-            })
+            }))
         }
+        await Promise.all(commands)
         return { status: 'okay' }
     },
 
@@ -855,26 +880,36 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-        if (await project.getSetting('ha')) {
-            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
-            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
-            const commands = []
-            for (const address in addresses) {
-                commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
-                    json: {
-                        cmd: 'stop'
-                    }
-                }))
-            }
-            await Promise.all(commands)
-        } else {
-            await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        // const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        // if (await project.getSetting('ha')) {
+        //     const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+        //     const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+        //     const commands = []
+        //     for (const address in addresses) {
+        //         commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
+        //             json: {
+        //                 cmd: 'stop'
+        //             }
+        //         }))
+        //     }
+        //     await Promise.all(commands)
+        // } else {
+        //     await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        //         json: {
+        //             cmd: 'stop'
+        //         }
+        //     })
+        // }
+        const endpoints = await getEndpoints(project)
+        const commands = []
+        for (const address in endpoints) {
+            commands.push(got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
                 json: {
                     cmd: 'stop'
                 }
-            })
+            }))
         }
+        await Promise.all(commands)
         return Promise.resolve({ status: 'okay' })
     },
 
@@ -914,26 +949,36 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-        if (project.getSetting('ha')) {
-            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
-            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
-            const commands = []
-            for (const address in addresses) {
-                commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
-                    json: {
-                        cmd: 'restart'
-                    }
-                }))
-            }
-            await Promise.all(commands)
-        } else {
-            await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        // const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        // if (project.getSetting('ha')) {
+        //     const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+        //     const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+        //     const commands = []
+        //     for (const address in addresses) {
+        //         commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
+        //             json: {
+        //                 cmd: 'restart'
+        //             }
+        //         }))
+        //     }
+        //     await Promise.all(commands)
+        // } else {
+        //     await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
+        //         json: {
+        //             cmd: 'restart'
+        //         }
+        //     })
+        // }
+        const endpoints = await getEndpoints(project)
+        const commands = []
+        for (const address in endpoints) {
+            commands.push(got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
                 json: {
                     cmd: 'restart'
                 }
-            })
+            }))
         }
+        await Promise.all(commands)
         return { state: 'okay' }
     },
     /**
@@ -943,35 +988,46 @@ module.exports = {
    * @return {forge.Status}
    */
     revokeUserToken: async (project, token) => { // logout:nodered(step-3)
-        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         this._app.log.debug(`[k8s] Project ${project.id} - logging out node-red instance`)
-        if (project.getSetting('ha')) {
-            const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
-            const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
-            const commands = []
-            for (const address in addresses) {
-                commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, { // logout:nodered(step-4)
-                    json: {
-                        cmd: 'logout',
-                        token
-                    }
-                }))
-            }
-            Promise.all(commands).catch(error => {
-                this._app.log.error(`[k8s] Project ${project.id} - error in 'revokeUserToken': ${error.stack}`)
-            })
-        } else {
-            try {
-                await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
-                    json: {
-                        cmd: 'logout',
-                        token
-                    }
-                })
-            } catch (error) {
-                this._app.log.error(`[k8s] Project ${project.id} - error in 'revokeUserToken': ${error.stack}`)
-            }
+        // const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        // if (project.getSetting('ha')) {
+        //     const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+        //     const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+        //     const commands = []
+        //     for (const address in addresses) {
+        //         commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, { // logout:nodered(step-4)
+        //             json: {
+        //                 cmd: 'logout',
+        //                 token
+        //             }
+        //         }))
+        //     }
+        //     Promise.all(commands).catch(error => {
+        //         this._app.log.error(`[k8s] Project ${project.id} - error in 'revokeUserToken': ${error.stack}`)
+        //     })
+        // } else {
+        //     try {
+        //         await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, { // logout:nodered(step-4)
+        //             json: {
+        //                 cmd: 'logout',
+        //                 token
+        //             }
+        //         })
+        //     } catch (error) {
+        //         this._app.log.error(`[k8s] Project ${project.id} - error in 'revokeUserToken': ${error.stack}`)
+        //     }
+        // }
+        const endpoints = await getEndpoints(project)
+        const commands = []
+        for (const address in endpoints) {
+            commands.push(got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
+                json: {
+                    cmd: 'logout',
+                    token
+                }
+            }))
         }
+        await Promise.all(commands)
     },
     /**
      * Shutdown Driver
