@@ -837,26 +837,6 @@ module.exports = {
         if (this._projects[project.id] === undefined) {
             return { state: 'unknown' }
         }
-        // const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-        // if (await project.getSetting('ha')) {
-        //     const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
-        //     const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
-        //     const commands = []
-        //     for (const address in addresses) {
-        //         commands.push(got.post(`http://${addresses[address]}:2880/flowforge/command`, {
-        //             json: {
-        //                 cmd: 'start'
-        //             }
-        //         }))
-        //     }
-        //     await Promise.all(commands)
-        // } else {
-        //     await got.post(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`, {
-        //         json: {
-        //             cmd: 'start'
-        //         }
-        //     })
-        // }
         const endpoints = await getEndpoints(project)
         const commands = []
         for (const address in endpoints) {
