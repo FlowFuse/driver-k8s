@@ -1,3 +1,8 @@
+#### 1.8.0: Release
+
+ - HA: multiple instance replicas (#85) @hardillb
+ - Log failures if not restarting susspended project (#86) @hardillb
+
 #### 1.7.0: Release
 
  - Editor configuration from process environment (#80) @andreikop
