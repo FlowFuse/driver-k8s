@@ -335,7 +335,7 @@ const createService = async (project, options) => {
 const createIngress = async (project, options) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
 
-    const url = URL(project.url)
+    const url = new URL(project.url)
 
     this._app.log.info('K8S DRIVER: start parse ingress template')
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
