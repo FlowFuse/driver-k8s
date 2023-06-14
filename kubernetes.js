@@ -240,7 +240,13 @@ const createDeployment = async (project, options) => {
     }
 
     const baseURL = new URL(this._app.config.base_url)
-    const projectURL = `${baseURL.protocol}//${project.safeName}.${this._options.domain}`
+    let projectURL
+    if (!project.url) {
+        projectURL = `${baseURL.protocol}//${project.safeName}.${this._options.domain}`
+    } else {
+        projectURL = project.url
+    }
+
     const teamID = this._app.db.models.Team.encodeHashid(project.TeamId)
     const authTokens = await project.refreshAuthTokens()
     localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_ID', value: authTokens.clientID })
@@ -329,12 +335,37 @@ const createService = async (project, options) => {
 const createIngress = async (project, options) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
 
+    const url = URL(project.url)
+
     this._app.log.info('K8S DRIVER: start parse ingress template')
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
     localIngress.metadata.name = project.safeName
-    localIngress.spec.rules[0].host = project.safeName + '.' + options.domain
+    localIngress.spec.rules[0].host = url.host
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
+    const hostnames = await project.getSetting('alternateHostnames')
+    if (hostnames) {
+        hostnames.forEach(name => {
+            const rule = {
+                host: name,
+                http: {
+                    paths: [
+                        {
+                            pathType: 'Prefix',
+                            path: '/',
+                            backend: {
+                                service: {
+                                    name: `${prefix}${project.safeName}`,
+                                    port: { number: 1880 }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+            localIngress.spec.rules.push(rule)
+        })
+    }
     return localIngress
 }
 
