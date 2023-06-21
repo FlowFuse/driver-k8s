@@ -17,7 +17,7 @@ const podTemplate = {
     apiVersion: 'v1',
     kind: 'Pod',
     metadata: {
-    // name: "k8s-client-test",
+        // name: "k8s-client-test",
         labels: {
             // name: "k8s-client-test",
             nodered: 'true'
@@ -70,7 +70,7 @@ const deploymentTemplate = {
     apiVersion: 'apps/v1',
     kind: 'Deployment',
     metadata: {
-    // name: "k8s-client-test-deployment",
+        // name: "k8s-client-test-deployment",
         labels: {
             // name: "k8s-client-test-deployment",
             nodered: 'true'
@@ -137,7 +137,7 @@ const serviceTemplate = {
     apiVersion: 'v1',
     kind: 'Service',
     metadata: {
-    // name: "k8s-client-test-service"
+        // name: "k8s-client-test-service"
     },
     spec: {
         type: 'NodePort',
@@ -407,22 +407,22 @@ const createProject = async (project, options) => {
     //         this._app.log.info(`[k8s] Ingress for project ${project.id} updated`)
     //     })
     // } else {
-        promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
-            // TODO: This will fail if the service already exists. Which it okay if
-            // we're restarting a suspended project. As we don't know if we're restarting
-            // or not, we don't know if this is fatal or not.
+    promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
+        // TODO: This will fail if the service already exists. Which it okay if
+        // we're restarting a suspended project. As we don't know if we're restarting
+        // or not, we don't know if this is fatal or not.
 
-            // Once we can know if this is a restart or create, then we can decide
-            // whether to throw this error or not. For now, this will silently
-            // let it pass
-            //
-            if (project.state !== 'suspended') {
-                this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
-            }
-            // throw err
-        }).then(async () => {
-            this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
-        }))
+        // Once we can know if this is a restart or create, then we can decide
+        // whether to throw this error or not. For now, this will silently
+        // let it pass
+        //
+        if (project.state !== 'suspended') {
+            this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+        }
+        // throw err
+    }).then(async () => {
+        this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
+    }))
     // }
 
     await project.updateSetting('k8sType', 'deployment')
@@ -717,7 +717,7 @@ module.exports = {
      * @return {Object}
      */
     remove: async (project) => {
-    // let project = await this._app.db.models.Project.byId(id)
+        // let project = await this._app.db.models.Project.byId(id)
 
         try {
             await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
@@ -787,9 +787,9 @@ module.exports = {
                         meta: {}
                     }
                 } else if (details.body.status?.conditions[0].status === 'True' &&
-                (details.body.status?.conditions[0].type === 'Available' ||
-                    (details.body.status?.conditions[0].type === 'Progressing' && details.body.status?.conditions[0].reason === 'NewReplicaSetAvailable')
-                )) {
+                    (details.body.status?.conditions[0].type === 'Available' ||
+                        (details.body.status?.conditions[0].type === 'Progressing' && details.body.status?.conditions[0].reason === 'NewReplicaSetAvailable')
+                    )) {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
