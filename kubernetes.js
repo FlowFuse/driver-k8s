@@ -400,22 +400,30 @@ const createProject = async (project, options) => {
         // throw err
     }))
 
-    promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
-        // TODO: This will fail if the service already exists. Which it okay if
-        // we're restarting a suspended project. As we don't know if we're restarting
-        // or not, we don't know if this is fatal or not.
+    // if (project.changedName) {
+    //     promises.push(this._k8sNetApi.replaceNamespacedIngress(project.safeName,namespace, localIngress)).catch(err => {
+    //         this._app.log.error(`[k8s] Project ${project.id} - error updating ingress: ${err.toString()}`)
+    //     }).then (async () => {
+    //         this._app.log.info(`[k8s] Ingress for project ${project.id} updated`)
+    //     })
+    // } else {
+        promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
+            // TODO: This will fail if the service already exists. Which it okay if
+            // we're restarting a suspended project. As we don't know if we're restarting
+            // or not, we don't know if this is fatal or not.
 
-        // Once we can know if this is a restart or create, then we can decide
-        // whether to throw this error or not. For now, this will silently
-        // let it pass
-        //
-        if (project.state !== 'suspended') {
-            this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
-        }
-        // throw err
-    }).then(async () => {
-        this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
-    }))
+            // Once we can know if this is a restart or create, then we can decide
+            // whether to throw this error or not. For now, this will silently
+            // let it pass
+            //
+            if (project.state !== 'suspended') {
+                this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+            }
+            // throw err
+        }).then(async () => {
+            this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
+        }))
+    // }
 
     await project.updateSetting('k8sType', 'deployment')
 
