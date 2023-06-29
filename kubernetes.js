@@ -17,7 +17,7 @@ const podTemplate = {
     apiVersion: 'v1',
     kind: 'Pod',
     metadata: {
-    // name: "k8s-client-test",
+        // name: "k8s-client-test",
         labels: {
             // name: "k8s-client-test",
             nodered: 'true'
@@ -70,7 +70,7 @@ const deploymentTemplate = {
     apiVersion: 'apps/v1',
     kind: 'Deployment',
     metadata: {
-    // name: "k8s-client-test-deployment",
+        // name: "k8s-client-test-deployment",
         labels: {
             // name: "k8s-client-test-deployment",
             nodered: 'true'
@@ -137,7 +137,7 @@ const serviceTemplate = {
     apiVersion: 'v1',
     kind: 'Service',
     metadata: {
-    // name: "k8s-client-test-service"
+        // name: "k8s-client-test-service"
     },
     spec: {
         type: 'NodePort',
@@ -240,7 +240,13 @@ const createDeployment = async (project, options) => {
     }
 
     const baseURL = new URL(this._app.config.base_url)
-    const projectURL = `${baseURL.protocol}//${project.safeName}.${this._options.domain}`
+    let projectURL
+    if (!project.url) {
+        projectURL = `${baseURL.protocol}//${project.safeName}.${this._options.domain}`
+    } else {
+        projectURL = project.url
+    }
+
     const teamID = this._app.db.models.Team.encodeHashid(project.TeamId)
     const authTokens = await project.refreshAuthTokens()
     localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_ID', value: authTokens.clientID })
@@ -329,10 +335,12 @@ const createService = async (project, options) => {
 const createIngress = async (project, options) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
 
+    const url = new URL(project.url)
+
     this._app.log.info('K8S DRIVER: start parse ingress template')
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
     localIngress.metadata.name = project.safeName
-    localIngress.spec.rules[0].host = project.safeName + '.' + options.domain
+    localIngress.spec.rules[0].host = url.host
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
     return localIngress
@@ -369,6 +377,13 @@ const createProject = async (project, options) => {
         // throw err
     }))
 
+    // if (project.changedName) {
+    //     promises.push(this._k8sNetApi.replaceNamespacedIngress(project.safeName,namespace, localIngress)).catch(err => {
+    //         this._app.log.error(`[k8s] Project ${project.id} - error updating ingress: ${err.toString()}`)
+    //     }).then (async () => {
+    //         this._app.log.info(`[k8s] Ingress for project ${project.id} updated`)
+    //     })
+    // } else {
     promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
         // TODO: This will fail if the service already exists. Which it okay if
         // we're restarting a suspended project. As we don't know if we're restarting
@@ -385,6 +400,7 @@ const createProject = async (project, options) => {
     }).then(async () => {
         this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
     }))
+    // }
 
     await project.updateSetting('k8sType', 'deployment')
 
@@ -678,7 +694,7 @@ module.exports = {
      * @return {Object}
      */
     remove: async (project) => {
-    // let project = await this._app.db.models.Project.byId(id)
+        // let project = await this._app.db.models.Project.byId(id)
 
         try {
             await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
@@ -748,9 +764,9 @@ module.exports = {
                         meta: {}
                     }
                 } else if (details.body.status?.conditions[0].status === 'True' &&
-                (details.body.status?.conditions[0].type === 'Available' ||
-                    (details.body.status?.conditions[0].type === 'Progressing' && details.body.status?.conditions[0].reason === 'NewReplicaSetAvailable')
-                )) {
+                    (details.body.status?.conditions[0].type === 'Available' ||
+                        (details.body.status?.conditions[0].type === 'Progressing' && details.body.status?.conditions[0].reason === 'NewReplicaSetAvailable')
+                    )) {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
