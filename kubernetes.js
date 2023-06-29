@@ -343,29 +343,6 @@ const createIngress = async (project, options) => {
     localIngress.spec.rules[0].host = url.host
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
-    const hostnames = await project.getSetting('alternateHostnames')
-    if (hostnames) {
-        hostnames.forEach(name => {
-            const rule = {
-                host: name,
-                http: {
-                    paths: [
-                        {
-                            pathType: 'Prefix',
-                            path: '/',
-                            backend: {
-                                service: {
-                                    name: `${prefix}${project.safeName}`,
-                                    port: { number: 1880 }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-            localIngress.spec.rules.push(rule)
-        })
-    }
     return localIngress
 }
 
