@@ -36,3 +36,4 @@ Next variables are read from flowforge process environment in runtime:
 * `INGRESS_CLASS_NAME` - `Ingress` class name for editor instances
 * `INGRESS_ANNOTATIONS` - `Ingress` annotations for editor instances as JSON-encoded object
 * `DEPLOYMENT_TOLERATIONS` - Editor `Deployment` tolerations as JSON-encoded object
+* `EDITOR_SERVICE_ACCOUNT` - Editor service account. 
