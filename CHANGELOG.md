@@ -1,3 +1,8 @@
+#### 1.9.0: Release
+
+ - Support for changing the base domain (#88) @hardillb
+ - Add package-lock.json (#89) @Pezmc
+
 #### 1.8.0: Release
 
  - HA: multiple instance replicas (#85) @hardillb
