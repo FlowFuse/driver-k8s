@@ -343,6 +343,14 @@ const createIngress = async (project, options) => {
     localIngress.spec.rules[0].host = url.host
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
+    if (url.protocol === 'https') {
+        localIngress.spec.tls = [{
+            hosts: [
+                url.host
+            ]
+        }]
+    }
+
     return localIngress
 }
 
