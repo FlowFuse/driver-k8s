@@ -340,6 +340,7 @@ const createIngress = async (project, options) => {
     this._app.log.info('K8S DRIVER: start parse ingress template')
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
     localIngress.metadata.name = project.safeName
+    localIngress.metadata.annotations["nginx.org/websocket-services"] = project.safeName
     localIngress.spec.rules[0].host = url.host
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
