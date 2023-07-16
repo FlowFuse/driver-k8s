@@ -332,6 +332,10 @@ const createService = async (project, options) => {
     return localService
 }
 
+const mustache = (string, data = {}) =>
+  Object.entries(data).reduce((res, [key, value]) => res.replace(new RegExp(`{{\\s*${key}\\s*}}`, "g"), value), string);
+
+
 const createIngress = async (project, options) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
 
@@ -339,6 +343,11 @@ const createIngress = async (project, options) => {
 
     this._app.log.info('K8S DRIVER: start parse ingress template')
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
+
+    // process annotations with replacement
+    Object.keys(localIngress.metadata.annotations).forEach((key)=>{
+        localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key],project)
+    })
     localIngress.metadata.name = project.safeName
     localIngress.metadata.annotations["nginx.org/websocket-services"] = project.safeName
     localIngress.spec.rules[0].host = url.host
