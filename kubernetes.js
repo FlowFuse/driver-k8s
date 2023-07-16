@@ -349,7 +349,6 @@ const createIngress = async (project, options) => {
         localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key],project)
     })
     localIngress.metadata.name = project.safeName
-    localIngress.metadata.annotations["nginx.org/websocket-services"] = project.safeName
     localIngress.spec.rules[0].host = url.host
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
