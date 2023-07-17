@@ -347,7 +347,8 @@ const createIngress = async (project, options) => {
         localIngress.spec.tls = [{
             hosts: [
                 url.host
-            ]
+            ],
+            secretName: project.safeName
         }]
     }
 
