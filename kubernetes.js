@@ -346,7 +346,7 @@ const createIngress = async (project, options) => {
 
     // process annotations with replacement
     Object.keys(localIngress.metadata.annotations).forEach((key)=>{
-        localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key],project)
+        localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key],{project, prefix, url})
     })
     localIngress.metadata.name = project.safeName
     localIngress.spec.rules[0].host = url.host
