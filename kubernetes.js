@@ -232,6 +232,7 @@ const createDeployment = async (project, options) => {
 
     localPod.metadata.labels.app = project.id
     localPod.metadata.labels.name = project.safeName
+    localPod.spec.serviceAccount = process.env.EDITOR_SERVICE_ACCOUNT
 
     if (stack.container) {
         localPod.spec.containers[0].image = stack.container
