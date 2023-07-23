@@ -333,18 +333,18 @@ const createService = async (project, options) => {
 }
 
 const mustache = (string, data = {}) =>
-  Object.entries(data).reduce((res, [key, value]) => res.replace(new RegExp(`{{\\s*${key}\\s*}}`, "g"), value), string);
+    Object.entries(data).reduce((res, [key, value]) => res.replace(new RegExp(`{{\\s*${key}\\s*}}`, 'g'), value), string)
 
 const createIngress = async (project, options) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
     const url = new URL(project.url)
-    
+
     // exposedData available for annotation replacements
     const exposedData = {
         serviceName: `${prefix}${project.safeName}`,
         instanceURL: url.href,
         instanceHost: url.host,
-        instanceProtocol: url.protocol,
+        instanceProtocol: url.protocol
     }
 
     this._app.log.info('K8S DRIVER: start parse ingress template')
@@ -352,8 +352,8 @@ const createIngress = async (project, options) => {
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
 
     // process annotations with potential replacements
-    Object.keys(localIngress.metadata.annotations).forEach((key)=>{
-        localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key],exposedData)
+    Object.keys(localIngress.metadata.annotations).forEach((key) => {
+        localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key], exposedData)
     })
 
     localIngress.metadata.name = project.safeName
