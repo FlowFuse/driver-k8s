@@ -1,3 +1,9 @@
+#### 1.10.0: Release
+
+ - Added support for annotation substitutions (#95) @dfulgham
+ - Editors: allow optional service account linkage (#92) @elenaviter
+ - Chore: Set root flag in eslint (#93) @Pezmc
+
 #### 1.9.0: Release
 
  - Support for changing the base domain (#88) @hardillb
