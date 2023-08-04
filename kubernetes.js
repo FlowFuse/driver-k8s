@@ -679,6 +679,18 @@ module.exports = {
     stop: async (project) => {
         // Stop the project, but don't remove all of its resources.
         this._projects[project.id].state = 'stopping'
+
+        try {
+            await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
+        } catch (err) {
+            this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
+        }
+        if (project.safeName.match(/^[0-9]/)) {
+            await this._k8sApi.deleteNamespacedService('srv-' + project.safeName, this._namespace)
+        } else {
+            await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
+        }
+
         // For now, we just want to remove the Pod/Deployment
         const currentType = await project.getSetting('k8sType')
         let pod = true
