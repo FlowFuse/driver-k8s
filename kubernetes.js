@@ -686,9 +686,17 @@ module.exports = {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
         }
         if (project.safeName.match(/^[0-9]/)) {
-            await this._k8sApi.deleteNamespacedService('srv-' + project.safeName, this._namespace)
+            try {
+                await this._k8sApi.deleteNamespacedService('srv-' + project.safeName, this._namespace)
+            } catch (err) {
+                this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
+            }
         } else {
-            await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
+            try {
+                await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
+            } catch (err) {
+                this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
+            }
         }
 
         // For now, we just want to remove the Pod/Deployment
