@@ -1,24 +1,21 @@
 name: Build and push packages
 
 on:
-  workflow_run:
-    workflows: ["Default Build & Test"]
-    branches: [main]
-    types: 
-      - completed
   schedule:
     - cron: '0 23 * * *'
   push:
     branches:
       - 'feat-*'
       - 'main'
+  pull_request:
+    branches: [main]
 
 jobs:
-  k8sDriver:
-    if: | 
-      github.event.workflow_run.conclusion == 'success' ||
-      github.event_name == 'push' ||
-      github.event_name == 'schedule'
+  build:
+    uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@feat-build-workflow'
+
+  publish:
+    needs: build
     permissions:
       contents: read
       packages: write
