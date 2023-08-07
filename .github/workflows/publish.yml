@@ -15,7 +15,6 @@ jobs:
     uses: 'flowforge/github-actions-workflows/.github/workflows/build_node_package.yml@main'
 
   publish:
-    if: false
     needs: build
     permissions:
       packages: write
