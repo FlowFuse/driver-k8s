@@ -1,0 +1,25 @@
+name: Build and push packages
+
+on:
+  schedule:
+    - cron: '0 23 * * *'
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: 'flowforge/github-actions-workflows/.github/workflows/build_node_package.yml@main'
+
+  publish:
+    needs: build
+    permissions:
+      packages: write
+      contents: read
+    uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@main'
+    with:
+      package_name: flowforge-driver-k8s
+      publish_package: true
