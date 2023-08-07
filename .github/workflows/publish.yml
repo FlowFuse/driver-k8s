@@ -5,7 +5,7 @@ on:
     - cron: '0 23 * * *'
   push:
     branches:
-      - 'main'
+      - main
   pull_request:
     branches:
       - main
@@ -16,9 +16,7 @@ jobs:
 
   publish:
     needs: build
-    permissions:
-      contents: read
-      packages: write
     uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@main'
     with:
       package_name: flowforge-driver-k8s
+      publish_package: true
