@@ -1,0 +1,23 @@
+name: Build and push packages
+
+on:
+  workflow_run:
+    workflows: ["Default Build & Test"]
+    branches: [main]
+    types: 
+      - completed
+  schedule:
+    - cron: '0 23 * * *'
+  push:
+    branches:
+      - 'feat-*'
+
+jobs:
+  k8sDriver:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      packages: write
+    uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@main'
+    with:
+      package_name: flowforge-driver-k8s
