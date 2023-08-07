@@ -20,47 +20,7 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@github-token-debug'
+    uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@main
     with:
       package_name: flowforge-driver-k8s
       publish_package: true
-    secrets:
-      token: ${{ secrets.GITHUB_TOKEN }}
-  
-  directPublish:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Set release name
-        id: set_release_name
-        run: |
-          echo "release_name=nightly" >> $GITHUB_ENV
-
-      - name: "Set package version"
-        run: |
-          npm version prerelease --preid `git rev-parse --short HEAD`-`date +%Y%m%d` --no-git-tag-version
-
-      - uses: actions/setup-node@v3
-        if: false
-        with:
-          node-version: '16'
-          registry-url: https://npm.pkg.github.com/
-      - run: npm publish
-        if: false
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: "Publish package to private registry"
-        if: true
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          tag: ${{ env.release_name }}
-          package: ./package.json
-          registry: "https://npm.pkg.github.com"
-          token: ${{ secrets.GITHUB_TOKEN }}
