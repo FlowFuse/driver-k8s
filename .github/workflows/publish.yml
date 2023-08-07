@@ -47,16 +47,18 @@ jobs:
           npm version prerelease --preid `git rev-parse --short HEAD`-`date +%Y%m%d` --no-git-tag-version
 
       - uses: actions/setup-node@v3
+        if: false
         with:
           node-version: '16'
           registry-url: https://npm.pkg.github.com/
       - run: npm publish
+        if: false
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Publish package to private registry"
-        if: false
-        uses: JS-DevTools/npm-publish@v2
+        if: true
+        uses: JS-DevTools/npm-publish@v2.1.0
         with:
           tag: ${{ env.release_name }}
           package: ./package.json
