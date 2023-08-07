@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@feat-build-workflow'
+    uses: 'flowforge/github-actions-workflows/.github/workflows/build_node_package.yml@feat-build-workflow'
 
   publish:
     needs: build
