@@ -14,7 +14,10 @@ on:
 
 jobs:
   k8sDriver:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: | 
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event_name == 'push' ||
+      github.event_name == 'schedule'
     permissions:
       contents: read
       packages: write
