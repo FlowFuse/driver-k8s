@@ -58,7 +58,7 @@ jobs:
 
       - name: "Publish package to private registry"
         if: true
-        uses: JS-DevTools/npm-publish@v2.1.0
+        uses: JS-DevTools/npm-publish@v2
         with:
           tag: ${{ env.release_name }}
           package: ./package.json
