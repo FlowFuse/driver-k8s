@@ -15,6 +15,7 @@ jobs:
     uses: 'flowforge/github-actions-workflows/.github/workflows/build_node_package.yml@main'
 
   publish:
+    if: false
     needs: build
     permissions:
       packages: write
@@ -25,3 +26,30 @@ jobs:
       publish_package: true
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
+  
+  directPublish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set release name
+        id: set_release_name
+        run: |
+          echo "release_name=nightly" >> $GITHUB_ENV
+
+      - name: "Set package version"
+        run: |
+          npm version prerelease --preid `git rev-parse --short HEAD`-`date +%Y%m%d` --no-git-tag-version
+
+      - name: "Publish package to private registry"
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          tag: ${{ env.release_name }}
+          package: ./package.json
+          registry: "https://npm.pkg.github.com"
+          token: ${{ secrets.GITHUB_TOKEN }}
