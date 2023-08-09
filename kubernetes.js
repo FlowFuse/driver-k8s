@@ -245,7 +245,8 @@ const createDeployment = async (project, options) => {
     if (!project.url.startWith('http')) {
         projectURL = `${baseURL.protocol}//${project.safeName}.${this._options.domain}`
     } else {
-        projectURL = project.url
+        const temp = new URL(project.url)
+        projectURL = `${temp.protocol}//${temp.hostname}${temp.port ? ':' + temp.port : ''}`
     }
 
     const teamID = this._app.db.models.Team.encodeHashid(project.TeamId)
