@@ -242,7 +242,7 @@ const createDeployment = async (project, options) => {
 
     const baseURL = new URL(this._app.config.base_url)
     let projectURL
-    if (!project.url.startWith('http')) {
+    if (!project.url.startsWith('http')) {
         projectURL = `${baseURL.protocol}//${project.safeName}.${this._options.domain}`
     } else {
         const temp = new URL(project.url)
