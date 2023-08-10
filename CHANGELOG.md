@@ -1,3 +1,10 @@
+#### 1.10.1: Release
+
+ - Fix editor path (#101) @hardillb
+ - Introduce package publish pipeline (#99) @ppawlowski
+ - Move to CluserIP (#100) @hardillb
+ - Remove evreything on suspend (#98) @hardillb
+
 #### 1.10.0: Release
 
  - Added support for annotation substitutions (#95) @dfulgham
