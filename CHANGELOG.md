@@ -1,3 +1,11 @@
+#### 1.11.0: Release
+
+ - Add flowforge container build dispatch in the node package build pipeline (#108) @ppawlowski
+ - Bump kubernetes client (#107) @hardillb
+ - Bump word-wrap from 1.2.3 to 1.2.5 (#105) @app/dependabot
+ - FIX: Publish package on schedule (#104) @ppawlowski
+ - FIX: Allow publish only when changes are pushed to `main` branch (#103) @ppawlowski
+
 #### 1.10.1: Release
 
  - Fix editor path (#101) @hardillb
