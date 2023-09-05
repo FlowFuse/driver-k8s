@@ -1,8 +1,6 @@
 name: Build and push packages
 
 on:
-  schedule:
-    - cron: '0 23 * * *'
   push:
     branches:
       - main
