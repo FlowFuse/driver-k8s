@@ -14,13 +14,13 @@ jobs:
 
   publish:
     needs: build
-    if: |
-      ( github.event_name == 'push' && github.ref == 'refs/heads/main' ) ||
-      github.event_name == 'schedule'
-    uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@e3e734b910af78371b2c9a1c6856446d17421f50'
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: 'flowforge/github-actions-workflows/.github/workflows/publish_node_package.yml@e5e57b30ac6ed8478406b3b3f2780241d2f4dcd8f'
     with:
       package_name: flowforge-driver-k8s
       publish_package: true
+    secrets:
+      npm_registry_token: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
   dispatch_container_build:
     needs: publish
