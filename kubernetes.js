@@ -374,14 +374,14 @@ const createProject = async (project, options) => {
 
     try {
         await this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment)
-    } catch(err) {
+    } catch (err) {
         this._app.log.error(`[k8s] Project ${project.id} - error creating deployment: ${err.toString()}`)
         this._app.log.error(`[k8s] deployment ${JSON.stringify(localDeployment, undefined, 2)}`)
         this._app.log.error(err)
         // rethrow the error so the wrapper knows this hasn't worked
         throw err
     }
-    
+
     try {
         await this._k8sApi.createNamespacedService(namespace, localService)
     } catch (err) {
@@ -670,7 +670,7 @@ module.exports = {
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
         }
-        
+
         // For now, we just want to remove the Pod/Deployment
         const currentType = await project.getSetting('k8sType')
         let pod = true
