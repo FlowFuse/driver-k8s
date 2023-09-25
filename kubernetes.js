@@ -382,6 +382,18 @@ const createProject = async (project, options) => {
         throw err
     }
 
+    await new Promise( (resolve, reject) => {
+        const pollInterval = setInterval( async () => {
+            try {
+                await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                clearInterval(pollInterval)
+                resolve()
+            } catch (err) {
+                // hmm
+            }
+        }, 1000)
+    })
+
     try {
         await this._k8sApi.createNamespacedService(namespace, localService)
     } catch (err) {
@@ -391,6 +403,19 @@ const createProject = async (project, options) => {
         }
     }
 
+    const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+    await new Promise( (resolve, reject) => {
+        const pollInterval = setInterval( async () => {
+            try {
+                await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
+                clearInterval(pollInterval)
+                resolve()
+            } catch (err) {
+                // hmm
+            }
+        }, 1000)
+    })
+
     try {
         await this._k8sNetApi.createNamespacedIngress(namespace, localIngress)
     } catch (err) {
@@ -399,6 +424,18 @@ const createProject = async (project, options) => {
             throw err
         }
     }
+
+    await new Promise( (resolve, reject) => {
+        const pollInterval = setInterval( async () => {
+            try {
+                await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
+                clearInterval(pollInterval)
+                resolve()
+            } catch (err) {
+                // hmm
+            }
+        }, 1000)
+    })
 
     await project.updateSetting('k8sType', 'deployment')
 
@@ -663,6 +700,17 @@ module.exports = {
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
         }
+        
+        await new Promise( (resolve, reject) => {
+            const pollInterval = setInterval( async () => {
+                try {
+                    await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
+                } catch (err) {
+                    clearInterval(pollInterval)
+                    resolve()
+                }
+            }, 1000)
+        })
 
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         try {
@@ -670,6 +718,17 @@ module.exports = {
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
         }
+
+        await new Promise( (resolve, reject) => {
+            const pollInterval = setInterval( async () => {
+                try {
+                    await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
+                } catch (err) {
+                    clearInterval(pollInterval)
+                    resolve()
+                }
+            }, 1000)
+        })
 
         // For now, we just want to remove the Pod/Deployment
         const currentType = await project.getSetting('k8sType')
@@ -704,8 +763,6 @@ module.exports = {
      * @return {Object}
      */
     remove: async (project) => {
-        // let project = await this._app.db.models.Project.byId(id)
-
         try {
             await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
         } catch (err) {
