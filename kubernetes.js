@@ -372,63 +372,40 @@ const createProject = async (project, options) => {
     const localService = await createService(project, options)
     const localIngress = await createIngress(project, options)
 
-    const promises = []
-    promises.push(this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment).catch(err => {
+    try {
+        await this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment)
+    } catch(err) {
         this._app.log.error(`[k8s] Project ${project.id} - error creating deployment: ${err.toString()}`)
         this._app.log.error(`[k8s] deployment ${JSON.stringify(localDeployment, undefined, 2)}`)
         this._app.log.error(err)
         // rethrow the error so the wrapper knows this hasn't worked
         throw err
-    }))
-    /* eslint n/handle-callback-err: "off" */
-    promises.push(this._k8sApi.createNamespacedService(namespace, localService).catch(err => {
-        // TODO: This will fail if the service already exists. Which it okay if
-        // we're restarting a suspended project. As we don't know if we're restarting
-        // or not, we don't know if this is fatal or not.
-
-        // Once we can know if this is a restart or create, then we can decide
-        // whether to throw this error or not. For now, this will silently
-        // let it pass
-        //
+    }
+    
+    try {
+        await this._k8sApi.createNamespacedService(namespace, localService)
+    } catch (err) {
         if (project.state !== 'suspended') {
             this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
+            throw err
         }
-        // throw err
-    }))
+    }
 
-    // if (project.changedName) {
-    //     promises.push(this._k8sNetApi.replaceNamespacedIngress(project.safeName,namespace, localIngress)).catch(err => {
-    //         this._app.log.error(`[k8s] Project ${project.id} - error updating ingress: ${err.toString()}`)
-    //     }).then (async () => {
-    //         this._app.log.info(`[k8s] Ingress for project ${project.id} updated`)
-    //     })
-    // } else {
-    promises.push(this._k8sNetApi.createNamespacedIngress(namespace, localIngress).catch(err => {
-        // TODO: This will fail if the service already exists. Which it okay if
-        // we're restarting a suspended project. As we don't know if we're restarting
-        // or not, we don't know if this is fatal or not.
-
-        // Once we can know if this is a restart or create, then we can decide
-        // whether to throw this error or not. For now, this will silently
-        // let it pass
-        //
+    try {
+        await this._k8sNetApi.createNamespacedIngress(namespace, localIngress)
+    } catch (err) {
         if (project.state !== 'suspended') {
             this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+            throw err
         }
-        // throw err
-    }).then(async () => {
-        this._app.log.info(`[k8s] Ingress creation completed for project ${project.id}`)
-    }))
-    // }
+    }
 
     await project.updateSetting('k8sType', 'deployment')
 
-    return Promise.all(promises).then(async () => {
-        this._app.log.debug(`[k8s] Container ${project.id} started`)
-        project.state = 'running'
-        await project.save()
-        this._projects[project.id].state = 'starting'
-    })
+    this._app.log.debug(`[k8s] Container ${project.id} started`)
+    project.state = 'running'
+    await project.save()
+    this._projects[project.id].state = 'starting'
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -686,20 +663,14 @@ module.exports = {
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
         }
-        if (project.safeName.match(/^[0-9]/)) {
-            try {
-                await this._k8sApi.deleteNamespacedService('srv-' + project.safeName, this._namespace)
-            } catch (err) {
-                this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
-            }
-        } else {
-            try {
-                await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
-            } catch (err) {
-                this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
-            }
-        }
 
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+        try {
+            await this._k8sApi.deleteNamespacedService(prefix + project.safeName, this._namespace)
+        } catch (err) {
+            this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
+        }
+        
         // For now, we just want to remove the Pod/Deployment
         const currentType = await project.getSetting('k8sType')
         let pod = true
