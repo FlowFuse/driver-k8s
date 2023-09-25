@@ -382,8 +382,8 @@ const createProject = async (project, options) => {
         throw err
     }
 
-    await new Promise( (resolve, reject) => {
-        const pollInterval = setInterval( async () => {
+    await new Promise((resolve, reject) => {
+        const pollInterval = setInterval(async () => {
             try {
                 await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
                 clearInterval(pollInterval)
@@ -404,8 +404,8 @@ const createProject = async (project, options) => {
     }
 
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-    await new Promise( (resolve, reject) => {
-        const pollInterval = setInterval( async () => {
+    await new Promise((resolve, reject) => {
+        const pollInterval = setInterval(async () => {
             try {
                 await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
                 clearInterval(pollInterval)
@@ -425,8 +425,8 @@ const createProject = async (project, options) => {
         }
     }
 
-    await new Promise( (resolve, reject) => {
-        const pollInterval = setInterval( async () => {
+    await new Promise((resolve, reject) => {
+        const pollInterval = setInterval(async () => {
             try {
                 await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
                 clearInterval(pollInterval)
@@ -700,9 +700,9 @@ module.exports = {
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
         }
-        
-        await new Promise( (resolve, reject) => {
-            const pollInterval = setInterval( async () => {
+
+        await new Promise((resolve, reject) => {
+            const pollInterval = setInterval(async () => {
                 try {
                     await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
                 } catch (err) {
@@ -719,8 +719,8 @@ module.exports = {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
         }
 
-        await new Promise( (resolve, reject) => {
-            const pollInterval = setInterval( async () => {
+        await new Promise((resolve, reject) => {
+            const pollInterval = setInterval(async () => {
                 try {
                     await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
                 } catch (err) {
