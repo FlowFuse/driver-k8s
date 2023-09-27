@@ -383,6 +383,7 @@ const createProject = async (project, options) => {
     }
 
     await new Promise((resolve, reject) => {
+        const counter = 0
         const pollInterval = setInterval(async () => {
             try {
                 await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
@@ -390,8 +391,13 @@ const createProject = async (project, options) => {
                 resolve()
             } catch (err) {
                 // hmm
+                counter++
+                if (counter > 5) {
+                    this._app.log.error(`[k8s] Project ${project.id} - timeout waiting for Deployment`)
+                    reject(new Error('Timed out to creating Deployment'))
+                }
             }
-        }, 1000)
+        }, 500)
     })
 
     try {
@@ -405,15 +411,20 @@ const createProject = async (project, options) => {
 
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
     await new Promise((resolve, reject) => {
+        const counter = 0
         const pollInterval = setInterval(async () => {
             try {
                 await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
                 clearInterval(pollInterval)
                 resolve()
             } catch (err) {
-                // hmm
+                counter++
+                if (counter > 5) {
+                    this._app.log.error(`[k8s] Project ${project.id} - timeout waiting for Service`)
+                    reject(new Error('Timed out to creating Service'))
+                }
             }
-        }, 1000)
+        }, 500)
     })
 
     try {
@@ -426,15 +437,20 @@ const createProject = async (project, options) => {
     }
 
     await new Promise((resolve, reject) => {
+        const counter = 0
         const pollInterval = setInterval(async () => {
             try {
                 await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
                 clearInterval(pollInterval)
                 resolve()
             } catch (err) {
-                // hmm
+                counter++
+                if (counter > 5) {
+                    this._app.log.error(`[k8s] Project ${project.id} - timeout waiting for Ingress`)
+                    reject(new Error('Timed out to creating Ingress'))
+                }
             }
-        }, 1000)
+        }, 500)
     })
 
     await project.updateSetting('k8sType', 'deployment')
@@ -702,6 +718,7 @@ module.exports = {
         }
 
         await new Promise((resolve, reject) => {
+            const counter = 0
             const pollInterval = setInterval(async () => {
                 try {
                     await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
@@ -709,7 +726,13 @@ module.exports = {
                     clearInterval(pollInterval)
                     resolve()
                 }
-            }, 1000)
+                counter++
+                if (counter > 5) {
+                    clearInterval(pollInterval)
+                    this._app.log.error(`[k8s] Project ${project.id} - timed out deleting ingress`)
+                    reject(new Error('Timed out to deleting Ingress'))
+                }
+            }, 500)
         })
 
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
@@ -720,6 +743,7 @@ module.exports = {
         }
 
         await new Promise((resolve, reject) => {
+            const counter = 0
             const pollInterval = setInterval(async () => {
                 try {
                     await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
@@ -727,7 +751,13 @@ module.exports = {
                     clearInterval(pollInterval)
                     resolve()
                 }
-            }, 1000)
+                counter++
+                if (counter > 5) {
+                    clearInterval(pollInterval)
+                    this._app.log.error(`[k8s] Project ${project.id} - timed deleting service`)
+                    reject(new Error('Timed out to deleting Service'))
+                }
+            }, 500)
         })
 
         // For now, we just want to remove the Pod/Deployment
@@ -742,6 +772,7 @@ module.exports = {
 
         this._projects[project.id].state = 'suspended'
         return new Promise(resolve => {
+            const counter = 0
             const pollInterval = setInterval(async () => {
                 try {
                     if (pod) {
@@ -749,11 +780,17 @@ module.exports = {
                     } else {
                         await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
                     }
+                    counter++
+                    if (counter > 5) {
+                        clearInterval(pollInterval)
+                        this._app.log.error(`[k8s] Project ${project.id} - timed deleting ${pod ? 'Pod' : 'Deployment'}`)
+                        reject(new Error('Timed out to deleting Deployment'))
+                    }
                 } catch (err) {
                     clearInterval(pollInterval)
                     resolve()
                 }
-            }, 1000)
+            }, 500)
         })
     },
 
