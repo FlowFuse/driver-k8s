@@ -383,7 +383,7 @@ const createProject = async (project, options) => {
     }
 
     await new Promise((resolve, reject) => {
-        const counter = 0
+        let counter = 0
         const pollInterval = setInterval(async () => {
             try {
                 await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
@@ -411,7 +411,7 @@ const createProject = async (project, options) => {
 
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
     await new Promise((resolve, reject) => {
-        const counter = 0
+        let counter = 0
         const pollInterval = setInterval(async () => {
             try {
                 await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
@@ -437,7 +437,7 @@ const createProject = async (project, options) => {
     }
 
     await new Promise((resolve, reject) => {
-        const counter = 0
+        let counter = 0
         const pollInterval = setInterval(async () => {
             try {
                 await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
@@ -718,7 +718,7 @@ module.exports = {
         }
 
         await new Promise((resolve, reject) => {
-            const counter = 0
+            let counter = 0
             const pollInterval = setInterval(async () => {
                 try {
                     await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
@@ -743,7 +743,7 @@ module.exports = {
         }
 
         await new Promise((resolve, reject) => {
-            const counter = 0
+            let counter = 0
             const pollInterval = setInterval(async () => {
                 try {
                     await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
@@ -771,8 +771,8 @@ module.exports = {
         }
 
         this._projects[project.id].state = 'suspended'
-        return new Promise(resolve => {
-            const counter = 0
+        return new Promise((resolve, reject) => {
+            let counter = 0
             const pollInterval = setInterval(async () => {
                 try {
                     if (pod) {
