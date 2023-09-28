@@ -1,3 +1,9 @@
+#### 1.12.0: Release
+
+ - Publish nightly package to npmjs (#112) @ppawlowski
+ - Pin reusable workflow to commit SHA (#111) @ppawlowski
+ - Disable scheduled package build (#110) @ppawlowski
+
 #### 1.11.0: Release
 
  - Add flowforge container build dispatch in the node package build pipeline (#108) @ppawlowski
