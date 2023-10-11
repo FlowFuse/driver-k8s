@@ -627,7 +627,7 @@ module.exports = {
 
         this._initialCheckTimeout = setTimeout(() => {
             this._app.log.debug('[k8s] Restarting projects')
-            const namespace = options.projectNamespace || 'flowforge'
+            const namespace = this._namespace
             projects.forEach(async (project) => {
                 try {
                     if (project.state === 'suspended') {
@@ -666,7 +666,8 @@ module.exports = {
                             await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
                             this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
                         } catch (err) {
-                            this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
+                            this._app.log.error(`[k8s] Error while reading namespaced deployment for project '${project.safeName}' ${project.id}.  Error msg=${err.message}, stack=${err.stack}`)
+                            this._app.log.info(`[k8s] Project ${project.id} - recreating deployment`)
                             const fullProject = await this._app.db.models.Project.byId(project.id)
                             await createProject(fullProject, options)
                         }
