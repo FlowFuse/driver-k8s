@@ -408,6 +408,7 @@ const createProject = async (project, options) => {
                 // hmm
                 counter++
                 if (counter > this._k8sRetries) {
+                    clearInterval(pollInterval)
                     this._app.log.error(`[k8s] Project ${project.id} - timeout waiting for Deployment`)
                     reject(new Error('Timed out to creating Deployment'))
                 }
