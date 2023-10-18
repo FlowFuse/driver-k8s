@@ -470,6 +470,7 @@ const createProject = async (project, options) => {
             } catch (err) {
                 counter++
                 if (counter > this._k8sRetries) {
+                    clearInterval(pollInterval)
                     this._app.log.error(`[k8s] Project ${project.id} - timeout waiting for Ingress`)
                     reject(new Error('Timed out to creating Ingress'))
                 }
