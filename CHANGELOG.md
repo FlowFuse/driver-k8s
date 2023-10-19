@@ -1,3 +1,10 @@
+#### 1.12.1: Release
+
+ - Run promises in order (#115) @hardillb
+ - Expose mem/cpu limits (#119) @hardillb
+ - Update ff references in package.json (#117) @knolleary
+ - Change repo references in workflows after github org rename (#113) @ppawlowski
+ 
 #### 1.12.0: Release
 
  - Publish nightly package to npmjs (#112) @ppawlowski
