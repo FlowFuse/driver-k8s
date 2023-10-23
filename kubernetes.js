@@ -271,7 +271,7 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].env.push({ name: 'FORGE_LICENSE_TYPE', value: 'ee' })
     }
     if (stack.memory) {
-        localPod.spec.containers[0].env.push({ name: 'FORGE_MEMORY_LIMIT', value: stack.memory.toString() })
+        localPod.spec.containers[0].env.push({ name: 'FORGE_MEMORY_LIMIT', value: `${stack.memory}` })
     }
     if (stack.cpu) {
         localPod.spec.containers[0].env.push({ name: 'FORGE_CPU_LIMIT', value: stack.cpu.toString() })
