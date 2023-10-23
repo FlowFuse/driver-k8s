@@ -274,7 +274,7 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].env.push({ name: 'FORGE_MEMORY_LIMIT', value: `${stack.memory}` })
     }
     if (stack.cpu) {
-        localPod.spec.containers[0].env.push({ name: 'FORGE_CPU_LIMIT', value: stack.cpu.toString() })
+        localPod.spec.containers[0].env.push({ name: 'FORGE_CPU_LIMIT', value: `${stack.cpu}` })
     }
 
     const credentialSecret = await project.getSetting('credentialSecret')
