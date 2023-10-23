@@ -271,10 +271,10 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].env.push({ name: 'FORGE_LICENSE_TYPE', value: 'ee' })
     }
     if (stack.memory) {
-        localPod.spec.containers[0].env.push({ name: 'FORGE_MEMORY_LIMIT', value: stack.memory })
+        localPod.spec.containers[0].env.push({ name: 'FORGE_MEMORY_LIMIT', value: stack.memory.toString() })
     }
     if (stack.cpu) {
-        localPod.spec.containers[0].env.push({ name: 'FORGE_CPU_LIMIT', value: stack.cpu })
+        localPod.spec.containers[0].env.push({ name: 'FORGE_CPU_LIMIT', value: stack.cpu.toString() })
     }
 
     const credentialSecret = await project.getSetting('credentialSecret')
