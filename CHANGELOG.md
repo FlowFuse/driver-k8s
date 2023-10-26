@@ -1,3 +1,8 @@
+#### 1.13.0: Release
+
+ - Pin reusable workflows to v0.1.0 (#123) @ppawlowski
+ - Force Resource limits to Strings (#122) @hardillb
+
 #### 1.12.1: Release
 
  - Run promises in order (#115) @hardillb
