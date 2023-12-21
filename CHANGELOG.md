@@ -1,3 +1,9 @@
+#### 1.15.0: Release
+
+ - #3174: Enable Multi-Core CPU Support for Node-RED Projects (#129) @elenaviter
+ - Update npm-publish action version to v2 (#127) @ppawlowski
+ - Update to flowfuse npm scope (#126) @knolleary
+
 #### 1.14.0: Release
 
 
