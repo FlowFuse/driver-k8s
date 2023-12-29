@@ -17,6 +17,7 @@ driver:
     projectNamespace: flowforge
     cloudProvider: aws
     privateCA: ff-ca-certs
+    certManagerIssuer: lets-encrypt
     k8sDelay: 1000
     k8sRetries: 10
 ```
@@ -28,6 +29,7 @@ should run on
 - `cloudProvider` can be left unset for none `aws` deployments. This triggers the adding of
 AWS EKS specific annotation for ALB Ingress.
 - `privateCA` name of ConfigMap holding PEM CA Cert Bundle (file name `certs.pem`) Optional
+- `certManagerIssuer` name of the ClusterIssuer to use to create HTTPS certs for instances (default not set)
 - `k8sRetries` how many times to retry actions against the K8s API
 - `k8sDelay` how long to wait (in ms) between retries to the K8s API
 
