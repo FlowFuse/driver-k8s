@@ -360,6 +360,18 @@ const createIngress = async (project, options) => {
 
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
 
+    if (this._certManagerIssuer) {
+        localIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._certManagerIssuer
+        localIngress.spec.tls = [
+            {
+                hosts: [
+                    url.host
+                ],
+                secretName: project.safeName
+            }
+        ]
+    }
+
     // process annotations with potential replacements
     Object.keys(localIngress.metadata.annotations).forEach((key) => {
         localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key], exposedData)
@@ -593,6 +605,7 @@ module.exports = {
         this._namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
         this._k8sDelay = this._app.config.driver.options.k8sDelay || 1000
         this._k8sRetries = this._app.config.driver.options.k8sRetries || 10
+        this._certManagerIssuer = this._app.config.driver.options._certManagerIssuer
 
         const kc = new k8s.KubeConfig()
 
@@ -753,6 +766,14 @@ module.exports = {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
         }
 
+        if (this._certManagerIssuer) {
+            try {
+                await this._k8sApi.deleteNamespacedSecret(project.safeName, this._namespace)
+            } catch (err) {
+                this._app.log.error(`[k8s] Project ${project.id} - error deleting tls secret: ${err.toString()}`)
+            }
+        }
+
         // Note that, regardless, the main objective is to delete deployment (runnable)
         // Even if some k8s resources like ingress or service are still not deleted (maybe because of
         // k8s service latency), the most important thing is to get to deployment.
@@ -850,6 +871,13 @@ module.exports = {
             await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
         } catch (err) {
             this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
+        }
+        if (this._certManagerIssuer) {
+            try {
+                await this._k8sApi.deleteNamespacedSecret(project.safeName, this._namespace)
+            } catch (err) {
+                this._app.log.error(`[k8s] Project ${project.id} - error deleting tls secret: ${err.toString()}`)
+            }
         }
         try {
             if (project.safeName.match(/^[0-9]/)) {
