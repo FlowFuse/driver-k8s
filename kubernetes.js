@@ -605,7 +605,7 @@ module.exports = {
         this._namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
         this._k8sDelay = this._app.config.driver.options.k8sDelay || 1000
         this._k8sRetries = this._app.config.driver.options.k8sRetries || 10
-        this._certManagerIssuer = this._app.config.driver.options._certManagerIssuer
+        this._certManagerIssuer = this._app.config.driver.options.certManagerIssuer
 
         const kc = new k8s.KubeConfig()
 
