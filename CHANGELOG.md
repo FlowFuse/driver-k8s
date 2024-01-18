@@ -1,3 +1,7 @@
+#### 2.0.0: Release
+
+ - Add support for using cert manager (#131) @hardillb
+
 #### 1.15.0: Release
 
  - #3174: Enable Multi-Core CPU Support for Node-RED Projects (#129) @elenaviter
