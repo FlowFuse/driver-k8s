@@ -1,3 +1,7 @@
+#### 2.0.1: Release
+
+ - Typo, extra `_` in option name (#133) @hardillb
+
 #### 2.0.0: Release
 
  - Add support for using cert manager (#131) @hardillb
