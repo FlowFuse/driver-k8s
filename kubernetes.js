@@ -102,7 +102,7 @@ const deploymentTemplate = {
                 containers: [
                     {
                         resources: {
-                            request: {
+                            requests: {
                                 // 10th of a core
                                 cpu: '100m',
                                 memory: '128Mi'
@@ -315,9 +315,9 @@ const createDeployment = async (project, options) => {
     }
 
     if (stack.memory && stack.cpu) {
-        localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
+        localPod.spec.containers[0].resources.requests.memory = `${stack.memory}Mi`
         localPod.spec.containers[0].resources.limits.memory = `${stack.memory}Mi`
-        localPod.spec.containers[0].resources.request.cpu = `${stack.cpu * 10}m`
+        localPod.spec.containers[0].resources.requests.cpu = `${stack.cpu * 10}m`
         localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
 
