@@ -20,6 +20,7 @@ driver:
     certManagerIssuer: lets-encrypt
     k8sDelay: 1000
     k8sRetries: 10
+    logPassthrough: true
 ```
 
 - `registry` is the Docker Registry to load Stack Containers from
@@ -32,6 +33,7 @@ AWS EKS specific annotation for ALB Ingress.
 - `certManagerIssuer` name of the ClusterIssuer to use to create HTTPS certs for instances (default not set)
 - `k8sRetries` how many times to retry actions against the K8s API
 - `k8sDelay` how long to wait (in ms) between retries to the K8s API
+- `logPassthrough` Have Node-RED logs printed in JSON format to container stdout (default false)
 
 Expects to pick up K8s credentials from the environment
 
