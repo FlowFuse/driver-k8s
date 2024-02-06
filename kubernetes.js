@@ -283,7 +283,7 @@ const createDeployment = async (project, options) => {
     }
 
     if (this._logPassthrough) {
-        localPod.spec.containers[0].env.push({ name: "FORGE_LOG_PASSTHROUGH", value: "true" })
+        localPod.spec.containers[0].env.push({ name: 'FORGE_LOG_PASSTHROUGH', value: 'true' })
     }
 
     if (this._app.config.driver.options.projectSelector) {
