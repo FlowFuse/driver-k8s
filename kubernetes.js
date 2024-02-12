@@ -606,11 +606,11 @@ module.exports = {
         this._projects = {}
         this._options = options
 
-        this._namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
-        this._k8sDelay = this._app.config.driver.options.k8sDelay || 1000
-        this._k8sRetries = this._app.config.driver.options.k8sRetries || 10
-        this._certManagerIssuer = this._app.config.driver.options.certManagerIssuer
-        this._logPassthrough = this._app.config.driver.options.logPassthrough || false
+        this._namespace = this._app.config.driver.options?.projectNamespace || 'flowforge'
+        this._k8sDelay = this._app.config.driver.options?.k8sDelay || 1000
+        this._k8sRetries = this._app.config.driver.options?.k8sRetries || 10
+        this._certManagerIssuer = this._app.config.driver.options?.certManagerIssuer
+        this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
 
         const kc = new k8s.KubeConfig()
 
