@@ -282,6 +282,10 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].env.push({ name: 'FORGE_NR_SECRET', value: credentialSecret })
     }
 
+    if (this._logPassthrough) {
+        localPod.spec.containers[0].env.push({ name: 'FORGE_LOG_PASSTHROUGH', value: 'true' })
+    }
+
     if (this._app.config.driver.options.projectSelector) {
         localPod.spec.nodeSelector = this._app.config.driver.options.projectSelector
     }
@@ -602,10 +606,11 @@ module.exports = {
         this._projects = {}
         this._options = options
 
-        this._namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
-        this._k8sDelay = this._app.config.driver.options.k8sDelay || 1000
-        this._k8sRetries = this._app.config.driver.options.k8sRetries || 10
-        this._certManagerIssuer = this._app.config.driver.options.certManagerIssuer
+        this._namespace = this._app.config.driver.options?.projectNamespace || 'flowforge'
+        this._k8sDelay = this._app.config.driver.options?.k8sDelay || 1000
+        this._k8sRetries = this._app.config.driver.options?.k8sRetries || 10
+        this._certManagerIssuer = this._app.config.driver.options?.certManagerIssuer
+        this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
 
         const kc = new k8s.KubeConfig()
 
