@@ -1,3 +1,8 @@
+#### 2.1.0: Release
+
+ - Add log passthrough support (#136) @hardillb
+ - Fix containers resource requests missing last s (#135) @hardillb
+
 #### 2.0.1: Release
 
  - Typo, extra `_` in option name (#133) @hardillb
