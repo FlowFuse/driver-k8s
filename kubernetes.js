@@ -318,6 +318,10 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].env.push({ name: 'NODE_EXTRA_CA_CERTS', value: '/usr/local/ssl-certs/chain.pem' })
     }
 
+    if (this._cloudProvider === 'openshift') {
+        localPod.spec.securityContext = {}
+    }
+
     if (stack.memory && stack.cpu) {
         localPod.spec.containers[0].resources.requests.memory = `${stack.memory}Mi`
         localPod.spec.containers[0].resources.limits.memory = `${stack.memory}Mi`
@@ -611,6 +615,7 @@ module.exports = {
         this._k8sRetries = this._app.config.driver.options?.k8sRetries || 10
         this._certManagerIssuer = this._app.config.driver.options?.certManagerIssuer
         this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
+        this._cloudProvider = this._app.config.driver.options?.cloudProvider
 
         const kc = new k8s.KubeConfig()
 
