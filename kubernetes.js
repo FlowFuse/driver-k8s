@@ -337,8 +337,6 @@ const createDeployment = async (project, options) => {
     project.url = projectURL
     await project.save()
 
-    console.log('BEN', JSON.stringify(localDeployment,null, 2))
-
     return localDeployment
 }
 
