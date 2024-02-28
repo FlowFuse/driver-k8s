@@ -1,3 +1,8 @@
+#### 2.1.1: Release
+
+ - Rename default stack container (#138) @hardillb
+ - Update nr-launcher to 2.1.1 @knolleary
+
 #### 2.1.0: Release
 
  - Add log passthrough support (#136) @hardillb
