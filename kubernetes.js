@@ -318,7 +318,7 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].env.push({ name: 'NODE_EXTRA_CA_CERTS', value: '/usr/local/ssl-certs/chain.pem' })
     }
 
-    if (this._cloudProvider === 'openshift') {
+    if (this._app.license.active() && this._cloudProvider === 'openshift') {
         localPod.spec.securityContext = {}
     }
 
