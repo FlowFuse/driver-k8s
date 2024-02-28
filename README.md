@@ -27,8 +27,8 @@ driver:
 - `projectNamespace` the namespace Project pods should run in
 - `projectSelector` a list of labels that should be used to select which nodes Project Pods
 should run on
-- `cloudProvider` can be left unset for none `aws` deployments. This triggers the adding of
-AWS EKS specific annotation for ALB Ingress.
+- `cloudProvider` normally not set, but can be `aws` This triggers the adding of
+AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on OpenShift (Enterprise license only)
 - `privateCA` name of ConfigMap holding PEM CA Cert Bundle (file name `certs.pem`) Optional
 - `certManagerIssuer` name of the ClusterIssuer to use to create HTTPS certs for instances (default not set)
 - `k8sRetries` how many times to retry actions against the K8s API
