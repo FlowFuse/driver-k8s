@@ -1,3 +1,9 @@
+#### 2.2.0: Release
+
+ - Bump jose from 4.14.4 to 4.15.5 (#142) @app/dependabot
+ - Make NR pods run on OpenShift (#140) @hardillb
+ - Rename default stack container (#138) @hardillb
+
 #### 2.1.0: Release
 
  - Add log passthrough support (#136) @hardillb
