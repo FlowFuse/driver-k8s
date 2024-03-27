@@ -324,7 +324,8 @@ const createDeployment = async (project, options) => {
 
     if (stack.memory && stack.cpu) {
         localPod.spec.containers[0].resources.requests.memory = `${stack.memory}Mi`
-        localPod.spec.containers[0].resources.limits.memory = `${stack.memory}Mi`
+        // increase limit to give npm more room to run in
+        localPod.spec.containers[0].resources.limits.memory = `${stack.memory + 128}Mi`
         localPod.spec.containers[0].resources.requests.cpu = `${stack.cpu * 10}m`
         localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
