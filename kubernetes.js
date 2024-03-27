@@ -14,59 +14,6 @@ const _ = require('lodash')
  *
  */
 
-const podTemplate = {
-    apiVersion: 'v1',
-    kind: 'Pod',
-    metadata: {
-        // name: "k8s-client-test",
-        labels: {
-            // name: "k8s-client-test",
-            nodered: 'true'
-            // app: "k8s-client-test",
-        }
-    },
-    spec: {
-        securityContext: {
-            runAsUser: 1000,
-            runAsGroup: 1000,
-            fsGroup: 1000
-        },
-        containers: [
-            {
-                resources: {
-                    request: {
-                        // 10th of a core
-                        cpu: '100m',
-                        memory: '128Mi'
-                    },
-                    limits: {
-                        cpu: '125m',
-                        memory: '192Mi'
-                    }
-                },
-                name: 'node-red',
-                // image: "docker-pi.local:5000/bronze-node-red",
-                imagePullPolicy: 'Always',
-                env: [
-                    // {name: "APP_NAME", value: "test"},
-                    { name: 'TZ', value: 'Europe/London' }
-                ],
-                ports: [
-                    { name: 'web', containerPort: 1880, protocol: 'TCP' }
-                ],
-                securityContext: {
-                    allowPrivilegeEscalation: false
-                }
-            }
-        ]
-        // nodeSelector: {
-        //     role: 'projects'
-        // }
-
-    },
-    enableServiceLinks: false
-}
-
 const deploymentTemplate = {
     apiVersion: 'apps/v1',
     kind: 'Deployment',
@@ -512,75 +459,6 @@ const createProject = async (project, options) => {
     await project.save()
 
     this._projects[project.id].state = 'starting'
-}
-
-// eslint-disable-next-line no-unused-vars
-const createPod = async (project, options) => {
-    // const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
-    const stack = project.ProjectStack.properties
-
-    const localPod = JSON.parse(JSON.stringify(podTemplate))
-    localPod.metadata.name = project.safeName
-    localPod.metadata.labels.name = project.safeName
-    localPod.metadata.labels.app = project.id
-    if (stack.container) {
-        localPod.spec.containers[0].image = stack.container
-    } else {
-        localPod.spec.containers[0].image = `${this._options.registry}flowforge/node-red`
-    }
-
-    const baseURL = new URL(this._app.config.base_url)
-    const projectURL = `${baseURL.protocol}//${project.safeName}.${this._options.domain}`
-    const teamID = this._app.db.models.Team.encodeHashid(project.TeamId)
-    const authTokens = await project.refreshAuthTokens()
-    localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_ID', value: authTokens.clientID })
-    localPod.spec.containers[0].env.push({ name: 'FORGE_CLIENT_SECRET', value: authTokens.clientSecret })
-    localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.api_url })
-    localPod.spec.containers[0].env.push({ name: 'BASE_URL', value: projectURL })
-    localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: teamID })
-    localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_ID', value: project.id })
-    localPod.spec.containers[0].env.push({ name: 'FORGE_PROJECT_TOKEN', value: authTokens.token })
-    // Inbound connections for k8s disabled by default
-    localPod.spec.containers[0].env.push({ name: 'FORGE_NR_NO_TCP_IN', value: 'true' }) // MVP. Future iteration could present this to YML or UI
-    localPod.spec.containers[0].env.push({ name: 'FORGE_NR_NO_UDP_IN', value: 'true' }) // MVP. Future iteration could present this to YML or UI
-    if (authTokens.broker) {
-        localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_URL', value: authTokens.broker.url })
-        localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_USERNAME', value: authTokens.broker.username })
-        localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_PASSWORD', value: authTokens.broker.password })
-    }
-    if (this._app.license.active()) {
-        localPod.spec.containers[0].env.push({ name: 'FORGE_LICENSE_TYPE', value: 'ee' })
-    }
-
-    const credentialSecret = await project.getSetting('credentialSecret')
-    if (credentialSecret) {
-        localPod.spec.containers[0].env.push({ name: 'FORGE_NR_SECRET', value: credentialSecret })
-    }
-
-    if (this._app.config.driver.options.projectSelector) {
-        localPod.spec.nodeSelector = this._app.config.driver.options.projectSelector
-    }
-    if (this._app.config.driver.options.registrySecrets) {
-        localPod.spec.imagePullSecrets = []
-        this._app.config.driver.options.registrySecrets.forEach(sec => {
-            const entry = {
-                name: sec
-            }
-            localPod.spec.imagePullSecrets.push(entry)
-        })
-    }
-
-    if (stack.memory && stack.cpu) {
-        localPod.spec.containers[0].resources.request.memory = `${stack.memory}Mi`
-        localPod.spec.containers[0].resources.limits.memory = `${stack.memory}Mi`
-        localPod.spec.containers[0].resources.request.cpu = `${stack.cpu * 10}m`
-        localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
-    }
-
-    project.url = projectURL
-    await project.save()
-
-    return localPod
 }
 
 const getEndpoints = async (project) => {
