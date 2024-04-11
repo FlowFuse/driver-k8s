@@ -1,3 +1,7 @@
+#### 2.3.0: Release
+
+ - Remove legacy code that is not used anymore (#144) @hardillb
+
 #### 2.2.0: Release
 
  - Bump jose from 4.14.4 to 4.15.5 (#142) @app/dependabot
