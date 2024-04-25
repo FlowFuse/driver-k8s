@@ -509,7 +509,7 @@ const createProject = async (project, options) => {
         }
     }
     if (this._customHostname?.enabled) {
-        const customHostname = await project.getSetting('customHostname')
+        const customHostname = await project.getSetting('hostname')
         if (customHostname) {
             const customHostnameIngress = await createCustomIngress(project, customHostname, options)
             try {
