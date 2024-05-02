@@ -911,7 +911,6 @@ module.exports = {
         settings.port = 1880
         settings.rootDir = '/'
         settings.userDir = 'data'
-        settings.healthCheckInterval = await project.getSetting('healthCheckInterval')
 
         return settings
     },
