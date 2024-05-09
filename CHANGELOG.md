@@ -1,3 +1,11 @@
+#### 2.4.0: Release
+
+ - Revert "Add support for user set health check interval" (#152) @Steve-Mcl
+ - Add support for user set health check interval (#150) @Steve-Mcl
+ - Fix memory addition (#148) @hardillb
+ - Allow pods to use 128m extra memory for npm (#145) @hardillb
+ - Bump tar from 6.1.15 to 6.2.1 (#147) @app/dependabot
+
 #### 2.3.0: Release
 
  - Remove legacy code that is not used anymore (#144) @hardillb
