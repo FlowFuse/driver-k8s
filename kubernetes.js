@@ -587,7 +587,7 @@ module.exports = {
         this._certManagerIssuer = this._app.config.driver.options?.certManagerIssuer
         this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
         this._cloudProvider = this._app.config.driver.options?.cloudProvider
-        this._customHostname = this._app.config.driver.options?.customHostname
+        this._customHostname = this._app.config.driver.options?.customHostname && this._app.config.features.enabled('customHostnames')
 
         const kc = new k8s.KubeConfig()
 
