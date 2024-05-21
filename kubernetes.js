@@ -412,6 +412,8 @@ const createCustomIngress = async (project, hostname, options) => {
         customIngress.spec.ingressClassName = `${this._customHostname.ingressClass}`
     }
 
+    console.log(JSON.stringify(customIngress))
+
     return customIngress
     } catch (err) {
         console.log(err)
