@@ -135,7 +135,7 @@ const customIngressTemplate = {
     apiVersion: 'networking.k8s.io/v1',
     kind: 'Ingress',
     metadata: {
-
+        annotations: {}
     },
     spec: {
         rules: [
