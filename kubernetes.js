@@ -371,6 +371,7 @@ const createIngress = async (project, options) => {
 }
 
 const createCustomIngress = async (project, hostname, options) => {
+    try {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
     const url = new URL(project.url)
     url.host = hostname
@@ -412,6 +413,9 @@ const createCustomIngress = async (project, hostname, options) => {
     }
 
     return customIngress
+    } catch (err) {
+        console.log(err)
+    }
 }
 
 const createProject = async (project, options) => {
