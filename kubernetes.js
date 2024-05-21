@@ -571,11 +571,11 @@ const getEndpoints = async (project) => {
 
 module.exports = {
     /**
-   * Initialises this driver
-   * @param {string} app - the Vue application
-   * @param {object} options - A set of configuration options for the driver
-   * @return {forge.containers.ProjectArguments}
-   */
+    * Initialises this driver
+    * @param {string} app - the Vue application
+    * @param {object} options - A set of configuration options for the driver
+    * @return {forge.containers.ProjectArguments}
+    */
     init: async (app, options) => {
         this._app = app
         this._projects = {}
