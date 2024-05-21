@@ -587,7 +587,8 @@ module.exports = {
         this._certManagerIssuer = this._app.config.driver.options?.certManagerIssuer
         this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
         this._cloudProvider = this._app.config.driver.options?.cloudProvider
-        if (this._app.config.features.enabled('customHostnames')) {
+        if (this._app.config.features.enabled('customHostnames') && this._app.config.driver.options?.customHostname?.enabled) {
+            this._app.log.info('[k8s] Enabling Custom Hostname Support')
             this._customHostname = this._app.config.driver.options?.customHostname
         }
 
