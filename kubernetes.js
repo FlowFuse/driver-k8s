@@ -392,7 +392,7 @@ const createCustomIngress = async (project, hostname, options) => {
     customIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
     if (this._customHostname?.certManagerIssuer) {
-        customIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._certManagerIssuer
+        customIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._customHostname.certManagerIssuer
         customIngress.spec.tls = [
             {
                 hosts: [
