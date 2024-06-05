@@ -23,6 +23,7 @@ driver:
     logPassthrough: true
     customHostname:
       enabled: true
+      cnameTarget: custom-loadbalancer.example.com
       certManagerIssuer: lets-encrypt
       ingressClass: custom-nginx
 ```
@@ -40,6 +41,7 @@ AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on 
 - `logPassthrough` Have Node-RED logs printed in JSON format to container stdout (default false)
 - `customHostname` Settings linked to allowing instances to have a second hostname
 - `customHostname.enabled` (default false)
+- `customHostname.cnameTarget` The hostname users should configure their DNS entries to point at. Required. (default not set)
 - `customHostname.certManagerIssuer` Name of the Cluster issuer to use to create HTTPS certs for the custom hostname (default not set)
 - `customHostname.ingressClass` Name of the IngressClass to use to expose the custom hostname (default not set)
 
