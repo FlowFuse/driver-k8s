@@ -131,6 +131,36 @@ const ingressTemplate = {
     }
 }
 
+const customIngressTemplate = {
+    apiVersion: 'networking.k8s.io/v1',
+    kind: 'Ingress',
+    metadata: {
+        annotations: {}
+    },
+    spec: {
+        rules: [
+            {
+                http: {
+                    paths: [
+                        {
+                            pathType: 'Prefix',
+                            path: '/',
+                            backend: {
+                                service: {
+                                    port: { number: 1880 }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        tls: [
+
+        ]
+    }
+}
+
 const createDeployment = async (project, options) => {
     const stack = project.ProjectStack.properties
 
@@ -340,6 +370,50 @@ const createIngress = async (project, options) => {
     return localIngress
 }
 
+const createCustomIngress = async (project, hostname, options) => {
+    const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+    const url = new URL(project.url)
+    url.host = hostname
+
+    // exposedData available for annotation replacements
+    const exposedData = {
+        serviceName: `${prefix}${project.safeName}`,
+        instanceURL: url.href,
+        instanceHost: url.host,
+        instanceProtocol: url.protocol
+    }
+
+    this._app.log.info('K8S DRIVER: start custom hostname ingress template')
+    const customIngress = JSON.parse(JSON.stringify(customIngressTemplate))
+
+    customIngress.metadata.name = `${project.safeName}-custom`
+    customIngress.spec.rules[0].host = hostname
+    customIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
+
+    if (this._customHostname?.certManagerIssuer) {
+        customIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._customHostname.certManagerIssuer
+        customIngress.spec.tls = [
+            {
+                hosts: [
+                    hostname
+                ],
+                secretName: `${project.safeName}-custom`
+            }
+        ]
+    }
+
+    // process annotations with potential replacements
+    Object.keys(customIngress.metadata.annotations).forEach((key) => {
+        customIngress.metadata.annotations[key] = mustache(customIngress.metadata.annotations[key], exposedData)
+    })
+
+    if (this._customHostname?.ingressClass) {
+        customIngress.spec.ingressClassName = `${this._customHostname.ingressClass}`
+    }
+
+    return customIngress
+}
+
 const createProject = async (project, options) => {
     const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
 
@@ -352,7 +426,7 @@ const createProject = async (project, options) => {
     } catch (err) {
         if (err.statusCode === 409) {
             // If deployment exists, perform an upgrade
-            this._app.log.warn(`[k8s] Deployment for project ${project.id} already exists. Upgrading deployment`)
+            this._app.log.warn(`[k8s] Deployment for instance ${project.id} already exists. Upgrading deployment`)
             const result = await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
 
             const existingDeployment = result.body
@@ -363,7 +437,7 @@ const createProject = async (project, options) => {
             }
         } else {
             // Log other errors and rethrow them for additional higher-level handling
-            this._app.log.error(`[k8s] Unexpected error creating deployment for project ${project.id}.`)
+            this._app.log.error(`[k8s] Unexpected error creating deployment for instance ${project.id}.`)
             this._app.log.error(`[k8s] deployment ${JSON.stringify(localDeployment, undefined, 2)}`)
             this._app.log.error(err)
             // rethrow the error so the wrapper knows this hasn't worked
@@ -383,7 +457,7 @@ const createProject = async (project, options) => {
                 counter++
                 if (counter > this._k8sRetries) {
                     clearInterval(pollInterval)
-                    this._app.log.error(`[k8s] Project ${project.id} - timeout waiting for Deployment`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - timeout waiting for Deployment`)
                     reject(new Error('Timed out to creating Deployment'))
                 }
             }
@@ -394,10 +468,10 @@ const createProject = async (project, options) => {
         await this._k8sApi.createNamespacedService(namespace, localService)
     } catch (err) {
         if (err.statusCode === 409) {
-            this._app.log.warn(`[k8s] Service for project ${project.id} already exists, proceeding...`)
+            this._app.log.warn(`[k8s] Service for instance ${project.id} already exists, proceeding...`)
         } else {
             if (project.state !== 'suspended') {
-                this._app.log.error(`[k8s] Project ${project.id} - error creating service: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error creating service: ${err.toString()}`)
                 throw err
             }
         }
@@ -415,7 +489,7 @@ const createProject = async (project, options) => {
                 counter++
                 if (counter > this._k8sRetries) {
                     clearInterval(pollInterval)
-                    this._app.log.error(`[k8s] Project ${project.id} - timeout waiting for Service`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - timeout waiting for Service`)
                     reject(new Error('Timed out to creating Service'))
                 }
             }
@@ -426,11 +500,29 @@ const createProject = async (project, options) => {
         await this._k8sNetApi.createNamespacedIngress(namespace, localIngress)
     } catch (err) {
         if (err.statusCode === 409) {
-            this._app.log.warn(`[k8s] Ingress for project ${project.id} already exists, proceeding...`)
+            this._app.log.warn(`[k8s] Ingress for instance ${project.id} already exists, proceeding...`)
         } else {
             if (project.state !== 'suspended') {
-                this._app.log.error(`[k8s] Project ${project.id} - error creating ingress: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error creating ingress: ${err.toString()}`)
                 throw err
+            }
+        }
+    }
+    if (this._customHostname?.enabled) {
+        const customHostname = await project.getSetting('customHostname')
+        if (customHostname) {
+            const customHostnameIngress = await createCustomIngress(project, customHostname, options)
+            try {
+                await this._k8sNetApi.createNamespacedIngress(namespace, customHostnameIngress)
+            } catch (err) {
+                if (err.statusCode === 409) {
+                    this._app.log.warn(`[k8s] Custom Hostname Ingress for instance ${project.id} already exists, proceeding...`)
+                } else {
+                    if (project.state !== 'suspended') {
+                        this._app.log.error(`[k8s] Instance ${project.id} - error creating custom hostname ingress: ${err.toString()}`)
+                        throw err
+                    }
+                }
             }
         }
     }
@@ -446,7 +538,7 @@ const createProject = async (project, options) => {
                 counter++
                 if (counter > this._k8sRetries) {
                     clearInterval(pollInterval)
-                    this._app.log.error(`[k8s] Project ${project.id} - timeout waiting for Ingress`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - timeout waiting for Ingress`)
                     reject(new Error('Timed out to creating Ingress'))
                 }
             }
@@ -479,11 +571,11 @@ const getEndpoints = async (project) => {
 
 module.exports = {
     /**
-   * Initialises this driver
-   * @param {string} app - the Vue application
-   * @param {object} options - A set of configuration options for the driver
-   * @return {forge.containers.ProjectArguments}
-   */
+    * Initialises this driver
+    * @param {string} app - the Vue application
+    * @param {object} options - A set of configuration options for the driver
+    * @return {forge.containers.ProjectArguments}
+    */
     init: async (app, options) => {
         this._app = app
         this._projects = {}
@@ -495,6 +587,10 @@ module.exports = {
         this._certManagerIssuer = this._app.config.driver.options?.certManagerIssuer
         this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
         this._cloudProvider = this._app.config.driver.options?.cloudProvider
+        if (this._app.config.driver.options?.customHostname?.enabled) {
+            this._app.log.info('[k8s] Enabling Custom Hostname Support')
+            this._customHostname = this._app.config.driver.options?.customHostname
+        }
 
         const kc = new k8s.KubeConfig()
 
@@ -570,7 +666,7 @@ module.exports = {
                             this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
                         } catch (err) {
                             this._app.log.error(`[k8s] Error while reading namespaced deployment for project '${project.safeName}' ${project.id}.  Error msg=${err.message}, stack=${err.stack}`)
-                            this._app.log.info(`[k8s] Project ${project.id} - recreating deployment`)
+                            this._app.log.info(`[k8s] Instance ${project.id} - recreating deployment`)
                             const fullProject = await this._app.db.models.Project.byId(project.id)
                             await createProject(fullProject, options)
                         }
@@ -581,13 +677,13 @@ module.exports = {
                             await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
                             this._app.log.info(`[k8s] pod ${project.id} in ${namespace} found`)
                         } catch (err) {
-                            this._app.log.debug(`[k8s] Project ${project.id} - recreating deployment`)
+                            this._app.log.debug(`[k8s] Instance ${project.id} - recreating deployment`)
                             const fullProject = await this._app.db.models.Project.byId(project.id)
                             await createProject(fullProject, options)
                         }
                     }
                 } catch (err) {
-                    this._app.log.error(`[k8s] Project ${project.id} - error resuming project: ${err.stack}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error resuming project: ${err.stack}`)
                 }
             })
         }, 1000)
@@ -652,14 +748,30 @@ module.exports = {
         try {
             await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
         } catch (err) {
-            this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()}`)
         }
 
         if (this._certManagerIssuer) {
             try {
                 await this._k8sApi.deleteNamespacedSecret(project.safeName, this._namespace)
             } catch (err) {
-                this._app.log.error(`[k8s] Project ${project.id} - error deleting tls secret: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+            }
+        }
+
+        if (this._customHostname?.enabled) {
+            try {
+                await this._k8sNetApi.deleteNamespacedIngress(`${project.safeName}-custom`, this._namespace)
+            } catch (err) {
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
+            }
+
+            if (this._customHostname?.certManagerIssuer) {
+                try {
+                    await this._k8sApi.deleteNamespacedSecret(`${project.safeName}-custom`, this._namespace)
+                } catch (err) {
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
+                }
             }
         }
 
@@ -679,20 +791,20 @@ module.exports = {
                     counter++
                     if (counter > this._k8sRetries) {
                         clearInterval(pollInterval)
-                        this._app.log.error(`[k8s] Project ${project.id} - timed out deleting ingress`)
+                        this._app.log.error(`[k8s] Instance ${project.id} - timed out deleting ingress`)
                         reject(new Error('Timed out to deleting Ingress'))
                     }
                 }, this._k8sDelay)
             })
         } catch (err) {
-            this._app.log.error(`[k8s] Project ${project.id} - Ingress was not deleted: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - Ingress was not deleted: ${err.toString()}`)
         }
 
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         try {
             await this._k8sApi.deleteNamespacedService(prefix + project.safeName, this._namespace)
         } catch (err) {
-            this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - error deleting service: ${err.toString()}`)
         }
 
         try {
@@ -708,13 +820,13 @@ module.exports = {
                     counter++
                     if (counter > this._k8sRetries) {
                         clearInterval(pollInterval)
-                        this._app.log.error(`[k8s] Project ${project.id} - timed deleting service`)
+                        this._app.log.error(`[k8s] Instance ${project.id} - timed deleting service`)
                         reject(new Error('Timed out to deleting Service'))
                     }
                 }, this._k8sDelay)
             })
         } catch (err) {
-            this._app.log.error(`[k8s] Project ${project.id} - Service was not deleted: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - Service was not deleted: ${err.toString()}`)
         }
 
         const currentType = await project.getSetting('k8sType')
@@ -739,7 +851,7 @@ module.exports = {
                     counter++
                     if (counter > this._k8sRetries) {
                         clearInterval(pollInterval)
-                        this._app.log.error(`[k8s] Project ${project.id} - timed deleting ${pod ? 'Pod' : 'Deployment'}`)
+                        this._app.log.error(`[k8s] Instance ${project.id} - timed deleting ${pod ? 'Pod' : 'Deployment'}`)
                         reject(new Error('Timed out to deleting Deployment'))
                     }
                 } catch (err) {
@@ -759,13 +871,27 @@ module.exports = {
         try {
             await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
         } catch (err) {
-            this._app.log.error(`[k8s] Project ${project.id} - error deleting ingress: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()}`)
         }
         if (this._certManagerIssuer) {
             try {
                 await this._k8sApi.deleteNamespacedSecret(project.safeName, this._namespace)
             } catch (err) {
-                this._app.log.error(`[k8s] Project ${project.id} - error deleting tls secret: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+            }
+        }
+        if (this._customHostname?.enabled) {
+            try {
+                await this._k8sNetApi.deleteNamespacedIngress(`${project.safeName}-custom`, this._namespace)
+            } catch (err) {
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
+            }
+            if (this._customHostname?.certManagerIssuer) {
+                try {
+                    await this._k8sApi.deleteNamespacedSecret(`${project.safeName}-custom`, this._namespace)
+                } catch (err) {
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
+                }
             }
         }
         try {
@@ -775,7 +901,7 @@ module.exports = {
                 await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
             }
         } catch (err) {
-            this._app.log.error(`[k8s] Project ${project.id} - error deleting service: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - error deleting service: ${err.toString()}`)
         }
         const currentType = await project.getSetting('k8sType')
         try {
@@ -789,9 +915,9 @@ module.exports = {
         } catch (err) {
             if (project.state !== 'suspended') {
                 if (currentType === 'deployment') {
-                    this._app.log.error(`[k8s] Project ${project.id} - error deleting deployment: ${err.toString()}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting deployment: ${err.toString()}`)
                 } else {
-                    this._app.log.error(`[k8s] Project ${project.id} - error deleting pod: ${err.toString()}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting pod: ${err.toString()}`)
                 }
             }
         }
@@ -841,7 +967,7 @@ module.exports = {
                         this._projects[project.id].state = info.state
                         return info
                     } catch (err) {
-                        this._app.log.debug(`error getting state from project ${project.id}: ${err}`)
+                        this._app.log.debug(`error getting state from instance ${project.id}: ${err}`)
                         return {
                             id: project.id,
                             state: 'starting',
@@ -874,7 +1000,7 @@ module.exports = {
                         this._projects[project.id].state = info.state
                         return info
                     } catch (err) {
-                        this._app.log.debug(`error getting state from project ${project.id}: ${err}`)
+                        this._app.log.debug(`error getting state from instance ${project.id}: ${err}`)
                         return {
                             id: project.id,
                             state: 'starting',
@@ -891,7 +1017,7 @@ module.exports = {
                 }
             }
         } catch (err) {
-            this._app.log.debug(`error getting pod status for project ${project.id}: ${err}`)
+            this._app.log.debug(`error getting pod status for instance ${project.id}: ${err}`)
             return {
                 id: project?.id,
                 error: err,
@@ -1013,7 +1139,7 @@ module.exports = {
    * @return {forge.Status}
    */
     revokeUserToken: async (project, token) => { // logout:nodered(step-3)
-        this._app.log.debug(`[k8s] Project ${project.id} - logging out node-red instance`)
+        this._app.log.debug(`[k8s] Instance ${project.id} - logging out node-red instance`)
         const endpoints = await getEndpoints(project)
         const commands = []
         for (const address in endpoints) {

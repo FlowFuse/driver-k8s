@@ -21,6 +21,11 @@ driver:
     k8sDelay: 1000
     k8sRetries: 10
     logPassthrough: true
+    customHostname:
+      enabled: true
+      cnameTarget: custom-loadbalancer.example.com
+      certManagerIssuer: lets-encrypt
+      ingressClass: custom-nginx
 ```
 
 - `registry` is the Docker Registry to load Stack Containers from
@@ -34,6 +39,11 @@ AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on 
 - `k8sRetries` how many times to retry actions against the K8s API
 - `k8sDelay` how long to wait (in ms) between retries to the K8s API
 - `logPassthrough` Have Node-RED logs printed in JSON format to container stdout (default false)
+- `customHostname` Settings linked to allowing instances to have a second hostname
+- `customHostname.enabled` (default false)
+- `customHostname.cnameTarget` The hostname users should configure their DNS entries to point at. Required. (default not set)
+- `customHostname.certManagerIssuer` Name of the Cluster issuer to use to create HTTPS certs for the custom hostname (default not set)
+- `customHostname.ingressClass` Name of the IngressClass to use to expose the custom hostname (default not set)
 
 Expects to pick up K8s credentials from the environment
 
