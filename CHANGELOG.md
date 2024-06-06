@@ -1,3 +1,10 @@
+#### 2.5.0: Release
+
+ - Custom Hostname support (#151) @hardillb
+ - Bump actions/setup-node from 1 to 4 (#159) @app/dependabot
+ - Bump actions/checkout from 1 to 4 (#158) @app/dependabot
+ - Enable dependabot for github actions (#154) @ppawlowski
+
 #### 2.4.0: Release
 
  - Revert "Add support for user set health check interval" (#152) @Steve-Mcl
