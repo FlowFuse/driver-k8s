@@ -2,6 +2,14 @@ const got = require('got')
 const k8s = require('@kubernetes/client-node')
 const _ = require('lodash')
 
+const {
+    deploymentTemplate,
+    serviceTemplate,
+    ingressTemplate,
+    customIngressTemplate,
+    persistentVolumeClaimTemplate
+} = require('./templates.js')
+
 /**
  * Kubernates Container driver
  *
@@ -14,152 +22,152 @@ const _ = require('lodash')
  *
  */
 
-const deploymentTemplate = {
-    apiVersion: 'apps/v1',
-    kind: 'Deployment',
-    metadata: {
-        // name: "k8s-client-test-deployment",
-        labels: {
-            // name: "k8s-client-test-deployment",
-            nodered: 'true'
-            // app: "k8s-client-test-deployment"
-        }
-    },
-    spec: {
-        replicas: 1,
-        selector: {
-            matchLabels: {
-                // app: "k8s-client-test-deployment"
-            }
-        },
-        template: {
-            metadata: {
-                labels: {
-                    // name: "k8s-client-test-deployment",
-                    nodered: 'true'
-                    // app: "k8s-client-test-deployment"
-                }
-            },
-            spec: {
-                securityContext: {
-                    runAsUser: 1000,
-                    runAsGroup: 1000,
-                    fsGroup: 1000
-                },
-                containers: [
-                    {
-                        resources: {
-                            requests: {
-                                // 10th of a core
-                                cpu: '100m',
-                                memory: '128Mi'
-                            },
-                            limits: {
-                                cpu: '125m',
-                                memory: '192Mi'
-                            }
-                        },
-                        name: 'node-red',
-                        // image: "docker-pi.local:5000/bronze-node-red",
-                        imagePullPolicy: 'Always',
-                        env: [
-                            // {name: "APP_NAME", value: "test"},
-                            { name: 'TZ', value: 'Europe/London' }
-                        ],
-                        ports: [
-                            { name: 'web', containerPort: 1880, protocol: 'TCP' },
-                            { name: 'management', containerPort: 2880, protocol: 'TCP' }
-                        ],
-                        securityContext: {
-                            allowPrivilegeEscalation: false
-                        }
-                    }
-                ]
-            },
-            enableServiceLinks: false
-        }
-    }
-}
+// const deploymentTemplate = {
+//     apiVersion: 'apps/v1',
+//     kind: 'Deployment',
+//     metadata: {
+//         // name: "k8s-client-test-deployment",
+//         labels: {
+//             // name: "k8s-client-test-deployment",
+//             nodered: 'true'
+//             // app: "k8s-client-test-deployment"
+//         }
+//     },
+//     spec: {
+//         replicas: 1,
+//         selector: {
+//             matchLabels: {
+//                 // app: "k8s-client-test-deployment"
+//             }
+//         },
+//         template: {
+//             metadata: {
+//                 labels: {
+//                     // name: "k8s-client-test-deployment",
+//                     nodered: 'true'
+//                     // app: "k8s-client-test-deployment"
+//                 }
+//             },
+//             spec: {
+//                 securityContext: {
+//                     runAsUser: 1000,
+//                     runAsGroup: 1000,
+//                     fsGroup: 1000
+//                 },
+//                 containers: [
+//                     {
+//                         resources: {
+//                             requests: {
+//                                 // 10th of a core
+//                                 cpu: '100m',
+//                                 memory: '128Mi'
+//                             },
+//                             limits: {
+//                                 cpu: '125m',
+//                                 memory: '192Mi'
+//                             }
+//                         },
+//                         name: 'node-red',
+//                         // image: "docker-pi.local:5000/bronze-node-red",
+//                         imagePullPolicy: 'Always',
+//                         env: [
+//                             // {name: "APP_NAME", value: "test"},
+//                             { name: 'TZ', value: 'Europe/London' }
+//                         ],
+//                         ports: [
+//                             { name: 'web', containerPort: 1880, protocol: 'TCP' },
+//                             { name: 'management', containerPort: 2880, protocol: 'TCP' }
+//                         ],
+//                         securityContext: {
+//                             allowPrivilegeEscalation: false
+//                         }
+//                     }
+//                 ]
+//             },
+//             enableServiceLinks: false
+//         }
+//     }
+// }
 
-const serviceTemplate = {
-    apiVersion: 'v1',
-    kind: 'Service',
-    metadata: {
-        // name: "k8s-client-test-service"
-    },
-    spec: {
-        type: 'ClusterIP',
-        selector: {
-            // name: "k8s-client-test"
-        },
-        ports: [
-            { name: 'web', port: 1880, protocol: 'TCP' },
-            { name: 'management', port: 2880, protocol: 'TCP' }
-        ]
-    }
-}
+// const serviceTemplate = {
+//     apiVersion: 'v1',
+//     kind: 'Service',
+//     metadata: {
+//         // name: "k8s-client-test-service"
+//     },
+//     spec: {
+//         type: 'ClusterIP',
+//         selector: {
+//             // name: "k8s-client-test"
+//         },
+//         ports: [
+//             { name: 'web', port: 1880, protocol: 'TCP' },
+//             { name: 'management', port: 2880, protocol: 'TCP' }
+//         ]
+//     }
+// }
 
-const ingressTemplate = {
-    apiVersion: 'networking.k8s.io/v1',
-    kind: 'Ingress',
-    metadata: {
-        // name: "k8s-client-test-ingress",
-        // namespace: 'flowforge',
-        annotations: process.env.INGRESS_ANNOTATIONS ? JSON.parse(process.env.INGRESS_ANNOTATIONS) : {}
-    },
-    spec: {
-        ingressClassName: process.env.INGRESS_CLASS_NAME ? process.env.INGRESS_CLASS_NAME : null,
-        rules: [
-            {
-                // host: "k8s-client-test" + "." + "ubuntu.local",
-                http: {
-                    paths: [
-                        {
-                            pathType: 'Prefix',
-                            path: '/',
-                            backend: {
-                                service: {
-                                    // name: 'k8s-client-test-service',
-                                    port: { number: 1880 }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        ]
-    }
-}
+// const ingressTemplate = {
+//     apiVersion: 'networking.k8s.io/v1',
+//     kind: 'Ingress',
+//     metadata: {
+//         // name: "k8s-client-test-ingress",
+//         // namespace: 'flowforge',
+//         annotations: process.env.INGRESS_ANNOTATIONS ? JSON.parse(process.env.INGRESS_ANNOTATIONS) : {}
+//     },
+//     spec: {
+//         ingressClassName: process.env.INGRESS_CLASS_NAME ? process.env.INGRESS_CLASS_NAME : null,
+//         rules: [
+//             {
+//                 // host: "k8s-client-test" + "." + "ubuntu.local",
+//                 http: {
+//                     paths: [
+//                         {
+//                             pathType: 'Prefix',
+//                             path: '/',
+//                             backend: {
+//                                 service: {
+//                                     // name: 'k8s-client-test-service',
+//                                     port: { number: 1880 }
+//                                 }
+//                             }
+//                         }
+//                     ]
+//                 }
+//             }
+//         ]
+//     }
+// }
 
-const customIngressTemplate = {
-    apiVersion: 'networking.k8s.io/v1',
-    kind: 'Ingress',
-    metadata: {
-        annotations: {}
-    },
-    spec: {
-        rules: [
-            {
-                http: {
-                    paths: [
-                        {
-                            pathType: 'Prefix',
-                            path: '/',
-                            backend: {
-                                service: {
-                                    port: { number: 1880 }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        ],
-        tls: [
+// const customIngressTemplate = {
+//     apiVersion: 'networking.k8s.io/v1',
+//     kind: 'Ingress',
+//     metadata: {
+//         annotations: {}
+//     },
+//     spec: {
+//         rules: [
+//             {
+//                 http: {
+//                     paths: [
+//                         {
+//                             pathType: 'Prefix',
+//                             path: '/',
+//                             backend: {
+//                                 service: {
+//                                     port: { number: 1880 }
+//                                 }
+//                             }
+//                         }
+//                     ]
+//                 }
+//             }
+//         ],
+//         tls: [
 
-        ]
-    }
-}
+//         ]
+//     }
+// }
 
 const createDeployment = async (project, options) => {
     const stack = project.ProjectStack.properties
@@ -276,7 +284,7 @@ const createDeployment = async (project, options) => {
         })
     }
 
-    if (this._app.config.driver.options.privateCA) {
+    if (this._app.config.driver.options?.privateCA) {
         localPod.spec.containers[0].volumeMounts = [
             {
                 name: 'cacert',
@@ -293,6 +301,27 @@ const createDeployment = async (project, options) => {
             }
         ]
         localPod.spec.containers[0].env.push({ name: 'NODE_EXTRA_CA_CERTS', value: '/usr/local/ssl-certs/chain.pem' })
+    }
+
+    if (this._app.config.driver.options?.storge?.enabled) {
+        const volMount = {
+            name: 'persistence',
+            mountPath: '/data/storage'
+        }
+        const vol = {
+            name: 'persistence',
+            persistentVolumeClaim: `${project.safeName}-pvc`
+        }
+        if (Array.isArray(localPod.spec.containers[0].volumeMounts)) {
+            localPod.spec.containers[0].volumeMounts.push(volMount)
+        } else {
+            localPod.spec.containers[0].volumeMounts = [volMount]
+        }
+        if (Array.isArray(localPod.spec.containers[0]).volumes) {
+            localPod.spec.containers[0].volumes.push(vol)
+        } else {
+            localPod.spec.containers[0].volumes = [vol]
+        }
     }
 
     if (this._app.license.active() && this._cloudProvider === 'openshift') {
@@ -414,12 +443,47 @@ const createCustomIngress = async (project, hostname, options) => {
     return customIngress
 }
 
+const createPersistentVolumeClaim = async (project, options) => {
+    const namespace = this._app.config.driver.options?.projectNamespace || 'flowforge'
+    const pvc = JSON.parse(JSON.stringify(persistentVolumeClaimTemplate))
+
+    const drvOptions = this._app.config.driver.options
+
+    if (drvOptions?.storage?.storageClass) {
+        pvc.spec.storageClassName = drvOptions.storage.storageClass
+    }
+
+    if (drvOptions?.storage?.size) {
+        pvc.spec.resources.requests.storage = drvOptions.storage.size
+    }
+
+    pvc.metadata.namespace = namespace
+    pvc.metadata.name = `${project.safeName}-pvc`
+    pvc.metadata.labels.name = project.safeName
+}
+
 const createProject = async (project, options) => {
     const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
 
     const localDeployment = await createDeployment(project, options)
     const localService = await createService(project, options)
     const localIngress = await createIngress(project, options)
+
+    if (this._app.config.driver.options?.storage?.enabled) {
+        const localPVC = await createPersistentVolumeClaim(project, options)
+        try {
+            await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
+        } catch (err) {
+            if (err.statusCode === 409) {
+                this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
+            } else {
+                if (project.state !== 'suspended') {
+                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()}`)
+                    throw err
+                }
+            }
+        }
+    }
 
     try {
         await this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment)
