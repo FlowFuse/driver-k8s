@@ -902,7 +902,7 @@ module.exports = {
             await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
         }
 
-        //not sure about this, I think it needs to be after deleting the deployment
+        // not sure about this, I think it needs to be after deleting the deployment
         if (this._app.config.driver.options?.storage?.enabled) {
             try {
                 this._k8sApi.deleteCollectionNamespacedPersistentVolumeClaim(this._namespace, `${project.safeName}-pvc`)
