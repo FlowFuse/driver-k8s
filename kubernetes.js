@@ -462,6 +462,7 @@ const createPersistentVolumeClaim = async (project, options) => {
     pvc.metadata.labels = {
         name: project.safeName
     }
+    return pvc
 }
 
 const createProject = async (project, options) => {
@@ -473,8 +474,9 @@ const createProject = async (project, options) => {
 
     if (this._app.config.driver.options?.storage?.enabled) {
         const localPVC = await createPersistentVolumeClaim(project, options)
+        console.log(localPVC)
         try {
-            await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
+            //await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
         } catch (err) {
             if (err.statusCode === 409) {
                 this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
