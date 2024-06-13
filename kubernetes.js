@@ -474,7 +474,7 @@ const createProject = async (project, options) => {
 
     if (this._app.config.driver.options?.storage?.enabled) {
         const localPVC = await createPersistentVolumeClaim(project, options)
-        console.log(localPVC)
+        console.log(JSON.stringify(localPVC, null, 2))
         try {
             await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
         } catch (err) {
@@ -482,7 +482,8 @@ const createProject = async (project, options) => {
                 this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
             } else {
                 if (project.state !== 'suspended') {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()} ${err.statusCode}`)
+                    console.log(err)
                     throw err
                 }
             }
