@@ -459,7 +459,9 @@ const createPersistentVolumeClaim = async (project, options) => {
 
     pvc.metadata.namespace = namespace
     pvc.metadata.name = `${project.safeName}-pvc`
-    pvc.metadata.labels.name = project.safeName
+    pvc.metadata.labels = {
+        name: project.safeName
+    }
 }
 
 const createProject = async (project, options) => {
