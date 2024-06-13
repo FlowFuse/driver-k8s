@@ -902,6 +902,15 @@ module.exports = {
             await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
         }
 
+        //not sure about this, I think it needs to be after deleting the deployment
+        if (this._app.config.driver.options?.storage?.enabled) {
+            try {
+                this._k8sApi.deleteCollectionNamespacedPersistentVolumeClaim(this._namespace, `${project.safeName}-pvc`)
+            } catch (err) {
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()}`)
+            }
+        }
+
         this._projects[project.id].state = 'suspended'
         return new Promise((resolve, reject) => {
             let counter = 0
@@ -983,6 +992,13 @@ module.exports = {
                 } else {
                     this._app.log.error(`[k8s] Instance ${project.id} - error deleting pod: ${err.toString()}`)
                 }
+            }
+        }
+        if (this._app.config.driver.options?.storage?.enabled) {
+            try {
+                this._k8sApi.deleteCollectionNamespacedPersistentVolumeClaim(this._namespace, `${project.safeName}-pvc`)
+            } catch (err) {
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()}`)
             }
         }
         delete this._projects[project.id]
