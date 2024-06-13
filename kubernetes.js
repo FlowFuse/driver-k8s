@@ -476,7 +476,7 @@ const createProject = async (project, options) => {
         const localPVC = await createPersistentVolumeClaim(project, options)
         console.log(localPVC)
         try {
-            //await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
+            await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
         } catch (err) {
             if (err.statusCode === 409) {
                 this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
@@ -909,7 +909,7 @@ module.exports = {
         // not sure about this, I think it needs to be after deleting the deployment
         if (this._app.config.driver.options?.storage?.enabled) {
             try {
-                this._k8sApi.deleteCollectionNamespacedPersistentVolumeClaim(this._namespace, `${project.safeName}-pvc`)
+                await this._k8sApi.deleteCollectionNamespacedPersistentVolumeClaim(this._namespace, `${project.safeName}-pvc`)
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()}`)
             }
@@ -1000,7 +1000,7 @@ module.exports = {
         }
         if (this._app.config.driver.options?.storage?.enabled) {
             try {
-                this._k8sApi.deleteCollectionNamespacedPersistentVolumeClaim(this._namespace, `${project.safeName}-pvc`)
+                await this._k8sApi.deleteCollectionNamespacedPersistentVolumeClaim(this._namespace, `${project.safeName}-pvc`)
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()}`)
             }
