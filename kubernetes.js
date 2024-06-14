@@ -303,7 +303,7 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].env.push({ name: 'NODE_EXTRA_CA_CERTS', value: '/usr/local/ssl-certs/chain.pem' })
     }
 
-    if (this._app.config.driver.options?.storge?.enabled) {
+    if (this._app.config.driver.options?.storage?.enabled) {
         const volMount = {
             name: 'persistence',
             mountPath: '/data/storage'
@@ -474,7 +474,7 @@ const createProject = async (project, options) => {
 
     if (this._app.config.driver.options?.storage?.enabled) {
         const localPVC = await createPersistentVolumeClaim(project, options)
-        console.log(JSON.stringify(localPVC, null, 2))
+        //console.log(JSON.stringify(localPVC, null, 2))
         try {
             await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
         } catch (err) {
@@ -912,7 +912,7 @@ module.exports = {
             try {
                 await this._k8sApi.deleteCollectionNamespacedPersistentVolumeClaim(this._namespace, `${project.safeName}-pvc`)
             } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()} ${err.statusCode}`)
             }
         }
 
