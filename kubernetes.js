@@ -329,7 +329,7 @@ const createProject = async (project, options) => {
 
     if (this._app.config.driver.options?.storage?.enabled) {
         const localPVC = await createPersistentVolumeClaim(project, options)
-        //console.log(JSON.stringify(localPVC, null, 2))
+        // console.log(JSON.stringify(localPVC, null, 2))
         try {
             await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
         } catch (err) {
@@ -859,7 +859,7 @@ module.exports = {
                 await this._k8sApi.deleteNamespacedPersistentVolumeClaim(`${project.safeName}-pvc`, this._namespace)
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()} ${err.statusCode}`)
-                console.log(err)
+                // console.log(err)
             }
         }
         delete this._projects[project.id]
