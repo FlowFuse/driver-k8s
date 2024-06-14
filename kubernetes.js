@@ -317,10 +317,10 @@ const createDeployment = async (project, options) => {
         } else {
             localPod.spec.containers[0].volumeMounts = [volMount]
         }
-        if (Array.isArray(localPod.spec.containers[0]).volumes) {
-            localPod.spec.containers[0].volumes.push(vol)
+        if (Array.isArray(localPod.spec.volumes)) {
+            localPod.spec.volumes.push(vol)
         } else {
-            localPod.spec.containers[0].volumes = [vol]
+            localPod.spec.volumes = [vol]
         }
     }
 
