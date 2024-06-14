@@ -310,7 +310,9 @@ const createDeployment = async (project, options) => {
         }
         const vol = {
             name: 'persistence',
-            persistentVolumeClaim: `${project.safeName}-pvc`
+            persistentVolumeClaim: {
+                claimName: `${project.safeName}-pvc`
+            }
         }
         if (Array.isArray(localPod.spec.containers[0].volumeMounts)) {
             localPod.spec.containers[0].volumeMounts.push(volMount)
