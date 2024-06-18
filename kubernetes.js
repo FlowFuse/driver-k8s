@@ -313,9 +313,10 @@ const createPersistentVolumeClaim = async (project, options) => {
     }
 
     pvc.metadata.namespace = namespace
-    pvc.metadata.name = `${project.safeName}-pvc`
+    pvc.metadata.name = `${project.id}-pvc`
     pvc.metadata.labels = {
-        name: project.safeName
+        'ff-project-id': project.id,
+        'ff-project-name': project.safeName
     }
     return pvc
 }
@@ -856,7 +857,7 @@ module.exports = {
         }
         if (this._app.config.driver.options?.storage?.enabled) {
             try {
-                await this._k8sApi.deleteNamespacedPersistentVolumeClaim(`${project.safeName}-pvc`, this._namespace)
+                await this._k8sApi.deleteNamespacedPersistentVolumeClaim(`${project.id}-pvc`, this._namespace)
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()} ${err.statusCode}`)
                 // console.log(err)
