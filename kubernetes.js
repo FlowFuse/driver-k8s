@@ -1,6 +1,7 @@
 const got = require('got')
 const k8s = require('@kubernetes/client-node')
 const _ = require('lodash')
+const awsEFS = require('./lib/aws-efs.js')
 
 const {
     deploymentTemplate,
@@ -306,6 +307,8 @@ const createPersistentVolumeClaim = async (project, options) => {
 
     if (drvOptions?.storage?.storageClass) {
         pvc.spec.storageClassName = drvOptions.storage.storageClass
+    } else if (drvOptions?.storage?.storageClassEFSTag) {
+        pvc.spec.storageClassName = awsEFS.lookupStorageClass(drvOptions?.storage?.storageClassEFSTag)
     }
 
     if (drvOptions?.storage?.size) {
