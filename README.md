@@ -50,6 +50,7 @@ AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on 
 - `customHostname.ingressClass` Name of the IngressClass to use to expose the custom hostname (default not set)
 - `storage.enabled` Mounts a persistent volume on `/data/storage` (default false)
 - `storage.storageClass` Name of StorageClass to use to allocate the volume (default not set)
+- `storage.storageClassEFSTag` Used instead of `storage.storageClass` when needing to shard across multiple EFS file systems (default not set)
 - `storage.size` Size of the volume to request (default not set)
 
 Expects to pick up K8s credentials from the environment
