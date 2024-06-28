@@ -308,7 +308,7 @@ const createPersistentVolumeClaim = async (project, options) => {
     if (drvOptions?.storage?.storageClass) {
         pvc.spec.storageClassName = drvOptions.storage.storageClass
     } else if (drvOptions?.storage?.storageClassEFSTag) {
-        pvc.spec.storageClassName = awsEFS.lookupStorageClass(drvOptions?.storage?.storageClassEFSTag)
+        pvc.spec.storageClassName = await awsEFS.lookupStorageClass(drvOptions?.storage?.storageClassEFSTag)
     }
 
     if (drvOptions?.storage?.size) {
@@ -321,6 +321,7 @@ const createPersistentVolumeClaim = async (project, options) => {
         'ff-project-id': project.id,
         'ff-project-name': project.safeName
     }
+    console.log(`PVC: ${JSON.stringify(pvc,null,2)}`)
     return pvc
 }
 
