@@ -321,7 +321,7 @@ const createPersistentVolumeClaim = async (project, options) => {
         'ff-project-id': project.id,
         'ff-project-name': project.safeName
     }
-    console.log(`PVC: ${JSON.stringify(pvc,null,2)}`)
+    console.log(`PVC: ${JSON.stringify(pvc, null, 2)}`)
     return pvc
 }
 
