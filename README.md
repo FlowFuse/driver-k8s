@@ -26,6 +26,10 @@ driver:
       cnameTarget: custom-loadbalancer.example.com
       certManagerIssuer: lets-encrypt
       ingressClass: custom-nginx
+    storage:
+      enabled: true
+      storageClass: nfs-storage
+      size: 5Gi
 ```
 
 - `registry` is the Docker Registry to load Stack Containers from
@@ -44,6 +48,10 @@ AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on 
 - `customHostname.cnameTarget` The hostname users should configure their DNS entries to point at. Required. (default not set)
 - `customHostname.certManagerIssuer` Name of the Cluster issuer to use to create HTTPS certs for the custom hostname (default not set)
 - `customHostname.ingressClass` Name of the IngressClass to use to expose the custom hostname (default not set)
+- `storage.enabled` Mounts a persistent volume on `/data/storage` (default false)
+- `storage.storageClass` Name of StorageClass to use to allocate the volume (default not set)
+- `storage.storageClassEFSTag` Used instead of `storage.storageClass` when needing to shard across multiple EFS file systems (default not set)
+- `storage.size` Size of the volume to request (default not set)
 
 Expects to pick up K8s credentials from the environment
 
