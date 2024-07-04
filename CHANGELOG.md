@@ -1,3 +1,8 @@
+#### 2.6.0: Release
+
+ - Persistent storage (#163) @hardillb
+ - ci: Bump build_node_package workflow to 0.14.0 (#161) @ppawlowski
+
 #### 2.5.0: Release
 
  - Custom Hostname support (#151) @hardillb
