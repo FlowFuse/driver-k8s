@@ -1,3 +1,10 @@
+#### 2.7.0: Release
+
+ - Bump tibdex/github-app-token from 1 to 2 (#155) @app/dependabot
+ - Bump ws from 8.13.0 to 8.18.0 (#168) @app/dependabot
+ - Update release-publish.yml to use NodeJS 18 (#170) @hardillb
+ - Bump JS-DevTools/npm-publish from 2 to 3 (#157) @app/dependabot
+
 #### 2.6.0: Release
 
  - Persistent storage (#163) @hardillb
