@@ -1,4 +1,5 @@
 const got = require('got')
+const FormData = require('form-data')
 const k8s = require('@kubernetes/client-node')
 const _ = require('lodash')
 const awsEFS = require('./lib/aws-efs.js')
@@ -496,6 +497,11 @@ const getEndpoints = async (project) => {
     } else {
         return [`${prefix}${project.safeName}.${this._namespace}`]
     }
+}
+
+async function getStaticFileUrl (project, filePath) {
+    const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+    return `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/files_/${filePath}`
 }
 
 module.exports = {
@@ -1117,5 +1123,62 @@ module.exports = {
         }
 
         return properties
+    },
+
+    // Static Assets API
+    listFiles: async (instance, filePath) => {
+        const fileUrl = await getStaticFileUrl(instance, filePath)
+        try {
+            return got.get(fileUrl).json()
+        } catch (err) {
+            err.statusCode = err.response.statusCode
+            throw err
+        }
+    },
+
+    updateFile: async (instance, filePath, update) => {
+        const fileUrl = await getStaticFileUrl(instance, filePath)
+        try {
+            return got.put(fileUrl, {
+                json: update
+            })
+        } catch (err) {
+            err.statusCode = err.response.statusCode
+            throw err
+        }
+    },
+
+    deleteFile: async (instance, filePath) => {
+        const fileUrl = await getStaticFileUrl(instance, filePath)
+        try {
+            return got.delete(fileUrl)
+        } catch (err) {
+            err.statusCode = err.response.statusCode
+            throw err
+        }
+    },
+    createDirectory: async (instance, filePath, directoryName) => {
+        const fileUrl = await getStaticFileUrl(instance, filePath)
+        try {
+            return got.post(fileUrl, {
+                json: { path: directoryName }
+            })
+        } catch (err) {
+            err.statusCode = err.response.statusCode
+            throw err
+        }
+    },
+    uploadFile: async (instance, filePath, fileBuffer) => {
+        const form = new FormData()
+        form.append('file', fileBuffer, { filename: filePath })
+        const fileUrl = await getStaticFileUrl(instance, filePath)
+        try {
+            return got.post(fileUrl, {
+                body: form
+            })
+        } catch (err) {
+            err.statusCode = err.response.statusCode
+            throw err
+        }
     }
 }
