@@ -1128,9 +1128,11 @@ module.exports = {
     // Static Assets API
     listFiles: async (instance, filePath) => {
         const fileUrl = await getStaticFileUrl(instance, filePath)
+        console.log(fileUrl)
         try {
             return got.get(fileUrl).json()
         } catch (err) {
+            console.log(err)
             err.statusCode = err.response.statusCode
             throw err
         }
