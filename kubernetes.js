@@ -501,7 +501,7 @@ const getEndpoints = async (project) => {
 
 const getStaticFileUrl = async (project, filePath) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-    return `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/files_/${filePath}`
+    return `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/files/_/${filePath}`
 }
 
 module.exports = {
