@@ -499,7 +499,7 @@ const getEndpoints = async (project) => {
     }
 }
 
-async function getStaticFileUrl (project, filePath) {
+const getStaticFileUrl = async (project, filePath) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
     return `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/files_/${filePath}`
 }
