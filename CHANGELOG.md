@@ -1,3 +1,10 @@
+#### 2.8.0: Release
+
+ - Remove extra console.log (#177) @hardillb
+ - First pass at file api for k8s (#175) @hardillb
+ - Ensure full count of EFS AccessPoints (#176) @hardillb
+ - Bump fast-xml-parser and @aws-sdk/client-efs (#174) @dependabot
+
 #### 2.7.0: Release
 
  - Bump tibdex/github-app-token from 1 to 2 (#155) @app/dependabot
