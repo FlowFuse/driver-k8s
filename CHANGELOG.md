@@ -1,3 +1,9 @@
+#### 2.9.0: Release
+
+ - Bump flowfuse/github-actions-workflows from 0.29.0 to 0.30.0 (#181) @app/dependabot
+ - Bump flowfuse/github-actions-workflows from 0.28.0 to 0.29.0 (#180) @app/dependabot
+ - Bump flowfuse/github-actions-workflows from 0.1.0 to 0.28.0 (#179) @app/dependabot
+
 #### 2.8.0: Release
 
  - Remove extra console.log (#177) @hardillb
