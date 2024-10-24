@@ -1,3 +1,8 @@
+#### 2.10.0: Release
+
+ - Bump flowfuse/github-actions-workflows from 0.34.0 to 0.36.0 (#187)
+ - Bump flowfuse/github-actions-workflows from 0.30.0 to 0.34.0 (#185) @app/dependabot
+
 #### 2.9.0: Release
 
  - Bump flowfuse/github-actions-workflows from 0.29.0 to 0.30.0 (#181) @app/dependabot
