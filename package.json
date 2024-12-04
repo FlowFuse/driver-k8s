@@ -22,7 +22,7 @@
     "license": "Apache-2.0",
     "dependencies": {
         "@aws-sdk/client-efs": "^3.600.0",
-        "@kubernetes/client-node": "^0.18.1",
+        "@kubernetes/client-node": "^0.22.3",
         "form-data": "^4.0.0",
         "got": "^11.8.0",
         "lodash": "^4.17.21"
