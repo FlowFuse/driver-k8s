@@ -1,3 +1,9 @@
+#### 2.12.0: Release
+
+ - Bump flowfuse/github-actions-workflows from 0.36.0 to 0.38.0 (#194)
+ - Bump cross-spawn from 7.0.3 to 7.0.6 (#193) @app/dependabot
+ - Bump jsonpath-plus and @kubernetes/client-node (#192) @app/dependabot
+
 #### 2.11.0: Release
 
 
