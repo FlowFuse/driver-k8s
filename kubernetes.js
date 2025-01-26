@@ -185,6 +185,10 @@ const createDeployment = async (project, options) => {
         localPod.spec.securityContext = {}
     }
 
+    if (this._app.config.driver.options?.podSecurityContext) {
+        localPod.spec.securityContext = this._app.config.driver.options.podSecurityContext
+    }
+
     if (stack.memory && stack.cpu) {
         localPod.spec.containers[0].resources.requests.memory = `${stack.memory}Mi`
         // increase limit to give npm more room to run in
