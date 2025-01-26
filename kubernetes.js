@@ -183,6 +183,8 @@ const createDeployment = async (project, options) => {
 
     if (this._app.config.driver.options?.podSecurityContext) {
         localPod.spec.securityContext = this._app.config.driver.options.podSecurityContext
+    } else if (this._app.license.active() && this._cloudProvider === 'openshift') {
+        localPod.spec.securityContext = {}
     }
 
     if (stack.memory && stack.cpu) {
