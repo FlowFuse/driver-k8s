@@ -30,6 +30,10 @@ driver:
       enabled: true
       storageClass: nfs-storage
       size: 5Gi
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
 ```
 
 - `registry` is the Docker Registry to load Stack Containers from
@@ -52,6 +56,7 @@ AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on 
 - `storage.storageClass` Name of StorageClass to use to allocate the volume (default not set)
 - `storage.storageClassEFSTag` Used instead of `storage.storageClass` when needing to shard across multiple EFS file systems (default not set)
 - `storage.size` Size of the volume to request (default not set)
+- `podSecurityContext` Settings linked to the [security context of the pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 
 Expects to pick up K8s credentials from the environment
 
