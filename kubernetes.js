@@ -517,7 +517,7 @@ const createMQTTTopicAgent = async (broker) => {
 
     const { token } = await broker.refreshAuthTokens()
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_TOKEN', value: token })
-    localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.base_url })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.api_url })
     localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_ID', value: broker.hashid })
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: broker.Team.hashid })
 
@@ -531,13 +531,13 @@ const createMQTTTopicAgent = async (broker) => {
         team: broker.Team.hashid,
         broker: broker.hashid
     }
+    localService.spec.selector.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`
     
     // TODO remove registry entry
     localPod.spec.containers[0].image = this._app.config.driver.options?.mqttSchemaContainer || `${this._app.config.driver.options.registry ? this._app.config.driver.options.registry + '/' : '' }flowfuse/mqtt-schema-agent`
 
-    console.log(JSON.stringify(localPod,null,2))
-    console.log(JSON.stringify(localService,null,2))
-
+    // console.log(JSON.stringify(localPod,null,2))
+    // console.log(JSON.stringify(localService,null,2))
     try {
         await this._k8sApi.createNamespacedPod(namespace,localPod)
         await this._k8sApi.createNamespacedService(namespace, localService)
@@ -1238,5 +1238,12 @@ module.exports = {
             this._app.log.error(`[k8s] Error deleting MQTT Agent ${broker.hashid}: ${err.toString()} ${err.statusCode}`)
         }
     },
-    getBrokerAgentState: async (broker) => {} 
+    getBrokerAgentState: async (broker) => {
+        try {
+            const status = got.get(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/status`).json()
+            return status
+        } catch (err) {
+            return { error: 'error_getting_status', message: err.toString() }
+        }
+    } 
 }
