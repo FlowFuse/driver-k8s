@@ -181,7 +181,7 @@ const mqttSchemaAgentPodTemplate = {
                     { name: 'TZ', value: 'Europe/London' }
                 ],
                 ports: [
-                    { name: 'web', containerPort: 3500, protocol: 'TCP' },
+                    { name: 'web', containerPort: 3500, protocol: 'TCP' }
                 ],
                 resources: {
                     requests: {
@@ -193,7 +193,7 @@ const mqttSchemaAgentPodTemplate = {
                         cpu: '100m',
                         memory: '128Mi'
                     }
-                },
+                }
             }
         ]
     },
@@ -212,7 +212,7 @@ const mqttSchemaAgentServiceTemplate = {
             // name: "k8s-client-test"
         },
         ports: [
-            { name: 'web', port: 3500, protocol: 'TCP' },
+            { name: 'web', port: 3500, protocol: 'TCP' }
         ]
     }
 }
