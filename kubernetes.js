@@ -513,6 +513,8 @@ const createMQTTTopicAgent = async (broker) => {
     const localPod = JSON.parse(JSON.stringify(mqttSchemaAgentPodTemplate))
     const localService = JSON.parse(JSON.stringify(mqttSchemaAgentServiceTemplate))
 
+    const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
+
     const { token } = await broker.refreshAuthTokens()
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_TOKEN', value: token })
     localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.base_url })
