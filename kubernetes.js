@@ -603,6 +603,11 @@ module.exports = {
             }
         })
 
+        // get list of all MQTTBrokers
+        const brokers = await app.db.models.BrokerCredentials.findAll({
+            include: [{ model: app.db.models.Team }]
+        })
+
         this._initialCheckTimeout = setTimeout(() => {
             this._app.log.debug('[k8s] Restarting projects')
             const namespace = this._namespace
@@ -663,6 +668,18 @@ module.exports = {
                     }
                 } catch (err) {
                     this._app.log.error(`[k8s] Instance ${project.id} - error resuming project: ${err.stack}`)
+                }
+            })
+
+            // Check restarting MQTT-Schema-Agent
+            brokers.forEach(async (broker) => {
+                try {
+                    this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists`)
+                    await this._k8sAppApi.readNamespacedPodStatus(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace)
+                    this._app.log.info(`[k8s] MQTT Agent pod ${broker.hashid} in ${namespace} found`)
+                } catch (err) {
+                    this._app.log.debug(`[k8s] MQTT Agent ${broker.hashid} - recreating pod`)
+                    await createMQTTTopicAgent(broker)
                 }
             })
         }, 1000)
