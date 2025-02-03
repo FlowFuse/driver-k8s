@@ -9,7 +9,9 @@ const {
     serviceTemplate,
     ingressTemplate,
     customIngressTemplate,
-    persistentVolumeClaimTemplate
+    persistentVolumeClaimTemplate,
+    mqttSchemaAgentPodTemplate,
+    mqttSchemaAgentServiceTemplate
 } = require('./templates.js')
 
 /**
@@ -504,6 +506,41 @@ const getEndpoints = async (project) => {
 const getStaticFileUrl = async (instance, filePath) => {
     const prefix = instance.safeName.match(/^[0-9]/) ? 'srv-' : ''
     return `http://${prefix}${instance.safeName}.${this._namespace}:2880/flowforge/files/_/${encodeURIComponent(filePath)}`
+}
+
+const createMQTTTopicAgent = async (broker) => {
+    this._app.log.info(`[k8s] Starting MQTT Schema agent ${broker.hashid} for ${broker.Team.hashid}`)
+    const localPod = JSON.parse(JSON.stringify(mqttSchemaAgentPodTemplate))
+    const localService = JSON.parse(JSON.stringify(mqttSchemaAgentServiceTemplate))
+
+    const { token } = await broker.refreshAuthTokens()
+    localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_TOKEN', value: token })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.base_url })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_ID', value: broker.hashid })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: broker.Team.hashid })
+
+    localPod.metadata.name = `mqtt-schema-agent-${broker.hashid}`
+    localPod.metadata.labels.team = broker.Team.hashid
+    localPod.metadata.labels.broker = broker.hashid
+    localService.metadata.name = `mqtt-schema-agent-${broker.hashid}`
+    localService.metadata.labels.team = broker.Team.hashid
+    localService.metadata.labels.broker = broker.hashid
+    
+    // TODO remove registry entry
+    localPod.spec.containers[0].image = this._app.config.driver.options?.mqttSchemaContainer || `${this._app.config.driver.options.registry ? this._app.config.driver.options.registry + '/' : '' }flowfuse/mqtt-schema-agent`
+
+    localService.metadata.name = `mqtt-schema-agent-${broker.hashid}`
+
+    console.log(JSON.stringify(localPod,null,2))
+    console.log(JSON.stringify(localService,null,2))
+
+    try {
+        await this._k8sApi.createNamespacedPod(namespace,localPod)
+        await this._k8sApi.createNamespacedService(namespace, localService)
+    } catch (err) {
+        this._app.log.error(`[k8s] Problem creating MQTT Agent ${broker.hashid} - ${err.toString()}`)
+        console.log(err)
+    }
 }
 
 module.exports = {
@@ -1183,5 +1220,19 @@ module.exports = {
             err.statusCode = err.response.statusCode
             throw err
         }
-    }
+    },
+
+    // Broker Agent
+    startBrokerAgent: async (broker) => {
+        createMQTTTopicAgent(broker)
+    },
+    stopBrokerAgent: async (broker) => {
+        try {
+            await this._k8sApi.deleteNamespacedService(`mqtt-schema-agent-${broker.hashid}`, this._namespace)
+            await this._k8sApi.deleteNamespacedPod(`mqtt-schema-agent-${broker.hashid}`, this._namespace)
+        } catch (err) {
+            this._app.log.error(`[k8s] Error deleting MQTT Agent ${broker.hashid}: ${err.toString()} ${err.statusCode}`)
+        }
+    },
+    getBrokerAgentState: async (broker) => {} 
 }

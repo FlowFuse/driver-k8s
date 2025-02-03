@@ -162,6 +162,61 @@ const persistentVolumeClaimTemplate = {
     }
 }
 
+const mqttSchemaAgentPodTemplate = {
+    apiVersion: 'v1',
+    kind: 'Pod',
+    metadata: {
+
+    },
+    spec: {
+        containers: [
+            {
+                name: 'mqtt-schema-agent',
+                // image: 'flowfuse/mqtt-schema-agent',
+                imagePullPolicy: 'Always',
+                securityContext: {
+                    allowPrivilegeEscalation: false
+                },
+                env: [
+                    { name: 'TZ', value: 'Europe/London' }
+                ],
+                ports: [
+                    { name: 'web', containerPort: 3500, protocol: 'TCP' },
+                ],
+                resources: {
+                    requests: {
+                        // 10th of a core
+                        cpu: '100m',
+                        memory: '128Mi'
+                    },
+                    limits: {
+                        cpu: '100m',
+                        memory: '128Mi'
+                    }
+                },
+            }
+        ]
+    },
+    enableServiceLinks: false
+}
+
+const mqttSchemaAgentServiceTemplate = {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+        // name: "k8s-client-test-service"
+    },
+    spec: {
+        type: 'ClusterIP',
+        selector: {
+            // name: "k8s-client-test"
+        },
+        ports: [
+            { name: 'web', port: 3500, protocol: 'TCP' },
+        ]
+    }
+}
+
 module.exports = {
     deploymentTemplate,
     serviceTemplate,
