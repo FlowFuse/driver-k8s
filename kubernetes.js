@@ -520,11 +520,15 @@ const createMQTTTopicAgent = async (broker) => {
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: broker.Team.hashid })
 
     localPod.metadata.name = `mqtt-schema-agent-${broker.hashid}`
-    localPod.metadata.labels.team = broker.Team.hashid
-    localPod.metadata.labels.broker = broker.hashid
+    localPod.metadata.labels = {
+        team: broker.Team.hashid,
+        broker: broker.hashid
+    }
     localService.metadata.name = `mqtt-schema-agent-${broker.hashid}`
-    localService.metadata.labels.team = broker.Team.hashid
-    localService.metadata.labels.broker = broker.hashid
+    localService.metadata.labels = {
+        team: broker.Team.hashid,
+        broker: broker.hashid
+    }
     
     // TODO remove registry entry
     localPod.spec.containers[0].image = this._app.config.driver.options?.mqttSchemaContainer || `${this._app.config.driver.options.registry ? this._app.config.driver.options.registry + '/' : '' }flowfuse/mqtt-schema-agent`
