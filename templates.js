@@ -222,5 +222,7 @@ module.exports = {
     serviceTemplate,
     ingressTemplate,
     customIngressTemplate,
-    persistentVolumeClaimTemplate
+    persistentVolumeClaimTemplate,
+    mqttSchemaAgentPodTemplate,
+    mqttSchemaAgentServiceTemplate
 }
