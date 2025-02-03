@@ -521,12 +521,12 @@ const createMQTTTopicAgent = async (broker) => {
     localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_ID', value: broker.hashid })
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: broker.Team.hashid })
 
-    localPod.metadata.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCaser()}-${broker.hashid.toLowerCaser()}`
+    localPod.metadata.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`
     localPod.metadata.labels = {
         team: broker.Team.hashid,
         broker: broker.hashid
     }
-    localService.metadata.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCaser()}-${broker.hashid.toLowerCaser()}`
+    localService.metadata.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`
     localService.metadata.labels = {
         team: broker.Team.hashid,
         broker: broker.hashid
@@ -1232,8 +1232,8 @@ module.exports = {
     },
     stopBrokerAgent: async (broker) => {
         try {
-            await this._k8sApi.deleteNamespacedService(`mqtt-schema-agent-${broker.Team.hashid.toLowerCaser()}-${broker.hashid.toLowerCaser()}`, this._namespace)
-            await this._k8sApi.deleteNamespacedPod(`mqtt-schema-agent-${broker.Team.hashid.toLowerCaser()}-${broker.hashid.toLowerCaser()}`, this._namespace)
+            await this._k8sApi.deleteNamespacedService(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, this._namespace)
+            await this._k8sApi.deleteNamespacedPod(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, this._namespace)
         } catch (err) {
             this._app.log.error(`[k8s] Error deleting MQTT Agent ${broker.hashid}: ${err.toString()} ${err.statusCode}`)
         }
