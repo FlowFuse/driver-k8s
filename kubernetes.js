@@ -1267,13 +1267,13 @@ module.exports = {
     sendBrokerAgentCommand: async (broker, command) => {
         if (command === 'start' || command === 'restart') {
             try {
-                const resp = await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/start`)
+                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/start`)
             } catch (err) {
 
             }
         } else if (command === 'stop') {
             try {
-                const resp = await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/stop`)
+                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/stop`)
             } catch (err) {
 
             }
