@@ -675,7 +675,8 @@ module.exports = {
             brokers.forEach(async (broker) => {
                 if (broker.Team) {
                     try {
-                        this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`)
+                        this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists`)
+                        this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`)
                         await this._k8sApi.readNamespacedPodStatus(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace)
                         this._app.log.info(`[k8s] MQTT Agent pod ${broker.hashid} in ${namespace} found`)
                     } catch (err) {
