@@ -509,7 +509,7 @@ const getStaticFileUrl = async (instance, filePath) => {
 }
 
 const createMQTTTopicAgent = async (broker) => {
-    this._app.log.info(`[k8s] Starting MQTT Schema agent ${broker.hashid} for ${broker.Team?.hashid}`)
+    this._app.log.info(`[k8s] Starting MQTT Schema agent ${broker.hashid} for ${broker.Team.?hashid}`)
     const localPod = JSON.parse(JSON.stringify(mqttSchemaAgentPodTemplate))
     const localService = JSON.parse(JSON.stringify(mqttSchemaAgentServiceTemplate))
 
@@ -673,6 +673,7 @@ module.exports = {
 
             // Check restarting MQTT-Schema-Agent
             brokers.forEach(async (broker) => {
+                console.log(broker)
                 try {
                     this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists`)
                     await this._k8sAppApi.readNamespacedPodStatus(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace)
