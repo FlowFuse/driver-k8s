@@ -67,9 +67,9 @@ const createDeployment = async (project, options) => {
         // TOLERATIONS
         try {
             localPod.spec.tolerations = JSON.parse(process.env.DEPLOYMENT_TOLERATIONS)
-            this._app.log.info(`DEPLOYMENT TOLERATIONS loaded: ${localPod.spec.tolerations}`)
+            this._app.log.info(`[k8s] DEPLOYMENT TOLERATIONS loaded: ${localPod.spec.tolerations}`)
         } catch (err) {
-            this._app.log.error(`TOLERATIONS load error: ${err}`)
+            this._app.log.error(`[k8s] TOLERATIONS load error: ${err}`)
         }
     }
 
@@ -185,8 +185,10 @@ const createDeployment = async (project, options) => {
 
     if (this._app.config.driver.options?.podSecurityContext) {
         localPod.spec.securityContext = this._app.config.driver.options.podSecurityContext
+        this._app.log.info(`[k8s] Using custom PodSecurityContext ${JSON.stringify(this._app.config.driver.options.podSecurityContext)}`)
     } else if (this._app.license.active() && this._cloudProvider === 'openshift') {
         localPod.spec.securityContext = {}
+        this._app.log.info('[k8s] OpenShift, removing PodSecurityContext')
     }
 
     if (stack.memory && stack.cpu) {
@@ -569,6 +571,10 @@ module.exports = {
         if (this._app.config.driver.options?.customHostname?.enabled) {
             this._app.log.info('[k8s] Enabling Custom Hostname Support')
             this._customHostname = this._app.config.driver.options?.customHostname
+        }
+
+        if (this._cloudProvider === 'openshift' && !this._app.license.active()) {
+            this._app.log.info('[k8s] OpenShift Cloud Provider set, but no Enterprise License')
         }
 
         const kc = new k8s.KubeConfig()
