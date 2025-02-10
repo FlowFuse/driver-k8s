@@ -673,9 +673,9 @@ module.exports = {
             })
 
             // get list of all MQTTBrokers
-            if (app.db.models.BrokerCredentials) {
-                const brokers = await app.db.models.BrokerCredentials.findAll({
-                    include: [{ model: app.db.models.Team }]
+            if (this._app.db.models.BrokerCredentials) {
+                const brokers = await this._app.db.models.BrokerCredentials.findAll({
+                    include: [{ model: this._app.db.models.Team }]
                 })
 
                 // Check restarting MQTT-Schema-Agent
