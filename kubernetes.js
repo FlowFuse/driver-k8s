@@ -573,7 +573,7 @@ module.exports = {
             this._customHostname = this._app.config.driver.options?.customHostname
         }
 
-        if (this._cloudProvider === 'openshift' && !app.license.active()) {
+        if (this._cloudProvider === 'openshift' && !this._app.license.active()) {
             app.log.info('[k8s] OpenShift Cloud Provider set, but no Enterprise License')
         }
 
