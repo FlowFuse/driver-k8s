@@ -609,12 +609,7 @@ module.exports = {
             }
         })
 
-        // get list of all MQTTBrokers
-        const brokers = await app.db.models.BrokerCredentials.findAll({
-            include: [{ model: app.db.models.Team }]
-        })
-
-        this._initialCheckTimeout = setTimeout(() => {
+        this._initialCheckTimeout = setTimeout(async () => {
             this._app.log.debug('[k8s] Restarting projects')
             const namespace = this._namespace
             projects.forEach(async (project) => {
@@ -677,21 +672,28 @@ module.exports = {
                 }
             })
 
-            // Check restarting MQTT-Schema-Agent
-            brokers.forEach(async (broker) => {
-                if (broker.Team) {
-                    try {
-                        this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists`)
-                        this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`)
-                        await this._k8sApi.readNamespacedPodStatus(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace)
-                        this._app.log.info(`[k8s] MQTT Agent pod ${broker.hashid} in ${namespace} found`)
-                    } catch (err) {
-                        this._app.log.debug(`[k8s] MQTT Agent ${broker.hashid} - failed ${err.toString()}`)
-                        this._app.log.debug(`[k8s] MQTT Agent ${broker.hashid} - recreating pod`)
-                        await createMQTTTopicAgent(broker)
+            // get list of all MQTTBrokers
+            if (this._app.db.models.BrokerCredentials) {
+                const brokers = await this._app.db.models.BrokerCredentials.findAll({
+                    include: [{ model: this._app.db.models.Team }]
+                })
+
+                // Check restarting MQTT-Schema-Agent
+                brokers.forEach(async (broker) => {
+                    if (broker.Team) {
+                        try {
+                            this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists`)
+                            this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`)
+                            await this._k8sApi.readNamespacedPodStatus(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace)
+                            this._app.log.info(`[k8s] MQTT Agent pod ${broker.hashid} in ${namespace} found`)
+                        } catch (err) {
+                            this._app.log.debug(`[k8s] MQTT Agent ${broker.hashid} - failed ${err.toString()}`)
+                            this._app.log.debug(`[k8s] MQTT Agent ${broker.hashid} - recreating pod`)
+                            await createMQTTTopicAgent(broker)
+                        }
                     }
-                }
-            })
+                })
+            }
         }, 1000)
 
         // need to work out what we can expose for K8s
