@@ -574,7 +574,7 @@ module.exports = {
         }
 
         if (this._cloudProvider === 'openshift' && !this._app.license.active()) {
-            app.log.info('[k8s] OpenShift Cloud Provider set, but no Enterprise License')
+            this._app.log.info('[k8s] OpenShift Cloud Provider set, but no Enterprise License')
         }
 
         const kc = new k8s.KubeConfig()
