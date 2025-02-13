@@ -684,7 +684,7 @@ module.exports = {
 
                 // Check restarting MQTT-Schema-Agent
                 brokers.forEach(async (broker) => {
-                    if (broker.Team) {
+                    if (broker.Team && broker.state === 'running') {
                         try {
                             this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists`)
                             this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`)
