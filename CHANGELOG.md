@@ -1,3 +1,12 @@
+#### 2.14.0: Release
+
+ - Add node selector to mqtt-schema-agent (#202) @hardillb
+ - Fix await when polling mqtt-schema-agent status (#201) @hardillb
+ - Add test to see if 3rd party broker table is present (#200) @hardillb
+ - Add better logging for when running on OpenShift (#199) @hardillb
+ - Mqtt schema agent (#198) @hardillb
+ - feat: Add possibility to specify custom pod security context (#197) @ppawlowski
+
 #### 2.13.0: Release
 
 
