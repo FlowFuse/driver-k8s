@@ -523,6 +523,10 @@ const createMQTTTopicAgent = async (broker) => {
     localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_ID', value: broker.hashid })
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: broker.Team.hashid })
 
+    if (this._app.config.driver.options.projectSelector) {
+        localPod.spec.nodeSelector = this._app.config.driver.options.projectSelector
+    }
+
     localPod.metadata.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`
     localPod.metadata.labels = {
         name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`,
