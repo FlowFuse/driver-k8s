@@ -1,3 +1,7 @@
+#### 2.14.1: Release
+
+ - Only restart active MQTT Agents (#204) @hardillb
+
 #### 2.14.0: Release
 
  - Add node selector to mqtt-schema-agent (#202) @hardillb
