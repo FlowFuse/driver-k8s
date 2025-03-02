@@ -222,9 +222,6 @@ const createService = async (project, options) => {
         throw new Error('Service type must be either NodePort or ClusterIP')
     }
     localService.spec.type = serviceType
-    if (serviceType === 'NodePort' && this._app.config.driver.options?.service?.nodePort) {
-        localService.spec.ports[0].nodePort = this._app.config.driver.options?.service?.nodePort
-    }
     return localService
 }
 
