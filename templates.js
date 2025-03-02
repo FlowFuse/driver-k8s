@@ -72,7 +72,6 @@ const serviceTemplate = {
         // name: "k8s-client-test-service"
     },
     spec: {
-        type: 'ClusterIP',
         selector: {
             // name: "k8s-client-test"
         },
