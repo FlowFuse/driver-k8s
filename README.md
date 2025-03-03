@@ -57,7 +57,7 @@ AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on 
 - `storage.storageClassEFSTag` Used instead of `storage.storageClass` when needing to shard across multiple EFS file systems (default not set)
 - `storage.size` Size of the volume to request (default not set)
 - `podSecurityContext` Settings linked to the [security context of the pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-- `service.type` Type of service to create for the editor (default `ClusterIP`)
+- `service.type` Type of service to create for the editor (allowed `ClusterIP` or `NodePort`, default `ClusterIP`)
 
 Expects to pick up K8s credentials from the environment
 
