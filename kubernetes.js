@@ -216,6 +216,12 @@ const createService = async (project, options) => {
     const localService = JSON.parse(JSON.stringify(serviceTemplate))
     localService.metadata.name = `${prefix}${project.safeName}`
     localService.spec.selector.name = project.safeName
+    const allowedServiceTypes = ['NodePort', 'ClusterIP']
+    const serviceType = this._app.config.driver.options?.service?.type || 'ClusterIP'
+    if (!allowedServiceTypes.includes(serviceType)) {
+        throw new Error('Service type must be either NodePort or ClusterIP')
+    }
+    localService.spec.type = serviceType
     return localService
 }
 
