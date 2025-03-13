@@ -1,3 +1,8 @@
+#### 2.15.0: Release
+
+ - feat: Add possibility to customise service type created for project deployment (#207) @ppawlowski
+ - Bump jsonpath-plus from 10.2.0 to 10.3.0 (#206) @app/dependabot
+
 #### 2.14.1: Release
 
  - Only restart active MQTT Agents (#204) @hardillb
