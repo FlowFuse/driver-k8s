@@ -1,3 +1,8 @@
+#### 2.16.0: Release
+
+ - chore: fix lint script (#211) @ppawlowski
+ - chore: Pin external actions to commit hash (#209) @ppawlowski
+
 #### 2.15.0: Release
 
  - feat: Add possibility to customise service type created for project deployment (#207) @ppawlowski
