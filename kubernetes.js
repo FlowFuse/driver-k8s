@@ -1300,5 +1300,27 @@ module.exports = {
 
             }
         }
+    },
+
+    // Resouces api
+    resources: async (project) => {
+        if (this._projects[project.id] === undefined) {
+            return { state: 'unknown' }
+        }
+        if (await project.getSetting('ha')) {
+            const addresses = await getEndpoints(project)
+            const logRequests = []
+            for (const address in addresses) {
+                logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/resources`).json())
+            }
+            const results = await Promise.all(logRequests)
+            const combinedResults = results.flat(1)
+            combinedResults.sort((a, b) => { return a.ts - b.ts })
+            return combinedResults
+        } else {
+            const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`).json()
+            return result
+        }
     }
 }
