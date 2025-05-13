@@ -1314,9 +1314,14 @@ module.exports = {
                 logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/resources`).json())
             }
             const results = await Promise.all(logRequests)
-            const combinedResults = results.flat(1)
+            const combinedResults = results[0].resources.concat(results[1].resources)
+            // const combinedResults = results.flat(1)
             combinedResults.sort((a, b) => { return a.ts - b.ts })
-            return combinedResults
+            return {
+                meta: results[0].meta,
+                resources: combinedResults,
+                count: combinedResults.length
+            }
         } else {
             const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
             const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`).json()
