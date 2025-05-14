@@ -1325,7 +1325,15 @@ module.exports = {
         } else {
             const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
             const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`).json()
-            return result
+            if (Array.isArray(result)) {
+                return {
+                    meta: {},
+                    resources: result,
+                    count: result.length
+                }
+            } else {
+                return result
+            }
         }
     }
 }
