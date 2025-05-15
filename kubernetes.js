@@ -3,6 +3,7 @@ const FormData = require('form-data')
 const k8s = require('@kubernetes/client-node')
 const _ = require('lodash')
 const awsEFS = require('./lib/aws-efs.js')
+const { WebSocket } = require('ws')
 
 const {
     deploymentTemplate,
@@ -1334,6 +1335,57 @@ module.exports = {
             } else {
                 return result
             }
+        }
+    },
+    resourcesStream: async (project, socket) => {
+        if (this._projects[project.id] === undefined) {
+            throw new Error('Cannot get instance resources')
+        }
+        if (await project.getSetting('ha')) {
+            const addresses = await getEndpoints(project)
+            const resourceStreams = []
+            for (const address in addresses) {
+                const url = `ws://${addresses[address]}:2880/flowforge/resources`
+                const resourceStream = new WebSocket(url, {})
+                resourceStreams.push(resourceStream)
+                resourceStream.on('message', (data) => {
+                    socket.send(data)
+                })
+                resourceStream.on('error', (err) => {
+                    this._app.log.error(`Error in resource stream: ${err}`)
+                    socket.close()
+                })
+            }
+            socket.on('close', () => {
+                try {
+                    resourceStreams.forEach((resourceStream) => {
+                        if (resourceStream.readyState === WebSocket.OPEN) {
+                            resourceStream.close()
+                        }
+                    })
+                } catch (err) {
+                    // logger.error(`Error closing resource stream: ${err}`)
+                }
+            })
+        } else {
+            const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+            const url = `ws://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`
+            const resourceStream = new WebSocket(url, {})
+            resourceStream.on('message', (data) => {
+                socket.send(data)
+            })
+            resourceStream.on('error', (err) => {
+                this._app.log.error(`Error in resource stream: ${err}`)
+                socket.close()
+            })
+            socket.on('close', () => {
+                try {
+                    resourceStream.close()
+                } catch (err) {
+                    // this._app.log.error(`Error closing resource stream: ${err}`)
+                }
+            })
+            return resourceStream
         }
     }
 }
