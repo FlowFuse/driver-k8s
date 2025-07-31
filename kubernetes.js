@@ -993,7 +993,7 @@ module.exports = {
             if (currentType === 'deployment') {
                 details = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
                 console.log(JSON.stringify(details,null,2))
-                if (details.body.status?.conditions[0].status === 'False') {
+                if (details.status?.conditions[0].status === 'False') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
                     return {
@@ -1001,9 +1001,9 @@ module.exports = {
                         state: 'starting',
                         meta: {}
                     }
-                } else if (details.body.status?.conditions[0].status === 'True' &&
-                    (details.body.status?.conditions[0].type === 'Available' ||
-                        (details.body.status?.conditions[0].type === 'Progressing' && details.body.status?.conditions[0].reason === 'NewReplicaSetAvailable')
+                } else if (details.status?.conditions[0].status === 'True' &&
+                    (details.status?.conditions[0].type === 'Available' ||
+                        (details.status?.conditions[0].type === 'Progressing' && details.status?.conditions[0].reason === 'NewReplicaSetAvailable')
                     )) {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
@@ -1023,13 +1023,14 @@ module.exports = {
                     return {
                         id: project.id,
                         state: 'starting',
-                        error: `Unexpected pod status '${details.body.status?.conditions[0]?.status}', type '${details.body.status?.conditions[0]?.type}'`,
+                        error: `Unexpected pod status '${details.status?.conditions[0]?.status}', type '${details.status?.conditions[0]?.type}'`,
                         meta: {}
                     }
                 }
             } else {
                 details = await this._k8sApi.readNamespacedPodStatus({name: project.safeName, namespace: this._namespace })
-                if (details.body.status?.phase === 'Pending') {
+                console.log(JSON.stringify(details,null,2))
+                if (details.status?.phase === 'Pending') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
                     return {
@@ -1037,7 +1038,7 @@ module.exports = {
                         state: 'starting',
                         meta: {}
                     }
-                } else if (details.body.status?.phase === 'Running') {
+                } else if (details.status?.phase === 'Running') {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
@@ -1056,18 +1057,18 @@ module.exports = {
                     return {
                         id: project.id,
                         state: 'starting',
-                        error: `Unexpected pod status '${details.body.status?.phase}'`,
+                        error: `Unexpected pod status '${details.status?.phase}'`,
                         meta: {}
                     }
                 }
             }
         } catch (err) {
-            this._app.log.debug(`error getting pod status for instance ${project.id}: ${err} ${err.stack()}`)
+            this._app.log.debug(`error getting pod status for instance ${project.id}: ${err} ${err.stack}`)
             return {
                 id: project?.id,
                 error: err,
                 state: 'starting',
-                meta: details?.body?.status
+                meta: details?.status
             }
         }
     },
