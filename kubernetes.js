@@ -1027,7 +1027,7 @@ module.exports = {
                     }
                 }
             } else {
-                details = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+                details = await this._k8sApi.readNamespacedPodStatus(( name: project.safeName, namespace: this._namespace })
                 if (details.body.status?.phase === 'Pending') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
