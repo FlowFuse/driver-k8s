@@ -991,7 +991,7 @@ module.exports = {
         const currentType = await project.getSetting('k8sType')
         try {
             if (currentType === 'deployment') {
-                details = await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                details = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
                 if (details.body.status?.conditions[0].status === 'False') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
