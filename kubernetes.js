@@ -1,6 +1,6 @@
 const got = require('got')
 const FormData = require('form-data')
-const k8s = require('@kubernetes/client-node')
+// const k8s = require('@kubernetes/client-node')
 const _ = require('lodash')
 const awsEFS = require('./lib/aws-efs.js')
 const { WebSocket } = require('ws')
@@ -14,6 +14,8 @@ const {
     mqttSchemaAgentPodTemplate,
     mqttSchemaAgentServiceTemplate
 } = require('./templates.js')
+
+let k8s
 
 /**
  * Kubernates Container driver
@@ -569,6 +571,11 @@ module.exports = {
     * @return {forge.containers.ProjectArguments}
     */
     init: async (app, options) => {
+        try {
+            k8s = await import('@kubernetes/client-node')
+        } catch (err) {
+            throw Error('Failed to load Kubernetes node client', { cause: err })
+        }
         this._app = app
         this._projects = {}
         this._options = options
