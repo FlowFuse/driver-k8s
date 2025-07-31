@@ -559,7 +559,7 @@ const createMQTTTopicAgent = async (broker) => {
         await this._k8sApi.createNamespacedPod(namespace, localPod)
         await this._k8sApi.createNamespacedService(namespace, localService)
     } catch (err) {
-        this._app.log.error(`[k8s] Problem creating MQTT Agent ${broker.hashid} - ${err.toString()}`)
+        this._app.log.error(`[k8s] Problem creating MQTT Agent ${broker.hashid} in ${namespace} - ${err.toString()}`)
         console.log(err)
     }
 }
@@ -666,7 +666,7 @@ module.exports = {
                     if (currentType === 'deployment') {
                         try {
                             this._app.log.info(`[k8s] Testing ${project.id} (${project.safeName}) in ${namespace} deployment exists`)
-                            await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
+                            await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace })
                             this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
                         } catch (err) {
                             this._app.log.error(`[k8s] Error while reading namespaced deployment for project '${project.safeName}' ${project.id}.  Error msg=${err.message}, stack=${err.stack}`)
@@ -678,7 +678,7 @@ module.exports = {
                         try {
                             // pod already running
                             this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} pod exists`)
-                            await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
+                            await this._k8sApi.readNamespacedPodStatus({name: project.safeName, namespace })
                             this._app.log.info(`[k8s] pod ${project.id} in ${namespace} found`)
                         } catch (err) {
                             this._app.log.debug(`[k8s] Instance ${project.id} - recreating deployment`)
@@ -703,7 +703,7 @@ module.exports = {
                         try {
                             this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists`)
                             this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`)
-                            await this._k8sApi.readNamespacedPodStatus(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace)
+                            await this._k8sApi.readNamespacedPodStatus({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace })
                             this._app.log.info(`[k8s] MQTT Agent pod ${broker.hashid} in ${namespace} found`)
                         } catch (err) {
                             this._app.log.debug(`[k8s] MQTT Agent ${broker.hashid} - failed ${err.toString()}`)
