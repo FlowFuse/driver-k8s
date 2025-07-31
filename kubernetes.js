@@ -352,7 +352,7 @@ const createProject = async (project, options) => {
         const localPVC = await createPersistentVolumeClaim(project, options)
         // console.log(JSON.stringify(localPVC, null, 2))
         try {
-            await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
+            await this._k8sApi.createNamespacedPersistentVolumeClaim({ namespace, body: localPVC })
         } catch (err) {
             if (err.statusCode === 409) {
                 this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
@@ -367,18 +367,18 @@ const createProject = async (project, options) => {
     }
 
     try {
-        await this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment)
+        await this._k8sAppApi.createNamespacedDeployment({ namespace, body: localDeployment })
     } catch (err) {
         if (err.statusCode === 409) {
             // If deployment exists, perform an upgrade
             this._app.log.warn(`[k8s] Deployment for instance ${project.id} already exists. Upgrading deployment`)
-            const result = await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
+            const result = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace })
 
             const existingDeployment = result.body
             // Check if the metadata and spec are aligned. They won't be though (at minimal because we regenerate auth)
             if (!_.isEqual(existingDeployment.metadata, localDeployment.metadata) || !_.isEqual(existingDeployment.spec, localDeployment.spec)) {
                 // If not aligned, replace the deployment
-                await this._k8sAppApi.replaceNamespacedDeployment(project.safeName, namespace, localDeployment)
+                await this._k8sAppApi.replaceNamespacedDeployment({ name: project.safeName, namespace, body: localDeployment })
             }
         } else {
             // Log other errors and rethrow them for additional higher-level handling
@@ -394,7 +394,7 @@ const createProject = async (project, options) => {
         let counter = 0
         const pollInterval = setInterval(async () => {
             try {
-                await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
                 clearInterval(pollInterval)
                 resolve()
             } catch (err) {
@@ -427,7 +427,7 @@ const createProject = async (project, options) => {
         let counter = 0
         const pollInterval = setInterval(async () => {
             try {
-                await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
+                await this._k8sApi.readNamespacedService({ name: prefix + project.safeName, namespace: this._namespace })
                 clearInterval(pollInterval)
                 resolve()
             } catch (err) {
@@ -442,7 +442,7 @@ const createProject = async (project, options) => {
     })
 
     try {
-        await this._k8sNetApi.createNamespacedIngress(namespace, localIngress)
+        await this._k8sNetApi.createNamespacedIngress({ namespace, body: localIngress })
     } catch (err) {
         if (err.statusCode === 409) {
             this._app.log.warn(`[k8s] Ingress for instance ${project.id} already exists, proceeding...`)
@@ -458,7 +458,7 @@ const createProject = async (project, options) => {
         if (customHostname) {
             const customHostnameIngress = await createCustomIngress(project, customHostname, options)
             try {
-                await this._k8sNetApi.createNamespacedIngress(namespace, customHostnameIngress)
+                await this._k8sNetApi.createNamespacedIngress({ namespace, body: customHostnameIngress })
             } catch (err) {
                 if (err.statusCode === 409) {
                     this._app.log.warn(`[k8s] Custom Hostname Ingress for instance ${project.id} already exists, proceeding...`)
@@ -476,7 +476,7 @@ const createProject = async (project, options) => {
         let counter = 0
         const pollInterval = setInterval(async () => {
             try {
-                await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
+                await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
                 clearInterval(pollInterval)
                 resolve()
             } catch (err) {
@@ -502,7 +502,7 @@ const createProject = async (project, options) => {
 const getEndpoints = async (project) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
     if (await project.getSetting('ha')) {
-        const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
+        const endpoints = await this._k8sApi.readNamespacedEndpoints({ name: `${prefix}${project.safeName}`, namespace: this._namespace })
         const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
         const hosts = []
         for (const address in addresses) {
@@ -556,8 +556,8 @@ const createMQTTTopicAgent = async (broker) => {
     // console.log(JSON.stringify(localService,null,2))
     try {
         console.log(namespace, localPod.metadata.name)
-        await this._k8sApi.createNamespacedPod(namespace, localPod)
-        await this._k8sApi.createNamespacedService(namespace, localService)
+        await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
+        await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
         this._app.log.error(`[k8s] Problem creating MQTT Agent ${broker.hashid} in ${namespace} - ${err.toString()}`)
         console.log(err)
@@ -678,7 +678,7 @@ module.exports = {
                         try {
                             // pod already running
                             this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} pod exists`)
-                            await this._k8sApi.readNamespacedPodStatus({name: project.safeName, namespace })
+                            await this._k8sApi.readNamespacedPodStatus({ name: project.safeName, namespace })
                             this._app.log.info(`[k8s] pod ${project.id} in ${namespace} found`)
                         } catch (err) {
                             this._app.log.debug(`[k8s] Instance ${project.id} - recreating deployment`)
