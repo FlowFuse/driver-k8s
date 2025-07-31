@@ -555,6 +555,7 @@ const createMQTTTopicAgent = async (broker) => {
     // console.log(JSON.stringify(localPod,null,2))
     // console.log(JSON.stringify(localService,null,2))
     try {
+        console.log(namespace, localPod.metadata.name)
         await this._k8sApi.createNamespacedPod(namespace, localPod)
         await this._k8sApi.createNamespacedService(namespace, localService)
     } catch (err) {
@@ -664,7 +665,7 @@ module.exports = {
                     const currentType = await project.getSetting('k8sType')
                     if (currentType === 'deployment') {
                         try {
-                            this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} deployment exists`)
+                            this._app.log.info(`[k8s] Testing ${project.id} (${project.safeName}) in ${namespace} deployment exists`)
                             await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
                             this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
                         } catch (err) {
