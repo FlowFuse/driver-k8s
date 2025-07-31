@@ -905,26 +905,26 @@ module.exports = {
      */
     remove: async (project) => {
         try {
-            await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
+            await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()}`)
         }
         if (this._certManagerIssuer) {
             try {
-                await this._k8sApi.deleteNamespacedSecret(project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace})
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
             }
         }
         if (this._customHostname?.enabled) {
             try {
-                await this._k8sNetApi.deleteNamespacedIngress(`${project.safeName}-custom`, this._namespace)
+                await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
             }
             if (this._customHostname?.certManagerIssuer) {
                 try {
-                    await this._k8sApi.deleteNamespacedSecret(`${project.safeName}-custom`, this._namespace)
+                    await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
                     this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
                 }
@@ -932,9 +932,9 @@ module.exports = {
         }
         try {
             if (project.safeName.match(/^[0-9]/)) {
-                await this._k8sApi.deleteNamespacedService('srv-' + project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedService({ name: 'srv-' + project.safeName, namespace: this._namespace })
             } else {
-                await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedService({ name: project.safeName, namespace: this._namespace })
             }
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting service: ${err.toString()}`)
@@ -944,9 +944,9 @@ module.exports = {
             // A suspended project won't have a pod to delete - but try anyway
             // just in case state has got out of sync
             if (currentType === 'deployment') {
-                await this._k8sAppApi.deleteNamespacedDeployment(project.safeName, this._namespace)
+                await this._k8sAppApi.deleteNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
             } else {
-                await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedPod({ name: project.safeName, namespace: this._namespace })
             }
         } catch (err) {
             if (project.state !== 'suspended') {
@@ -959,7 +959,7 @@ module.exports = {
         }
         if (this._app.config.driver.options?.storage?.enabled) {
             try {
-                await this._k8sApi.deleteNamespacedPersistentVolumeClaim(`${project.id}-pvc`, this._namespace)
+                await this._k8sApi.deleteNamespacedPersistentVolumeClaim({ name: `${project.id}-pvc`, namespace: this._namespace })
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()} ${err.statusCode}`)
                 // console.log(err)
@@ -992,6 +992,7 @@ module.exports = {
         try {
             if (currentType === 'deployment') {
                 details = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
+                console.log(JSON.stringify(details,null,2))
                 if (details.body.status?.conditions[0].status === 'False') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
@@ -1061,7 +1062,7 @@ module.exports = {
                 }
             }
         } catch (err) {
-            this._app.log.debug(`error getting pod status for instance ${project.id}: ${err}`)
+            this._app.log.debug(`error getting pod status for instance ${project.id}: ${err} ${err.stack()}`)
             return {
                 id: project?.id,
                 error: err,
