@@ -355,11 +355,11 @@ const createProject = async (project, options) => {
             await this._k8sApi.createNamespacedPersistentVolumeClaim({ namespace, body: localPVC })
         } catch (err) {
             console.log(JSON.stringify(err))
-            if (err.statusCode === 409) {
+            if (err.code === 409) {
                 this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
             } else {
                 if (project.state !== 'suspended') {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()} ${err.statusCode} ${err.stack}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()} ${err.code} ${err.stack}`)
                     // console.log(err)
                     throw err
                 }
@@ -370,7 +370,7 @@ const createProject = async (project, options) => {
     try {
         await this._k8sAppApi.createNamespacedDeployment({ namespace, body: localDeployment })
     } catch (err) {
-        if (err.statusCode === 409) {
+        if (err.code === 409) {
             // If deployment exists, perform an upgrade
             this._app.log.warn(`[k8s] Deployment for instance ${project.id} already exists. Upgrading deployment`)
             const result = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace })
@@ -413,7 +413,7 @@ const createProject = async (project, options) => {
     try {
         await this._k8sApi.createNamespacedService(namespace, localService)
     } catch (err) {
-        if (err.statusCode === 409) {
+        if (err.code === 409) {
             this._app.log.warn(`[k8s] Service for instance ${project.id} already exists, proceeding...`)
         } else {
             if (project.state !== 'suspended') {
@@ -445,11 +445,11 @@ const createProject = async (project, options) => {
     try {
         await this._k8sNetApi.createNamespacedIngress({ namespace, body: localIngress })
     } catch (err) {
-        if (err.statusCode === 409) {
+        if (err.code === 409) {
             this._app.log.warn(`[k8s] Ingress for instance ${project.id} already exists, proceeding...`)
         } else {
             if (project.state !== 'suspended') {
-                this._app.log.error(`[k8s] Instance ${project.id} - error creating ingress: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error creating ingress: ${err.toString() ${err.stack}}`)
                 throw err
             }
         }
@@ -461,11 +461,11 @@ const createProject = async (project, options) => {
             try {
                 await this._k8sNetApi.createNamespacedIngress({ namespace, body: customHostnameIngress })
             } catch (err) {
-                if (err.statusCode === 409) {
+                if (err.code === 409) {
                     this._app.log.warn(`[k8s] Custom Hostname Ingress for instance ${project.id} already exists, proceeding...`)
                 } else {
                     if (project.state !== 'suspended') {
-                        this._app.log.error(`[k8s] Instance ${project.id} - error creating custom hostname ingress: ${err.toString()}`)
+                        this._app.log.error(`[k8s] Instance ${project.id} - error creating custom hostname ingress: ${err.toString()} ${err.stack}`)
                         throw err
                     }
                 }
@@ -961,7 +961,7 @@ module.exports = {
             try {
                 await this._k8sApi.deleteNamespacedPersistentVolumeClaim({ name: `${project.id}-pvc`, namespace: this._namespace })
             } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()} ${err.statusCode}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()} ${err.code}`)
                 // console.log(err)
             }
         }
@@ -1284,7 +1284,7 @@ module.exports = {
             await this._k8sApi.deleteNamespacedService(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, this._namespace)
             await this._k8sApi.deleteNamespacedPod(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, this._namespace)
         } catch (err) {
-            this._app.log.error(`[k8s] Error deleting MQTT Agent ${broker.hashid}: ${err.toString()} ${err.statusCode}`)
+            this._app.log.error(`[k8s] Error deleting MQTT Agent ${broker.hashid}: ${err.toString()} ${err.code}`)
         }
     },
     getBrokerAgentState: async (broker) => {
