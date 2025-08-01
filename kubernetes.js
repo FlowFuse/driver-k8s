@@ -449,7 +449,7 @@ const createProject = async (project, options) => {
             this._app.log.warn(`[k8s] Ingress for instance ${project.id} already exists, proceeding...`)
         } else {
             if (project.state !== 'suspended') {
-                this._app.log.error(`[k8s] Instance ${project.id} - error creating ingress: ${err.toString() ${err.stack}}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error creating ingress: ${err.toString()} ${err.stack}}`)
                 throw err
             }
         }
