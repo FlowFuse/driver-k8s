@@ -1281,8 +1281,8 @@ module.exports = {
     },
     stopBrokerAgent: async (broker) => {
         try {
-            await this._k8sApi.deleteNamespacedService(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, this._namespace)
-            await this._k8sApi.deleteNamespacedPod(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, this._namespace)
+            await this._k8sApi.deleteNamespacedService({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace: this._namespace })
+            await this._k8sApi.deleteNamespacedPod({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace: this._namespace })
         } catch (err) {
             this._app.log.error(`[k8s] Error deleting MQTT Agent ${broker.hashid}: ${err.toString()} ${err.code}`)
         }
