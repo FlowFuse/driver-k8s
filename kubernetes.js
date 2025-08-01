@@ -772,7 +772,7 @@ module.exports = {
         this._projects[project.id].state = 'stopping'
 
         try {
-            await this._k8sNetApi.deleteNamespacedIngress({name: project.safeName, namespace: this._namespace })
+            await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()} ${err.stack}`)
         }
@@ -858,10 +858,10 @@ module.exports = {
         const currentType = await project.getSetting('k8sType')
         let pod = true
         if (currentType === 'deployment') {
-            await this._k8sAppApi.deleteNamespacedDeployment({name: project.safeName, namespace: this._namespace })
+            await this._k8sAppApi.deleteNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
             pod = false
         } else {
-            await this._k8sApi.deleteNamespacedPod({name: project.safeName, namespace: this._namespace })
+            await this._k8sApi.deleteNamespacedPod({ name: project.safeName, namespace: this._namespace })
         }
 
         // We should not delete the PVC when the instance is suspended
@@ -910,7 +910,7 @@ module.exports = {
         }
         if (this._certManagerIssuer) {
             try {
-                await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace})
+                await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
             }
@@ -1026,7 +1026,7 @@ module.exports = {
                     }
                 }
             } else {
-                details = await this._k8sApi.readNamespacedPodStatus({name: project.safeName, namespace: this._namespace })
+                details = await this._k8sApi.readNamespacedPodStatus({ name: project.safeName, namespace: this._namespace })
                 if (details.status?.phase === 'Pending') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
