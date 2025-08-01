@@ -411,7 +411,7 @@ const createProject = async (project, options) => {
     })
 
     try {
-        await this._k8sApi.createNamespacedService(namespace, localService)
+        await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
         if (err.code === 409) {
             this._app.log.warn(`[k8s] Service for instance ${project.id} already exists, proceeding...`)
