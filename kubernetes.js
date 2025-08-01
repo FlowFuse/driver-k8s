@@ -374,7 +374,7 @@ const createProject = async (project, options) => {
             this._app.log.warn(`[k8s] Deployment for instance ${project.id} already exists. Upgrading deployment`)
             const result = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace })
 
-            const existingDeployment = result.body
+            const existingDeployment = result
             // Check if the metadata and spec are aligned. They won't be though (at minimal because we regenerate auth)
             if (!_.isEqual(existingDeployment.metadata, localDeployment.metadata) || !_.isEqual(existingDeployment.spec, localDeployment.spec)) {
                 // If not aligned, replace the deployment
@@ -503,7 +503,7 @@ const getEndpoints = async (project) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
     if (await project.getSetting('ha')) {
         const endpoints = await this._k8sApi.readNamespacedEndpoints({ name: `${prefix}${project.safeName}`, namespace: this._namespace })
-        const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+        const addresses = endpoints.subsets[0].addresses.map(a => { return a.ip })
         const hosts = []
         for (const address in addresses) {
             hosts.push(addresses[address])
@@ -559,8 +559,7 @@ const createMQTTTopicAgent = async (broker) => {
         await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
         await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
-        this._app.log.error(`[k8s] Problem creating MQTT Agent ${broker.hashid} in ${namespace} - ${err.toString()}`)
-        console.log(err)
+        this._app.log.error(`[k8s] Problem creating MQTT Agent ${broker.hashid} in ${namespace} - ${err.toString()} ${err.stack}`)
     }
 }
 
@@ -992,7 +991,6 @@ module.exports = {
         try {
             if (currentType === 'deployment') {
                 details = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
-                console.log(JSON.stringify(details,null,2))
                 if (details.status?.conditions[0].status === 'False') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
@@ -1029,7 +1027,6 @@ module.exports = {
                 }
             } else {
                 details = await this._k8sApi.readNamespacedPodStatus({name: project.safeName, namespace: this._namespace })
-                console.log(JSON.stringify(details,null,2))
                 if (details.status?.phase === 'Pending') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
