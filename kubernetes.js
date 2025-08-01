@@ -354,11 +354,12 @@ const createProject = async (project, options) => {
         try {
             await this._k8sApi.createNamespacedPersistentVolumeClaim({ namespace, body: localPVC })
         } catch (err) {
+            console.log(JSON.stringify(err))
             if (err.statusCode === 409) {
                 this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
             } else {
                 if (project.state !== 'suspended') {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()} ${err.statusCode}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()} ${err.statusCode} ${err.stack}`)
                     // console.log(err)
                     throw err
                 }
