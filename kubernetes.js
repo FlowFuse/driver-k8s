@@ -772,31 +772,31 @@ module.exports = {
         this._projects[project.id].state = 'stopping'
 
         try {
-            await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
+            await this._k8sNetApi.deleteNamespacedIngress({name: project.safeName, namespace: this._namespace })
         } catch (err) {
-            this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()} ${err.stack}`)
         }
 
         if (this._certManagerIssuer) {
             try {
-                await this._k8sApi.deleteNamespacedSecret(project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
             } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()} ${err.stack}`)
             }
         }
 
         if (this._customHostname?.enabled) {
             try {
-                await this._k8sNetApi.deleteNamespacedIngress(`${project.safeName}-custom`, this._namespace)
+                await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
             } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()} ${err.stack}`)
             }
 
             if (this._customHostname?.certManagerIssuer) {
                 try {
-                    await this._k8sApi.deleteNamespacedSecret(`${project.safeName}-custom`, this._namespace)
+                    await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()} ${err.stack}`)
                 }
             }
         }
@@ -809,7 +809,7 @@ module.exports = {
                 let counter = 0
                 const pollInterval = setInterval(async () => {
                     try {
-                        await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
+                        await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
                     } catch (err) {
                         clearInterval(pollInterval)
                         resolve()
@@ -828,9 +828,9 @@ module.exports = {
 
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         try {
-            await this._k8sApi.deleteNamespacedService(prefix + project.safeName, this._namespace)
+            await this._k8sApi.deleteNamespacedService({ name: prefix + project.safeName, namespace: this._namespace })
         } catch (err) {
-            this._app.log.error(`[k8s] Instance ${project.id} - error deleting service: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - error deleting service: ${err.toString()} ${err.stack}`)
         }
 
         try {
@@ -838,7 +838,7 @@ module.exports = {
                 let counter = 0
                 const pollInterval = setInterval(async () => {
                     try {
-                        await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
+                        await this._k8sApi.readNamespacedService({ name: prefix + project.safeName, namespace: this._namespace })
                     } catch (err) {
                         clearInterval(pollInterval)
                         resolve()
@@ -852,16 +852,16 @@ module.exports = {
                 }, this._k8sDelay)
             })
         } catch (err) {
-            this._app.log.error(`[k8s] Instance ${project.id} - Service was not deleted: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - Service was not deleted: ${err.toString()} ${err.stack}`)
         }
 
         const currentType = await project.getSetting('k8sType')
         let pod = true
         if (currentType === 'deployment') {
-            await this._k8sAppApi.deleteNamespacedDeployment(project.safeName, this._namespace)
+            await this._k8sAppApi.deleteNamespacedDeployment({name: project.safeName, namespace: this._namespace })
             pod = false
         } else {
-            await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
+            await this._k8sApi.deleteNamespacedPod({name: project.safeName, namespace: this._namespace })
         }
 
         // We should not delete the PVC when the instance is suspended
@@ -879,9 +879,9 @@ module.exports = {
             const pollInterval = setInterval(async () => {
                 try {
                     if (pod) {
-                        await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+                        await this._k8sApi.readNamespacedPodStatus({ name: project.safeName, namespace: this._namespace })
                     } else {
-                        await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                        await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
                     }
                     counter++
                     if (counter > this._k8sRetries) {
