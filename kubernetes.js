@@ -1007,7 +1007,7 @@ module.exports = {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
-                        const info = JSON.parse((await got.get(infoURL)).body)
+                        const info = JSON.parse((await got.get(infoURL), { timeout: { request: 1000 } }).body)
                         this._projects[project.id].state = info.state
                         return info
                     } catch (err) {
@@ -1040,7 +1040,7 @@ module.exports = {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
-                        const info = JSON.parse((await got.get(infoURL)).body)
+                        const info = JSON.parse((await got.get(infoURL), { timeout: { request: 1000 } }).body)
                         this._projects[project.id].state = info.state
                         return info
                     } catch (err) {
@@ -1142,7 +1142,7 @@ module.exports = {
             const addresses = await getEndpoints(project)
             const logRequests = []
             for (const address in addresses) {
-                logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`).json())
+                logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`, { timeout: { request: 1000 } }).json())
             }
             const results = await Promise.all(logRequests)
             const combinedResults = results.flat(1)
@@ -1150,7 +1150,7 @@ module.exports = {
             return combinedResults
         } else {
             const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`).json()
+            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`, { timeout: { request: 1000 } }).json()
             return result
         }
     },
@@ -1221,7 +1221,7 @@ module.exports = {
     listFiles: async (instance, filePath) => {
         const fileUrl = await getStaticFileUrl(instance, filePath)
         try {
-            return got.get(fileUrl).json()
+            return got.get(fileUrl, { timeout: { request: 1000 } }).json()
         } catch (err) {
             console.log(err)
             err.statusCode = err.response.statusCode
@@ -1289,7 +1289,7 @@ module.exports = {
     },
     getBrokerAgentState: async (broker) => {
         try {
-            const status = await got.get(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/status`).json()
+            const status = await got.get(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/status`, { timeout: { request: 1000 } }).json()
             return status
         } catch (err) {
             return { error: 'error_getting_status', message: err.toString() }
@@ -1298,13 +1298,13 @@ module.exports = {
     sendBrokerAgentCommand: async (broker, command) => {
         if (command === 'start' || command === 'restart') {
             try {
-                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/start`)
+                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/start`, { timeout: { request: 1000 } })
             } catch (err) {
 
             }
         } else if (command === 'stop') {
             try {
-                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/stop`)
+                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/stop`, { timeout: { request: 1000 } })
             } catch (err) {
 
             }
@@ -1333,7 +1333,7 @@ module.exports = {
             }
         } else {
             const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`).json()
+            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`, { timeout: { request: 1000 } }).json()
             if (Array.isArray(result)) {
                 return {
                     meta: {},
