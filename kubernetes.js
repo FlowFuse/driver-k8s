@@ -1007,7 +1007,7 @@ module.exports = {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
-                        const info = JSON.parse((await got.get(infoURL), { timeout: { request: 1000 } }).body)
+                        const info = JSON.parse((await got.get(infoURL, { timeout: { request: 1000 } })).body)
                         this._projects[project.id].state = info.state
                         return info
                     } catch (err) {
@@ -1040,7 +1040,7 @@ module.exports = {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
-                        const info = JSON.parse((await got.get(infoURL), { timeout: { request: 1000 } }).body)
+                        const info = JSON.parse((await got.get(infoURL, { timeout: { request: 1000 } })).body)
                         this._projects[project.id].state = info.state
                         return info
                     } catch (err) {
