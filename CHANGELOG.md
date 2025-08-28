@@ -1,3 +1,7 @@
+#### 2.21.1: Release
+
+ - Bump brace-expansion from 1.1.11 to 1.1.12 (#228) @app/dependabot
+
 #### 2.21.0: Release
 
  - Bump actions/checkout from 4.2.2 to 5.0.0 (#226)
