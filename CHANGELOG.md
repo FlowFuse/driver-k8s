@@ -6,7 +6,7 @@
 
  - Bump actions/checkout from 4.2.2 to 5.0.0 (#226)
  - Bump flowfuse/github-actions-workflows from 0.40.0 to 0.42.0 (#224)
- 
+
 #### 2.20.0: Release
 
 
