@@ -1,6 +1,6 @@
 const got = require('got')
 const FormData = require('form-data')
-const k8s = require('@kubernetes/client-node')
+// const k8s = require('@kubernetes/client-node')
 const _ = require('lodash')
 const awsEFS = require('./lib/aws-efs.js')
 const { WebSocket } = require('ws')
@@ -14,6 +14,8 @@ const {
     mqttSchemaAgentPodTemplate,
     mqttSchemaAgentServiceTemplate
 } = require('./templates.js')
+
+let k8s
 
 /**
  * Kubernates Container driver
@@ -350,13 +352,14 @@ const createProject = async (project, options) => {
         const localPVC = await createPersistentVolumeClaim(project, options)
         // console.log(JSON.stringify(localPVC, null, 2))
         try {
-            await this._k8sApi.createNamespacedPersistentVolumeClaim(namespace, localPVC)
+            await this._k8sApi.createNamespacedPersistentVolumeClaim({ namespace, body: localPVC })
         } catch (err) {
-            if (err.statusCode === 409) {
+            console.log(JSON.stringify(err))
+            if (err.code === 409) {
                 this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
             } else {
                 if (project.state !== 'suspended') {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()} ${err.statusCode}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error creating PVC: ${err.toString()} ${err.code} ${err.stack}`)
                     // console.log(err)
                     throw err
                 }
@@ -365,18 +368,18 @@ const createProject = async (project, options) => {
     }
 
     try {
-        await this._k8sAppApi.createNamespacedDeployment(namespace, localDeployment)
+        await this._k8sAppApi.createNamespacedDeployment({ namespace, body: localDeployment })
     } catch (err) {
-        if (err.statusCode === 409) {
+        if (err.code === 409) {
             // If deployment exists, perform an upgrade
             this._app.log.warn(`[k8s] Deployment for instance ${project.id} already exists. Upgrading deployment`)
-            const result = await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
+            const result = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace })
 
-            const existingDeployment = result.body
+            const existingDeployment = result
             // Check if the metadata and spec are aligned. They won't be though (at minimal because we regenerate auth)
             if (!_.isEqual(existingDeployment.metadata, localDeployment.metadata) || !_.isEqual(existingDeployment.spec, localDeployment.spec)) {
                 // If not aligned, replace the deployment
-                await this._k8sAppApi.replaceNamespacedDeployment(project.safeName, namespace, localDeployment)
+                await this._k8sAppApi.replaceNamespacedDeployment({ name: project.safeName, namespace, body: localDeployment })
             }
         } else {
             // Log other errors and rethrow them for additional higher-level handling
@@ -392,7 +395,7 @@ const createProject = async (project, options) => {
         let counter = 0
         const pollInterval = setInterval(async () => {
             try {
-                await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
                 clearInterval(pollInterval)
                 resolve()
             } catch (err) {
@@ -408,9 +411,9 @@ const createProject = async (project, options) => {
     })
 
     try {
-        await this._k8sApi.createNamespacedService(namespace, localService)
+        await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
-        if (err.statusCode === 409) {
+        if (err.code === 409) {
             this._app.log.warn(`[k8s] Service for instance ${project.id} already exists, proceeding...`)
         } else {
             if (project.state !== 'suspended') {
@@ -425,7 +428,7 @@ const createProject = async (project, options) => {
         let counter = 0
         const pollInterval = setInterval(async () => {
             try {
-                await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
+                await this._k8sApi.readNamespacedService({ name: prefix + project.safeName, namespace: this._namespace })
                 clearInterval(pollInterval)
                 resolve()
             } catch (err) {
@@ -440,13 +443,13 @@ const createProject = async (project, options) => {
     })
 
     try {
-        await this._k8sNetApi.createNamespacedIngress(namespace, localIngress)
+        await this._k8sNetApi.createNamespacedIngress({ namespace, body: localIngress })
     } catch (err) {
-        if (err.statusCode === 409) {
+        if (err.code === 409) {
             this._app.log.warn(`[k8s] Ingress for instance ${project.id} already exists, proceeding...`)
         } else {
             if (project.state !== 'suspended') {
-                this._app.log.error(`[k8s] Instance ${project.id} - error creating ingress: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error creating ingress: ${err.toString()} ${err.stack}}`)
                 throw err
             }
         }
@@ -456,13 +459,13 @@ const createProject = async (project, options) => {
         if (customHostname) {
             const customHostnameIngress = await createCustomIngress(project, customHostname, options)
             try {
-                await this._k8sNetApi.createNamespacedIngress(namespace, customHostnameIngress)
+                await this._k8sNetApi.createNamespacedIngress({ namespace, body: customHostnameIngress })
             } catch (err) {
-                if (err.statusCode === 409) {
+                if (err.code === 409) {
                     this._app.log.warn(`[k8s] Custom Hostname Ingress for instance ${project.id} already exists, proceeding...`)
                 } else {
                     if (project.state !== 'suspended') {
-                        this._app.log.error(`[k8s] Instance ${project.id} - error creating custom hostname ingress: ${err.toString()}`)
+                        this._app.log.error(`[k8s] Instance ${project.id} - error creating custom hostname ingress: ${err.toString()} ${err.stack}`)
                         throw err
                     }
                 }
@@ -474,7 +477,7 @@ const createProject = async (project, options) => {
         let counter = 0
         const pollInterval = setInterval(async () => {
             try {
-                await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
+                await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
                 clearInterval(pollInterval)
                 resolve()
             } catch (err) {
@@ -500,8 +503,8 @@ const createProject = async (project, options) => {
 const getEndpoints = async (project) => {
     const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
     if (await project.getSetting('ha')) {
-        const endpoints = await this._k8sApi.readNamespacedEndpoints(`${prefix}${project.safeName}`, this._namespace)
-        const addresses = endpoints.body.subsets[0].addresses.map(a => { return a.ip })
+        const endpoints = await this._k8sApi.readNamespacedEndpoints({ name: `${prefix}${project.safeName}`, namespace: this._namespace })
+        const addresses = endpoints.subsets[0].addresses.map(a => { return a.ip })
         const hosts = []
         for (const address in addresses) {
             hosts.push(addresses[address])
@@ -553,11 +556,11 @@ const createMQTTTopicAgent = async (broker) => {
     // console.log(JSON.stringify(localPod,null,2))
     // console.log(JSON.stringify(localService,null,2))
     try {
-        await this._k8sApi.createNamespacedPod(namespace, localPod)
-        await this._k8sApi.createNamespacedService(namespace, localService)
+        console.log(namespace, localPod.metadata.name)
+        await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
+        await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
-        this._app.log.error(`[k8s] Problem creating MQTT Agent ${broker.hashid} - ${err.toString()}`)
-        console.log(err)
+        this._app.log.error(`[k8s] Problem creating MQTT Agent ${broker.hashid} in ${namespace} - ${err.toString()} ${err.stack}`)
     }
 }
 
@@ -569,6 +572,11 @@ module.exports = {
     * @return {forge.containers.ProjectArguments}
     */
     init: async (app, options) => {
+        try {
+            k8s = await import('@kubernetes/client-node')
+        } catch (err) {
+            throw Error('Failed to load Kubernetes node client', { cause: err })
+        }
         this._app = app
         this._projects = {}
         this._options = options
@@ -657,8 +665,8 @@ module.exports = {
                     const currentType = await project.getSetting('k8sType')
                     if (currentType === 'deployment') {
                         try {
-                            this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} deployment exists`)
-                            await this._k8sAppApi.readNamespacedDeployment(project.safeName, namespace)
+                            this._app.log.info(`[k8s] Testing ${project.id} (${project.safeName}) in ${namespace} deployment exists`)
+                            await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace })
                             this._app.log.info(`[k8s] deployment ${project.id} in ${namespace} found`)
                         } catch (err) {
                             this._app.log.error(`[k8s] Error while reading namespaced deployment for project '${project.safeName}' ${project.id}.  Error msg=${err.message}, stack=${err.stack}`)
@@ -670,7 +678,7 @@ module.exports = {
                         try {
                             // pod already running
                             this._app.log.info(`[k8s] Testing ${project.id} in ${namespace} pod exists`)
-                            await this._k8sApi.readNamespacedPodStatus(project.safeName, namespace)
+                            await this._k8sApi.readNamespacedPodStatus({ name: project.safeName, namespace })
                             this._app.log.info(`[k8s] pod ${project.id} in ${namespace} found`)
                         } catch (err) {
                             this._app.log.debug(`[k8s] Instance ${project.id} - recreating deployment`)
@@ -695,7 +703,7 @@ module.exports = {
                         try {
                             this._app.log.info(`[k8s] Testing MQTT Agent ${broker.hashid} in ${namespace} pod exists`)
                             this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`)
-                            await this._k8sApi.readNamespacedPodStatus(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace)
+                            await this._k8sApi.readNamespacedPodStatus({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace })
                             this._app.log.info(`[k8s] MQTT Agent pod ${broker.hashid} in ${namespace} found`)
                         } catch (err) {
                             this._app.log.debug(`[k8s] MQTT Agent ${broker.hashid} - failed ${err.toString()}`)
@@ -765,31 +773,31 @@ module.exports = {
         this._projects[project.id].state = 'stopping'
 
         try {
-            await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
+            await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
         } catch (err) {
-            this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()} ${err.stack}`)
         }
 
         if (this._certManagerIssuer) {
             try {
-                await this._k8sApi.deleteNamespacedSecret(project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
             } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()} ${err.stack}`)
             }
         }
 
         if (this._customHostname?.enabled) {
             try {
-                await this._k8sNetApi.deleteNamespacedIngress(`${project.safeName}-custom`, this._namespace)
+                await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
             } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()} ${err.stack}`)
             }
 
             if (this._customHostname?.certManagerIssuer) {
                 try {
-                    await this._k8sApi.deleteNamespacedSecret(`${project.safeName}-custom`, this._namespace)
+                    await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()} ${err.stack}`)
                 }
             }
         }
@@ -802,7 +810,7 @@ module.exports = {
                 let counter = 0
                 const pollInterval = setInterval(async () => {
                     try {
-                        await this._k8sNetApi.readNamespacedIngress(project.safeName, this._namespace)
+                        await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
                     } catch (err) {
                         clearInterval(pollInterval)
                         resolve()
@@ -821,9 +829,9 @@ module.exports = {
 
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         try {
-            await this._k8sApi.deleteNamespacedService(prefix + project.safeName, this._namespace)
+            await this._k8sApi.deleteNamespacedService({ name: prefix + project.safeName, namespace: this._namespace })
         } catch (err) {
-            this._app.log.error(`[k8s] Instance ${project.id} - error deleting service: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - error deleting service: ${err.toString()} ${err.stack}`)
         }
 
         try {
@@ -831,7 +839,7 @@ module.exports = {
                 let counter = 0
                 const pollInterval = setInterval(async () => {
                     try {
-                        await this._k8sApi.readNamespacedService(prefix + project.safeName, this._namespace)
+                        await this._k8sApi.readNamespacedService({ name: prefix + project.safeName, namespace: this._namespace })
                     } catch (err) {
                         clearInterval(pollInterval)
                         resolve()
@@ -845,16 +853,16 @@ module.exports = {
                 }, this._k8sDelay)
             })
         } catch (err) {
-            this._app.log.error(`[k8s] Instance ${project.id} - Service was not deleted: ${err.toString()}`)
+            this._app.log.error(`[k8s] Instance ${project.id} - Service was not deleted: ${err.toString()} ${err.stack}`)
         }
 
         const currentType = await project.getSetting('k8sType')
         let pod = true
         if (currentType === 'deployment') {
-            await this._k8sAppApi.deleteNamespacedDeployment(project.safeName, this._namespace)
+            await this._k8sAppApi.deleteNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
             pod = false
         } else {
-            await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
+            await this._k8sApi.deleteNamespacedPod({ name: project.safeName, namespace: this._namespace })
         }
 
         // We should not delete the PVC when the instance is suspended
@@ -872,9 +880,9 @@ module.exports = {
             const pollInterval = setInterval(async () => {
                 try {
                     if (pod) {
-                        await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
+                        await this._k8sApi.readNamespacedPodStatus({ name: project.safeName, namespace: this._namespace })
                     } else {
-                        await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
+                        await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
                     }
                     counter++
                     if (counter > this._k8sRetries) {
@@ -897,26 +905,26 @@ module.exports = {
      */
     remove: async (project) => {
         try {
-            await this._k8sNetApi.deleteNamespacedIngress(project.safeName, this._namespace)
+            await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()}`)
         }
         if (this._certManagerIssuer) {
             try {
-                await this._k8sApi.deleteNamespacedSecret(project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
             }
         }
         if (this._customHostname?.enabled) {
             try {
-                await this._k8sNetApi.deleteNamespacedIngress(`${project.safeName}-custom`, this._namespace)
+                await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
             }
             if (this._customHostname?.certManagerIssuer) {
                 try {
-                    await this._k8sApi.deleteNamespacedSecret(`${project.safeName}-custom`, this._namespace)
+                    await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
                     this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
                 }
@@ -924,9 +932,9 @@ module.exports = {
         }
         try {
             if (project.safeName.match(/^[0-9]/)) {
-                await this._k8sApi.deleteNamespacedService('srv-' + project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedService({ name: 'srv-' + project.safeName, namespace: this._namespace })
             } else {
-                await this._k8sApi.deleteNamespacedService(project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedService({ name: project.safeName, namespace: this._namespace })
             }
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting service: ${err.toString()}`)
@@ -936,9 +944,9 @@ module.exports = {
             // A suspended project won't have a pod to delete - but try anyway
             // just in case state has got out of sync
             if (currentType === 'deployment') {
-                await this._k8sAppApi.deleteNamespacedDeployment(project.safeName, this._namespace)
+                await this._k8sAppApi.deleteNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
             } else {
-                await this._k8sApi.deleteNamespacedPod(project.safeName, this._namespace)
+                await this._k8sApi.deleteNamespacedPod({ name: project.safeName, namespace: this._namespace })
             }
         } catch (err) {
             if (project.state !== 'suspended') {
@@ -951,9 +959,9 @@ module.exports = {
         }
         if (this._app.config.driver.options?.storage?.enabled) {
             try {
-                await this._k8sApi.deleteNamespacedPersistentVolumeClaim(`${project.id}-pvc`, this._namespace)
+                await this._k8sApi.deleteNamespacedPersistentVolumeClaim({ name: `${project.id}-pvc`, namespace: this._namespace })
             } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()} ${err.statusCode}`)
+                this._app.log.error(`[k8s] Instance ${project.id} - error deleting PVC: ${err.toString()} ${err.code}`)
                 // console.log(err)
             }
         }
@@ -983,8 +991,8 @@ module.exports = {
         const currentType = await project.getSetting('k8sType')
         try {
             if (currentType === 'deployment') {
-                details = await this._k8sAppApi.readNamespacedDeployment(project.safeName, this._namespace)
-                if (details.body.status?.conditions[0].status === 'False') {
+                details = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
+                if (details.status?.conditions[0].status === 'False') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
                     return {
@@ -992,14 +1000,14 @@ module.exports = {
                         state: 'starting',
                         meta: {}
                     }
-                } else if (details.body.status?.conditions[0].status === 'True' &&
-                    (details.body.status?.conditions[0].type === 'Available' ||
-                        (details.body.status?.conditions[0].type === 'Progressing' && details.body.status?.conditions[0].reason === 'NewReplicaSetAvailable')
+                } else if (details.status?.conditions[0].status === 'True' &&
+                    (details.status?.conditions[0].type === 'Available' ||
+                        (details.status?.conditions[0].type === 'Progressing' && details.status?.conditions[0].reason === 'NewReplicaSetAvailable')
                     )) {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
-                        const info = JSON.parse((await got.get(infoURL)).body)
+                        const info = JSON.parse((await got.get(infoURL, { timeout: { request: 1000 } })).body)
                         this._projects[project.id].state = info.state
                         return info
                     } catch (err) {
@@ -1014,13 +1022,13 @@ module.exports = {
                     return {
                         id: project.id,
                         state: 'starting',
-                        error: `Unexpected pod status '${details.body.status?.conditions[0]?.status}', type '${details.body.status?.conditions[0]?.type}'`,
+                        error: `Unexpected pod status '${details.status?.conditions[0]?.status}', type '${details.status?.conditions[0]?.type}'`,
                         meta: {}
                     }
                 }
             } else {
-                details = await this._k8sApi.readNamespacedPodStatus(project.safeName, this._namespace)
-                if (details.body.status?.phase === 'Pending') {
+                details = await this._k8sApi.readNamespacedPodStatus({ name: project.safeName, namespace: this._namespace })
+                if (details.status?.phase === 'Pending') {
                     // return "starting" status until pod it running
                     this._projects[project.id].state = 'starting'
                     return {
@@ -1028,11 +1036,11 @@ module.exports = {
                         state: 'starting',
                         meta: {}
                     }
-                } else if (details.body.status?.phase === 'Running') {
+                } else if (details.status?.phase === 'Running') {
                     // not calling all endpoints for HA as they should be the same
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
-                        const info = JSON.parse((await got.get(infoURL)).body)
+                        const info = JSON.parse((await got.get(infoURL, { timeout: { request: 1000 } })).body)
                         this._projects[project.id].state = info.state
                         return info
                     } catch (err) {
@@ -1047,18 +1055,18 @@ module.exports = {
                     return {
                         id: project.id,
                         state: 'starting',
-                        error: `Unexpected pod status '${details.body.status?.phase}'`,
+                        error: `Unexpected pod status '${details.status?.phase}'`,
                         meta: {}
                     }
                 }
             }
         } catch (err) {
-            this._app.log.debug(`error getting pod status for instance ${project.id}: ${err}`)
+            this._app.log.debug(`error getting pod status for instance ${project.id}: ${err} ${err.stack}`)
             return {
                 id: project?.id,
                 error: err,
                 state: 'starting',
-                meta: details?.body?.status
+                meta: details?.status
             }
         }
     },
@@ -1134,7 +1142,7 @@ module.exports = {
             const addresses = await getEndpoints(project)
             const logRequests = []
             for (const address in addresses) {
-                logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`).json())
+                logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`, { timeout: { request: 1000 } }).json())
             }
             const results = await Promise.all(logRequests)
             const combinedResults = results.flat(1)
@@ -1142,7 +1150,7 @@ module.exports = {
             return combinedResults
         } else {
             const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`).json()
+            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`, { timeout: { request: 1000 } }).json()
             return result
         }
     },
@@ -1213,7 +1221,7 @@ module.exports = {
     listFiles: async (instance, filePath) => {
         const fileUrl = await getStaticFileUrl(instance, filePath)
         try {
-            return got.get(fileUrl).json()
+            return got.get(fileUrl, { timeout: { request: 1000 } }).json()
         } catch (err) {
             console.log(err)
             err.statusCode = err.response.statusCode
@@ -1273,15 +1281,15 @@ module.exports = {
     },
     stopBrokerAgent: async (broker) => {
         try {
-            await this._k8sApi.deleteNamespacedService(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, this._namespace)
-            await this._k8sApi.deleteNamespacedPod(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, this._namespace)
+            await this._k8sApi.deleteNamespacedService({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace: this._namespace })
+            await this._k8sApi.deleteNamespacedPod({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`, namespace: this._namespace })
         } catch (err) {
-            this._app.log.error(`[k8s] Error deleting MQTT Agent ${broker.hashid}: ${err.toString()} ${err.statusCode}`)
+            this._app.log.error(`[k8s] Error deleting MQTT Agent ${broker.hashid}: ${err.toString()} ${err.code}`)
         }
     },
     getBrokerAgentState: async (broker) => {
         try {
-            const status = await got.get(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/status`).json()
+            const status = await got.get(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/status`, { timeout: { request: 1000 } }).json()
             return status
         } catch (err) {
             return { error: 'error_getting_status', message: err.toString() }
@@ -1290,13 +1298,13 @@ module.exports = {
     sendBrokerAgentCommand: async (broker, command) => {
         if (command === 'start' || command === 'restart') {
             try {
-                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/start`)
+                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/start`, { timeout: { request: 1000 } })
             } catch (err) {
 
             }
         } else if (command === 'stop') {
             try {
-                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/stop`)
+                await got.post(`http://mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}.${this._namespace}:3500/api/v1/commands/stop`, { timeout: { request: 1000 } })
             } catch (err) {
 
             }
@@ -1325,7 +1333,7 @@ module.exports = {
             }
         } else {
             const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`).json()
+            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`, { timeout: { request: 1000 } }).json()
             if (Array.isArray(result)) {
                 return {
                     meta: {},
