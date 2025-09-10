@@ -1,3 +1,8 @@
+#### 2.21.2: Release
+
+ - Bump actions/setup-node from 4.4.0 to 5.0.0 (#230)
+ - Bump node k8s driver (#223) @hardillb
+
 #### 2.21.1: Release
 
  - Bump brace-expansion from 1.1.11 to 1.1.12 (#228) @app/dependabot
