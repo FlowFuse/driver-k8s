@@ -1142,7 +1142,7 @@ module.exports = {
             const addresses = await getEndpoints(project)
             const logRequests = []
             for (const address in addresses) {
-                logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`, { timeout: { request: 1000 } }).json())
+                logRequests.push(got.get(`http://${addresses[address]}:2880/flowforge/logs`, { timeout: { request: 2000 } }).json())
             }
             const results = await Promise.all(logRequests)
             const combinedResults = results.flat(1)
@@ -1150,7 +1150,7 @@ module.exports = {
             return combinedResults
         } else {
             const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`, { timeout: { request: 1000 } }).json()
+            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/logs`, { timeout: { request: 2000 } }).json()
             return result
         }
     },
@@ -1333,7 +1333,7 @@ module.exports = {
             }
         } else {
             const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`, { timeout: { request: 1000 } }).json()
+            const result = await got.get(`http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/resources`, { timeout: { request: 2000 } }).json()
             if (Array.isArray(result)) {
                 return {
                     meta: {},
