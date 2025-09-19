@@ -531,7 +531,7 @@ const createMQTTTopicAgent = async (broker) => {
     const { token } = await broker.refreshAuthTokens()
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_TOKEN', value: token })
     localPod.spec.containers[0].env.push({ name: 'FORGE_URL', value: this._app.config.api_url })
-    localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_ID', value: agent? 'team-broker' : broker.hashid })
+    localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_ID', value: agent ? 'team-broker' : broker.hashid })
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: broker.Team.hashid })
     if (agent) {
         localPod.spec.containers[0].env.push({ name: 'FORGE_TIMEOUT', value: 24 })
@@ -707,7 +707,7 @@ module.exports = {
                     if (broker.Team && broker.state === 'running') {
                         try {
                             this._app.log.info(`[k8s] Testing MQTT Agent ${agent ? 'team-broker' : broker.hashid} in ${namespace} pod exists`)
-                            this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' :broker.hashid.toLowerCase()}`)
+                            this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`)
                             await this._k8sApi.readNamespacedPodStatus({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace })
                             this._app.log.info(`[k8s] MQTT Agent pod ${agent ? 'team-broker' : broker.hashid} in ${namespace} found`)
                         } catch (err) {
