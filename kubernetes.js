@@ -534,6 +534,7 @@ const createMQTTTopicAgent = async (broker) => {
     localPod.spec.containers[0].env.push({ name: 'FORGE_BROKER_ID', value: agent ? 'team-broker' : broker.hashid })
     localPod.spec.containers[0].env.push({ name: 'FORGE_TEAM_ID', value: broker.Team.hashid })
     if (agent) {
+        // env vars must be strings not numbers
         localPod.spec.containers[0].env.push({ name: 'FORGE_TIMEOUT', value: '24' })
     }
 
