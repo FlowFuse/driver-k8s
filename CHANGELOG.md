@@ -1,3 +1,12 @@
+#### 2.22.0: Release
+
+ - Bump JS-DevTools/npm-publish from 4.0.0 to 4.0.1 (#236)
+ - Increase http timeout for forge polling nr-launcher (#235)
+ - Bump JS-DevTools/npm-publish from 3.1.1 to 4.0.0 (#234)
+ - Bump tar-fs from 3.1.0 to 3.1.1 (#238) @app/dependabot
+ - Force 24 hour time out to be a string (#237) @hardillb
+ - Add team broker mqtt agent support (#232) @hardillb
+
 #### 2.21.2: Release
 
  - Bump actions/setup-node from 4.4.0 to 5.0.0 (#230)
