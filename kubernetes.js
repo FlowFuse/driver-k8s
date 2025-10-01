@@ -203,8 +203,12 @@ const createDeployment = async (project, options) => {
     }
 
     if (this._app.config.driver.options?.projectLabels) {
-        localPod.spec.labels = {
-            ...localPod.spec.labels,
+        localPod.metadata.labels = {
+            ...localPod.metadata.labels,
+            ...this._app.config.driver.options.projectLabels
+        }
+        localDeployment.metadata.labels = {
+            ...localDeployment.metadata.labels,
             ...this._app.config.driver.options.projectLabels
         }
     }
@@ -578,8 +582,8 @@ const createMQTTTopicAgent = async (broker) => {
         broker: agent ? 'team-broker' : broker.hashid
     }
     if (this._app.config.driver.options?.projectLabels) {
-        localPod.spec.labels = {
-            ...localPod.spec.labels,
+        localPod.metadata.labels = {
+            ...localPod.metadata.labels,
             ...this._app.config.driver.options.projectLabels
         }
         localService.metadata.labels = {
