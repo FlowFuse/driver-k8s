@@ -202,6 +202,17 @@ const createDeployment = async (project, options) => {
         localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
     }
 
+    if (this._app.config.driver.options?.projectLabels) {
+        localPod.metadata.labels = {
+            ...localPod.metadata.labels,
+            ...this._app.config.driver.options.projectLabels
+        }
+        localDeployment.metadata.labels = {
+            ...localDeployment.metadata.labels,
+            ...this._app.config.driver.options.projectLabels
+        }
+    }
+
     const ha = await project.getSetting('ha')
     if (ha?.replicas > 1) {
         localDeployment.spec.replicas = ha.replicas
@@ -225,6 +236,9 @@ const createService = async (project, options) => {
         throw new Error('Service type must be either NodePort or ClusterIP')
     }
     localService.spec.type = serviceType
+    if (this._app.config.driver.options?.projectLabels) {
+        localService.metadata.labels = this._app.config.driver.options.projectLabels
+    }
     return localService
 }
 
@@ -263,6 +277,10 @@ const createIngress = async (project, options) => {
     Object.keys(localIngress.metadata.annotations).forEach((key) => {
         localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key], exposedData)
     })
+
+    if (this._app.config.driver.options?.projectLabels) {
+        localIngress.metadata.labels = this._app.config.driver.options.projectLabels
+    }
 
     localIngress.metadata.name = project.safeName
     localIngress.spec.rules[0].host = url.host
@@ -312,6 +330,10 @@ const createCustomIngress = async (project, hostname, options) => {
         customIngress.spec.ingressClassName = `${this._customHostname.ingressClass}`
     }
 
+    if (this._app.config.driver.options?.projectLabels) {
+        customIngress.metadata.labels = this._app.config.driver.options.projectLabels
+    }
+
     return customIngress
 }
 
@@ -336,6 +358,12 @@ const createPersistentVolumeClaim = async (project, options) => {
     pvc.metadata.labels = {
         'ff-project-id': project.id,
         'ff-project-name': project.safeName
+    }
+    if (this._app.config.driver.options?.projectLabels) {
+        pvc.metadata.labels = {
+            ...pvc.metadata.labels,
+            ...this._app.config.driver.options.projectLabels
+        }
     }
     console.log(`PVC: ${JSON.stringify(pvc, null, 2)}`)
     return pvc
@@ -552,6 +580,16 @@ const createMQTTTopicAgent = async (broker) => {
     localService.metadata.labels = {
         team: broker.Team.hashid,
         broker: agent ? 'team-broker' : broker.hashid
+    }
+    if (this._app.config.driver.options?.projectLabels) {
+        localPod.metadata.labels = {
+            ...localPod.metadata.labels,
+            ...this._app.config.driver.options.projectLabels
+        }
+        localService.metadata.labels = {
+            ...localService.metadata.labels,
+            ...this._app.config.driver.options.projectLabels
+        }
     }
     localService.spec.selector.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`
 

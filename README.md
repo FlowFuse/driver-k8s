@@ -15,6 +15,9 @@ driver:
     projectSelector:
       role: projects
     projectNamespace: flowforge
+    projectLabels:
+      environment: production
+      team: alpha
     cloudProvider: aws
     privateCA: ff-ca-certs
     certManagerIssuer: lets-encrypt
@@ -40,6 +43,7 @@ driver:
 - `projectNamespace` the namespace Project pods should run in
 - `projectSelector` a list of labels that should be used to select which nodes Project Pods
 should run on
+- `projectLabels` a list of custom labels that should be applied to all resources created for Projects (Pods, Services, Ingresses, PVCs)
 - `cloudProvider` normally not set, but can be `aws` This triggers the adding of
 AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on OpenShift (Enterprise license only)
 - `privateCA` name of ConfigMap holding PEM CA Cert Bundle (file name `certs.pem`) Optional
