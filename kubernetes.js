@@ -262,7 +262,7 @@ const createIngress = async (project, options) => {
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
 
     let addIngressTls = false
-    
+
     if (this._certManagerIssuer) {
         localIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._certManagerIssuer
         addIngressTls = true
@@ -276,20 +276,20 @@ const createIngress = async (project, options) => {
             })
         }
     } else if (this._projectIngressAnnotations) {
-        const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key => 
+        const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key =>
             key.startsWith('cert-manager.io/')
         )
-        
+
         if (hasCertManagerAnnotation) {
             addIngressTls = true
         }
-        
+
         // Add all annotations from projectIngressAnnotations
         Object.keys(this._projectIngressAnnotations).forEach((key) => {
             localIngress.metadata.annotations[key] = this._projectIngressAnnotations[key]
         })
     }
-    
+
     // Add TLS configuration if needed
     if (addIngressTls) {
         localIngress.spec.tls = [
@@ -339,16 +339,16 @@ const createCustomIngress = async (project, hostname, options) => {
     customIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
     let addCustomIngressTls = false
-    
+
     if (this._customHostname?.certManagerIssuer) {
-        localIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._customHostname.certManagerIssuer
+        customIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._customHostname.certManagerIssuer
         addCustomIngressTls = true
 
         // Add non-cert-manager annotations from projectIngressAnnotations if they exist
         if (this._customHostname?.ingressAnnotations) {
             Object.keys(this._customHostname?.ingressAnnotations).forEach((key) => {
                 if (!key.startsWith('cert-manager.io/')) {
-                    localIngress.metadata.annotations[key] = this._customHostname?.ingressAnnotations[key]
+                    customIngress.metadata.annotations[key] = this._customHostname?.ingressAnnotations[key]
                 }
             })
         }
@@ -356,20 +356,20 @@ const createCustomIngress = async (project, hostname, options) => {
         const hasCertManagerAnnotation = Object.keys(this._customHostname?.ingressAnnotations).some(key =>
             key.startsWith('cert-manager.io/')
         )
-        
+
         if (hasCertManagerAnnotation) {
             addCustomIngressTls = true
         }
-        
+
         // Add all annotations from projectIngressAnnotations
         Object.keys(this._customHostname?.ingressAnnotations).forEach((key) => {
-            localIngress.metadata.annotations[key] = this._customHostname?.ingressAnnotations[key]
+            customIngress.metadata.annotations[key] = this._customHostname?.ingressAnnotations[key]
         })
     }
-    
+
     // Add TLS configuration if needed
     if (addCustomIngressTls) {
-        localIngress.spec.tls = [
+        customIngress.spec.tls = [
             {
                 hosts: [
                     hostname
