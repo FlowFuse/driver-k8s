@@ -686,7 +686,7 @@ module.exports = {
         this._k8sDelay = this._app.config.driver.options?.k8sDelay || 1000
         this._k8sRetries = this._app.config.driver.options?.k8sRetries || 10
         this._certManagerIssuer = this._app.config.driver.options?.certManagerIssuer
-        this._certManagerAnnotations = this._app.config.driver.options?.certManagerAnnotations
+        this._projectIngressAnnotations = this._app.config.driver.options?.projectIngressAnnotations
         this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
         this._cloudProvider = this._app.config.driver.options?.cloudProvider
         if (this._app.config.driver.options?.customHostname?.enabled) {
@@ -887,12 +887,16 @@ module.exports = {
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()} ${err.stack}`)
             }
-        }
-        if (this._certManagerAnnotations) {
-            try {
-                await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
-            } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret (annotations): ${err.toString()} ${err.stack}`)
+        } else if (this._projectIngressAnnotations) {
+            const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key =>
+                key.startsWith('cert-manager.io/')
+            )
+            if (hasCertManagerAnnotation) {
+                try {
+                    await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
+                } catch (err) {
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()} ${err.stack}`)
+                }
             }
         }
 
@@ -1019,11 +1023,22 @@ module.exports = {
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()}`)
         }
-        if (this._certManagerIssuer || this._certManagerAnnotations) {
+        if (this._certManagerIssuer) {
             try {
                 await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+            }
+        } else if (this._projectIngressAnnotations) {
+            const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key =>
+                key.startsWith('cert-manager.io/')
+            )
+            if (hasCertManagerAnnotation) {
+                try {
+                    await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
+                } catch (err) {
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+                }
             }
         }
         if (this._customHostname?.enabled) {
