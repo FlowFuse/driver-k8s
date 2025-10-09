@@ -525,7 +525,9 @@ const createProject = async (project, options) => {
     project.state = 'running'
     await project.save()
 
-    this._projects[project.id].state = 'starting'
+    const cachedProject = await this._projects.get(project.id)
+    cachedProject.state = 'starting'
+    await this._projects.set(project.id, cachedProject)
 }
 
 const getEndpoints = async (project) => {
@@ -621,7 +623,7 @@ module.exports = {
             throw Error('Failed to load Kubernetes node client', { cause: err })
         }
         this._app = app
-        this._projects = {}
+        this._projects = app.caches.getCache('driver-k8s-projects') // {}
         this._options = options
 
         this._namespace = this._app.config.driver.options?.projectNamespace || 'flowforge'
@@ -664,10 +666,10 @@ module.exports = {
             ]
         })
         projects.forEach(async (project) => {
-            if (this._projects[project.id] === undefined) {
-                this._projects[project.id] = {
+            if (await this._projects.get(project.id) === undefined) {
+                await this._projects.set(project.id, {
                     state: 'unknown'
-                }
+                })
             }
         })
 
@@ -757,7 +759,7 @@ module.exports = {
                     }
                 })
             }
-        }, 1000)
+        }, Math.floor(1000 + (Math.random() * 5))) // space this out so if 2 instances running they shouldn't run at the same time
 
         // need to work out what we can expose for K8s
         return {
@@ -792,9 +794,9 @@ module.exports = {
      * @return {forge.containers.Project}
      */
     start: async (project) => {
-        this._projects[project.id] = {
+        await this._projects.set(project.id, {
             state: 'starting'
-        }
+        })
 
         // Rather than await this promise, we return it. That allows the wrapper
         // to respond to the create request much quicker and the create can happen
@@ -814,7 +816,9 @@ module.exports = {
      */
     stop: async (project) => {
         // Stop the project
-        this._projects[project.id].state = 'stopping'
+        const cachedProject = await this._projects.get(project.id)
+        cachedProject.state = 'stopping'
+        await this._projects.set(project.id, cachedProject)
 
         try {
             await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
@@ -918,7 +922,8 @@ module.exports = {
         //     }
         // }
 
-        this._projects[project.id].state = 'suspended'
+        cachedProject.state = 'suspended'
+        await this._projects.set(project.id, cachedProject)
         return new Promise((resolve, reject) => {
             let counter = 0
             const pollInterval = setInterval(async () => {
@@ -1009,7 +1014,7 @@ module.exports = {
                 // console.log(err)
             }
         }
-        delete this._projects[project.id]
+        await this._projects.del(project.id)
     },
     /**
      * Retrieves details of a project's container
@@ -1017,14 +1022,15 @@ module.exports = {
      * @return {Object}
      */
     details: async (project) => {
-        if (this._projects[project.id] === undefined) {
+        const cachedProject = await this._projects.get(project.id)
+        if (cachedProject === undefined) {
             return { state: 'unknown' }
         }
-        if (this._projects[project.id].state === 'suspended') {
+        if (cachedProject.state === 'suspended') {
             // We should only poll the launcher if we think it is running.
             // Otherwise, return our cached state
             return {
-                state: this._projects[project.id].state
+                state: cachedProject.state
             }
         }
         const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
@@ -1038,7 +1044,8 @@ module.exports = {
                 details = await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
                 if (details.status?.conditions[0].status === 'False') {
                     // return "starting" status until pod it running
-                    this._projects[project.id].state = 'starting'
+                    cachedProject.state = 'starting'
+                    await this._projects.set(project.id, cachedProject)
                     return {
                         id: project.id,
                         state: 'starting',
@@ -1052,7 +1059,8 @@ module.exports = {
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
                         const info = JSON.parse((await got.get(infoURL, { timeout: { request: 1000 } })).body)
-                        this._projects[project.id].state = info.state
+                        cachedProject.state = info.state
+                        await this._projects.set(project.id, cachedProject)
                         return info
                     } catch (err) {
                         this._app.log.debug(`error getting state from instance ${project.id}: ${err}`)
@@ -1074,7 +1082,8 @@ module.exports = {
                 details = await this._k8sApi.readNamespacedPodStatus({ name: project.safeName, namespace: this._namespace })
                 if (details.status?.phase === 'Pending') {
                     // return "starting" status until pod it running
-                    this._projects[project.id].state = 'starting'
+                    cachedProject.state = 'starting'
+                    this._projects.set(project.id, cachedProject)
                     return {
                         id: project.id,
                         state: 'starting',
@@ -1085,7 +1094,8 @@ module.exports = {
                     const infoURL = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/info`
                     try {
                         const info = JSON.parse((await got.get(infoURL, { timeout: { request: 1000 } })).body)
-                        this._projects[project.id].state = info.state
+                        cachedProject.state = info.state
+                        await this._projects.set(project.id, cachedProject)
                         return info
                     } catch (err) {
                         this._app.log.debug(`error getting state from instance ${project.id}: ${err}`)
@@ -1135,7 +1145,8 @@ module.exports = {
      * @return {forge.Status}
      */
     startFlows: async (project) => {
-        if (this._projects[project.id] === undefined) {
+        const cachedProject = await this._projects.get(project.id)
+        if (cachedProject === undefined) {
             return { state: 'unknown' }
         }
         const endpoints = await getEndpoints(project)
@@ -1157,7 +1168,8 @@ module.exports = {
      * @return {forge.Status}
      */
     stopFlows: async (project) => {
-        if (this._projects[project.id] === undefined) {
+        const cachedProject = await this._projects.get(project.id)
+        if (cachedProject === undefined) {
             return { state: 'unknown' }
         }
         const endpoints = await getEndpoints(project)
@@ -1179,7 +1191,8 @@ module.exports = {
      * @return {array} logs
      */
     logs: async (project) => {
-        if (this._projects[project.id] === undefined) {
+        const cachedProject = await this._projects.get(project.id)
+        if (cachedProject === undefined) {
             return { state: 'unknown' }
         }
         if (await project.getSetting('ha')) {
@@ -1205,7 +1218,8 @@ module.exports = {
      * @return {forge.Status}
      */
     restartFlows: async (project) => {
-        if (this._projects[project.id] === undefined) {
+        const cachedProject = await this._projects.get(project.id)
+        if (cachedProject === undefined) {
             return { state: 'unknown' }
         }
         const endpoints = await getEndpoints(project)
@@ -1360,7 +1374,8 @@ module.exports = {
 
     // Resouces api
     resources: async (project) => {
-        if (this._projects[project.id] === undefined) {
+        const cachedProject = await this._projects.get(project.id)
+        if (cachedProject === undefined) {
             return { state: 'unknown' }
         }
         if (await project.getSetting('ha')) {
@@ -1393,7 +1408,8 @@ module.exports = {
         }
     },
     resourcesStream: async (project, socket) => {
-        if (this._projects[project.id] === undefined) {
+        const cachedProject = await this._projects.get(project.id)
+        if (cachedProject === undefined) {
             throw new Error('Cannot get instance resources')
         }
         if (await project.getSetting('ha')) {
