@@ -665,13 +665,13 @@ module.exports = {
                 'TeamId'
             ]
         })
-        projects.forEach(async (project) => {
+        for(const project of projects) {
             if (await this._projects.get(project.id) === undefined) {
                 await this._projects.set(project.id, {
                     state: 'unknown'
                 })
             }
-        })
+        }
 
         this._initialCheckTimeout = setTimeout(async () => {
             this._app.log.debug('[k8s] Restarting projects')
@@ -680,6 +680,9 @@ module.exports = {
                 try {
                     if (project.state === 'suspended') {
                         // Do not restart suspended projects
+                        const cachedProject = await this._projects.get(project.id)
+                        cachedProject.state = 'suspened'
+                        await this._projects.set(project.id, cachedProject)
                         continue
                     }
 
