@@ -665,7 +665,7 @@ module.exports = {
                 'TeamId'
             ]
         })
-        for(const project of projects) {
+        for (const project of projects) {
             if (await this._projects.get(project.id) === undefined) {
                 await this._projects.set(project.id, {
                     state: 'unknown'
