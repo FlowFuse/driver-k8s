@@ -676,11 +676,11 @@ module.exports = {
         this._initialCheckTimeout = setTimeout(async () => {
             this._app.log.debug('[k8s] Restarting projects')
             const namespace = this._namespace
-            projects.forEach(async (project) => {
+            for (const project of projects) {
                 try {
                     if (project.state === 'suspended') {
                         // Do not restart suspended projects
-                        return
+                        continue
                     }
 
                     // need to upgrade bare pods to deployments
@@ -734,7 +734,7 @@ module.exports = {
                 } catch (err) {
                     this._app.log.error(`[k8s] Instance ${project.id} - error resuming project: ${err.stack}`)
                 }
-            })
+            }
 
             // get list of all MQTTBrokers
             if (this._app.db.models.BrokerCredentials) {
@@ -743,7 +743,7 @@ module.exports = {
                 })
 
                 // Check restarting MQTT-Schema-Agent
-                brokers.forEach(async (broker) => {
+                for (const broker of brokers) {
                     const agent = broker.constructor.name === 'TeamBrokerAgent'
                     if (broker.Team && broker.state === 'running') {
                         try {
@@ -757,7 +757,7 @@ module.exports = {
                             await createMQTTTopicAgent(broker)
                         }
                     }
-                })
+                }
             }
         }, Math.floor(1000 + (Math.random() * 5))) // space this out so if 2 instances running they shouldn't run at the same time
 
