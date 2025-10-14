@@ -1,3 +1,8 @@
+#### 2.22.1: Release
+
+ - Bump JS-DevTools/npm-publish from 4.0.1 to 4.1.1 (#240)
+ - feat: add possibility to apply custom labels on project-related resources (#241) @ppawlowski
+
 #### 2.22.0: Release
 
  - Bump JS-DevTools/npm-publish from 4.0.0 to 4.0.1 (#236)
