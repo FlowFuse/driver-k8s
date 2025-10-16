@@ -44,6 +44,10 @@ driver:
 - `projectSelector` a list of labels that should be used to select which nodes Project Pods
 should run on
 - `projectLabels` a list of custom labels that should be applied to all resources created for Projects (Pods, Services, Ingresses, PVCs)
+- `projectProbes` optional configuration for liveness, readiness and startup probes for project containers
+- `projectProbes.livenessProbe` custom liveness probe configuration (default not set)
+- `projectProbes.readinessProbe` custom readiness probe configuration (default not set)
+- `projectProbes.startupProbe` custom startup probe configuration (default not set)
 - `cloudProvider` normally not set, but can be `aws` This triggers the adding of
 AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on OpenShift (Enterprise license only)
 - `privateCA` name of ConfigMap holding PEM CA Cert Bundle (file name `certs.pem`) Optional
