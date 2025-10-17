@@ -213,6 +213,16 @@ const createDeployment = async (project, options) => {
         }
     }
 
+    if (this._app.config.driver.options?.projectProbes?.livenessProbe) {
+        localPod.spec.containers[0].livenessProbe = this._app.config.driver.options.projectProbes.livenessProbe
+    }
+    if (this._app.config.driver.options?.projectProbes?.readinessProbe) {
+        localPod.spec.containers[0].readinessProbe = this._app.config.driver.options.projectProbes.readinessProbe
+    }
+    if (this._app.config.driver.options?.projectProbes?.startupProbe) {
+        localPod.spec.containers[0].startupProbe = this._app.config.driver.options.projectProbes.startupProbe
+    }
+
     const ha = await project.getSetting('ha')
     if (ha?.replicas > 1) {
         localDeployment.spec.replicas = ha.replicas
