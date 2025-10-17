@@ -194,6 +194,14 @@ const createDeployment = async (project, options) => {
         this._app.log.info('[k8s] OpenShift, removing PodSecurityContext')
     }
 
+    if (this._app.config.driver.options?.containerSecurityContext) {
+        localPod.spec.containers[0].securityContext = this._app.config.driver.options.containerSecurityContext
+        this._app.log.info(`[k8s] Using custom ContainerSecurityContext ${JSON.stringify(this._app.config.driver.options.containerSecurityContext)}`)
+    } else if (this._app.license.active() && this._cloudProvider === 'openshift') {
+        localPod.spec.containers[0].securityContext = {}
+        this._app.log.info('[k8s] OpenShift, removing ContainerSecurityContext')
+    }
+
     if (stack.memory && stack.cpu) {
         localPod.spec.containers[0].resources.requests.memory = `${stack.memory}Mi`
         // increase limit to give npm more room to run in
