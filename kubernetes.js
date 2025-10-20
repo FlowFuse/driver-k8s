@@ -279,8 +279,37 @@ const createIngress = async (project, options) => {
 
     const localIngress = JSON.parse(JSON.stringify(ingressTemplate))
 
+    let addIngressTls = false
+
     if (this._certManagerIssuer) {
         localIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._certManagerIssuer
+        addIngressTls = true
+
+        // Add non-cert-manager annotations from projectIngressAnnotations if they exist
+        if (this._projectIngressAnnotations) {
+            Object.keys(this._projectIngressAnnotations).forEach((key) => {
+                if (!key.startsWith('cert-manager.io/')) {
+                    localIngress.metadata.annotations[key] = this._projectIngressAnnotations[key]
+                }
+            })
+        }
+    } else if (this._projectIngressAnnotations) {
+        const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key =>
+            key.startsWith('cert-manager.io/')
+        )
+
+        if (hasCertManagerAnnotation) {
+            addIngressTls = true
+        }
+
+        // Add all annotations from projectIngressAnnotations
+        Object.keys(this._projectIngressAnnotations).forEach((key) => {
+            localIngress.metadata.annotations[key] = this._projectIngressAnnotations[key]
+        })
+    }
+
+    // Add TLS configuration if needed
+    if (addIngressTls) {
         localIngress.spec.tls = [
             {
                 hosts: [
@@ -327,8 +356,37 @@ const createCustomIngress = async (project, hostname, options) => {
     customIngress.spec.rules[0].host = hostname
     customIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
 
+    let addCustomIngressTls = false
+
     if (this._customHostname?.certManagerIssuer) {
         customIngress.metadata.annotations['cert-manager.io/cluster-issuer'] = this._customHostname.certManagerIssuer
+        addCustomIngressTls = true
+
+        // Add non-cert-manager annotations from projectIngressAnnotations if they exist
+        if (this._customHostname?.ingressAnnotations) {
+            Object.keys(this._customHostname?.ingressAnnotations).forEach((key) => {
+                if (!key.startsWith('cert-manager.io/')) {
+                    customIngress.metadata.annotations[key] = this._customHostname?.ingressAnnotations[key]
+                }
+            })
+        }
+    } else if (this._customHostname?.ingressAnnotations) {
+        const hasCertManagerAnnotation = Object.keys(this._customHostname?.ingressAnnotations).some(key =>
+            key.startsWith('cert-manager.io/')
+        )
+
+        if (hasCertManagerAnnotation) {
+            addCustomIngressTls = true
+        }
+
+        // Add all annotations from projectIngressAnnotations
+        Object.keys(this._customHostname?.ingressAnnotations).forEach((key) => {
+            customIngress.metadata.annotations[key] = this._customHostname?.ingressAnnotations[key]
+        })
+    }
+
+    // Add TLS configuration if needed
+    if (addCustomIngressTls) {
         customIngress.spec.tls = [
             {
                 hosts: [
@@ -646,6 +704,7 @@ module.exports = {
         this._k8sDelay = this._app.config.driver.options?.k8sDelay || 1000
         this._k8sRetries = this._app.config.driver.options?.k8sRetries || 10
         this._certManagerIssuer = this._app.config.driver.options?.certManagerIssuer
+        this._projectIngressAnnotations = this._app.config.driver.options?.projectIngressAnnotations
         this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
         this._cloudProvider = this._app.config.driver.options?.cloudProvider
         if (this._app.config.driver.options?.customHostname?.enabled) {
@@ -846,6 +905,17 @@ module.exports = {
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()} ${err.stack}`)
             }
+        } else if (this._projectIngressAnnotations) {
+            const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key =>
+                key.startsWith('cert-manager.io/')
+            )
+            if (hasCertManagerAnnotation) {
+                try {
+                    await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
+                } catch (err) {
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()} ${err.stack}`)
+                }
+            }
         }
 
         if (this._customHostname?.enabled) {
@@ -977,6 +1047,17 @@ module.exports = {
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
             }
+        } else if (this._projectIngressAnnotations) {
+            const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key =>
+                key.startsWith('cert-manager.io/')
+            )
+            if (hasCertManagerAnnotation) {
+                try {
+                    await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
+                } catch (err) {
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+                }
+            }
         }
         if (this._customHostname?.enabled) {
             try {
@@ -984,7 +1065,7 @@ module.exports = {
             } catch (err) {
                 this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
             }
-            if (this._customHostname?.certManagerIssuer) {
+            if (this._customHostname?.certManagerIssuer || this._customHostname?.certManagerAnnotations) {
                 try {
                     await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
