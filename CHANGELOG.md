@@ -1,3 +1,12 @@
+#### 2.23.0: Release
+
+ - Bump actions/setup-node from 5.0.0 to 6.0.0 (#251)
+ - Use new cache system for in-memory state (#243) @hardillb
+ - feat: Improve projects ingress annotations logic (#242) @ppawlowski
+ - feat: Add possibility to configure container security context (#250) @ppawlowski
+ - feat: Add possibility to configure probes (#248) @ppawlowski
+ - Update container name validator (#247) @hardillb
+
 #### 2.22.1: Release
 
  - Bump JS-DevTools/npm-publish from 4.0.1 to 4.1.1 (#240)
