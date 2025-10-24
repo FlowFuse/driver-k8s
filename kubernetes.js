@@ -320,9 +320,11 @@ const createIngress = async (project, options) => {
         ]
     }
 
+    this._app.log.info(`K8S DRIVER: ingress annotations ${this._projectIngressAnnotations}`)
+
     // process annotations with potential replacements
     Object.keys(localIngress.metadata.annotations).forEach((key) => {
-        localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key], exposedData)
+        localIngress.metadata.annotations[key] = mustache(`${localIngress.metadata.annotations[key]}`, exposedData)
     })
 
     if (this._app.config.driver.options?.projectLabels) {
@@ -332,6 +334,8 @@ const createIngress = async (project, options) => {
     localIngress.metadata.name = project.safeName
     localIngress.spec.rules[0].host = url.host
     localIngress.spec.rules[0].http.paths[0].backend.service.name = `${prefix}${project.safeName}`
+
+    this._app.log.info(`K8S DRIVER: ingress ${JSON.stringify(localIngress, null, 2)}`)
 
     return localIngress
 }
