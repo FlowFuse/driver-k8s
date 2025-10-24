@@ -322,7 +322,7 @@ const createIngress = async (project, options) => {
 
     // process annotations with potential replacements
     Object.keys(localIngress.metadata.annotations).forEach((key) => {
-        localIngress.metadata.annotations[key] = mustache(localIngress.metadata.annotations[key], exposedData)
+        localIngress.metadata.annotations[key] = mustache(`${localIngress.metadata.annotations[key]}`, exposedData)
     })
 
     if (this._app.config.driver.options?.projectLabels) {
