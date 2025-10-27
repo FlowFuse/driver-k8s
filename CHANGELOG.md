@@ -1,3 +1,8 @@
+#### 2.23.1: Release
+
+ - Bump flowfuse/github-actions-workflows from 0.42.0 to 0.43.0 (#254)
+ - Force Numeric Annotations to be strings (#253)
+
 #### 2.23.0: Release
 
  - Bump actions/setup-node from 5.0.0 to 6.0.0 (#251)
