@@ -229,17 +229,6 @@ const createDeployment = async (project, options) => {
     }
     if (this._app.config.driver.options?.projectProbes?.startupProbe) {
         localPod.spec.containers[0].startupProbe = this._app.config.driver.options.projectProbes.startupProbe
-    } else {
-        localPod.spec.containers[0].startupProbe = {
-            httpGet: {
-                path: '/flowforge/ready',
-                port: deploymentTemplate.spec.template.spec.containers[0].ports[1].name
-            },
-            initialDelaySeconds: 5,
-            periodSeconds: 2,
-            successThreshold: 1,
-            failureThreshold: 300
-        }
     }
 
     const ha = await project.getSetting('ha')

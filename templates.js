@@ -56,6 +56,16 @@ const deploymentTemplate = {
                         ],
                         securityContext: {
                             allowPrivilegeEscalation: false
+                        },
+                        startupProbe: {
+                            httpGet: {
+                                path: '/flowforge/ready',
+                                port: 'management'
+                            },
+                            initialDelaySeconds: 5,
+                            periodSeconds: 2,
+                            successThreshold: 1,
+                            failureThreshold: 450
                         }
                     }
                 ]
