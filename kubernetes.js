@@ -236,7 +236,9 @@ const createDeployment = async (project, options) => {
                 port: deploymentTemplate.spec.template.spec.containers[0].ports[1].name
             },
             initialDelaySeconds: 5,
-            periodSeconds: 2
+            periodSeconds: 2,
+            successThreshold: 1,
+            failureThreshold: 300
         }
     }
 
