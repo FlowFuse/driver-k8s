@@ -1,3 +1,9 @@
+#### 2.24.0: Release
+
+ - feat: Add default startup probe values (#257)
+ - Revert "feat: Add default startup probe values (#257)" (#258) @ppawlowski
+ - Bump js-yaml from 4.1.0 to 4.1.1 (#256) @app/dependabot
+
 #### 2.23.1: Release
 
  - Bump flowfuse/github-actions-workflows from 0.42.0 to 0.43.0 (#254)
