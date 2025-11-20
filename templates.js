@@ -60,9 +60,9 @@ const deploymentTemplate = {
                         startupProbe: {
                             exec: {
                                 command: [
-                                    "sh",
-                                    "-c",
-                                    "curl -sf -o /dev/null -w '%{http_code}' http://localhost:2880/flowforge/ready | grep -qE '^(200|404)$' && exit 0 || exit 1"
+                                    'sh',
+                                    '-c',
+                                    'curl -sf -o /dev/null -w \'%{http_code}\' http://localhost:2880/flowforge/ready | grep -qE \'^(200|404)$\' && exit 0 || exit 1'
                                 ]
                             },
                             initialDelaySeconds: 5,
