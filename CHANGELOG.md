@@ -1,3 +1,8 @@
+#### 2.24.5: Release
+
+ - Bump actions/checkout from 6.0.0 to 6.0.1 (#267)
+ - Bump actions/setup-node from 6.0.0 to 6.1.0 (#266)
+
 #### 2.24.4: Release
 
 
