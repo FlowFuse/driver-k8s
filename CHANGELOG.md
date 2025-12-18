@@ -1,3 +1,8 @@
+#### 2.25.0: Release
+
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#269)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#270)
+
 #### 2.24.5: Release
 
  - Bump actions/checkout from 6.0.0 to 6.0.1 (#267)
