@@ -67,6 +67,7 @@ AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on 
 - `podSecurityContext` Settings linked to the [security context of the pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 - `containerSecurityContext` Settings linked to the [security context of the container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 - `service.type` Type of service to create for the editor (allowed `ClusterIP` or `NodePort`, default `ClusterIP`)
+- `schedulerName` name of the custom Kubernetes scheduler to use for Project Pods and MQTT agent Pods (default not set, uses default Kubernetes scheduler)
 
 Expects to pick up K8s credentials from the environment
 
