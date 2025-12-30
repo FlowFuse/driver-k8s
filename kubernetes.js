@@ -80,6 +80,10 @@ const createDeployment = async (project, options) => {
     localPod.metadata.labels.name = project.safeName
     localPod.spec.serviceAccount = process.env.EDITOR_SERVICE_ACCOUNT
 
+    if (this._schedulerName) {
+        localPod.spec.schedulerName = this._schedulerName
+    }
+
     if (stack.container) {
         localPod.spec.containers[0].image = stack.container
     } else {
@@ -648,6 +652,10 @@ const createMQTTTopicAgent = async (broker) => {
         localPod.spec.nodeSelector = this._app.config.driver.options.projectSelector
     }
 
+    if (this._schedulerName) {
+        localPod.spec.schedulerName = this._schedulerName
+    }
+
     localPod.metadata.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`
     localPod.metadata.labels = {
         name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`,
@@ -709,6 +717,7 @@ module.exports = {
         this._projectIngressAnnotations = this._app.config.driver.options?.projectIngressAnnotations
         this._logPassthrough = this._app.config.driver.options?.logPassthrough || false
         this._cloudProvider = this._app.config.driver.options?.cloudProvider
+        this._schedulerName = this._app.config.driver.options?.schedulerName
         if (this._app.config.driver.options?.customHostname?.enabled) {
             this._app.log.info('[k8s] Enabling Custom Hostname Support')
             this._customHostname = this._app.config.driver.options?.customHostname
