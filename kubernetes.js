@@ -685,7 +685,7 @@ const createMQTTTopicAgent = async (broker) => {
     // console.log(JSON.stringify(localPod,null,2))
     // console.log(JSON.stringify(localService,null,2))
     try {
-        console.error(namespace, localPod.metadata.name)
+        console.debug(namespace, localPod.metadata.name)
         await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
         await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
