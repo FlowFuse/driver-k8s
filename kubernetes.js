@@ -445,7 +445,7 @@ const createPersistentVolumeClaim = async (project, options) => {
             ...this._app.config.driver.options.projectLabels
         }
     }
-    console.log(`PVC: ${JSON.stringify(pvc, null, 2)}`)
+    console.error(`PVC: ${JSON.stringify(pvc, null, 2)}`)
     return pvc
 }
 
@@ -462,7 +462,7 @@ const createProject = async (project, options) => {
         try {
             await this._k8sApi.createNamespacedPersistentVolumeClaim({ namespace, body: localPVC })
         } catch (err) {
-            console.log(JSON.stringify(err))
+            console.error(JSON.stringify(err))
             if (err.code === 409) {
                 this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
             } else {
@@ -685,7 +685,7 @@ const createMQTTTopicAgent = async (broker) => {
     // console.log(JSON.stringify(localPod,null,2))
     // console.log(JSON.stringify(localService,null,2))
     try {
-        console.log(namespace, localPod.metadata.name)
+        console.debug(namespace, localPod.metadata.name)
         await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
         await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
@@ -1392,7 +1392,7 @@ module.exports = {
         try {
             return got.get(fileUrl, { timeout: { request: 1000 } }).json()
         } catch (err) {
-            console.log(err)
+            console.error(err)
             err.statusCode = err.response.statusCode
             throw err
         }
