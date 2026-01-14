@@ -1,0 +1,27 @@
+# Trivy configuration file
+# See: https://aquasecurity.github.io/trivy/latest/docs/configuration/
+
+scan:
+  scanners:
+    - vuln
+    - secret
+
+  skip-dirs:
+    - node_modules
+    - .git
+    - coverage
+    - ci
+
+vulnerability:
+  type:
+    - os
+    - library
+
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+  - LOW
+
+format:
+  - sarif
