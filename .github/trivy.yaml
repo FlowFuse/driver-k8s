@@ -1,5 +1,5 @@
-# Trivy configuration file
-# See: https://aquasecurity.github.io/trivy/latest/docs/configuration/
+# Trivy Security Scanner Configuration
+# Documentation: https://aquasecurity.github.io/trivy/latest/docs/configuration/
 
 scan:
   scanners:
@@ -12,16 +12,18 @@ scan:
     - coverage
     - ci
 
-vulnerability:
-  type:
-    - os
-    - library
-
 severity:
   - CRITICAL
   - HIGH
   - MEDIUM
   - LOW
 
-format:
-  - sarif
+pkg:
+  types:
+    - os
+    - library
+  include-dev-deps: true
+
+format: "sarif"
+ignorefile: ".github/.trivyignore.yaml"
+exit-code: 0
