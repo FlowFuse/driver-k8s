@@ -1,6 +1,6 @@
 {
     "name": "@flowfuse/driver-kubernetes",
-    "version": "2.25.0",
+    "version": "2.26.0",
     "description": "Kubernetes driver for FlowFuse",
     "main": "kubernetes.js",
     "scripts": {
