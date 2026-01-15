@@ -1,3 +1,13 @@
+#### 2.26.0: Release
+
+ - Bump JS-DevTools/npm-publish from 4.1.2 to 4.1.3 (#280)
+ - Add possibility to specify custom scheduler (#276)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#273)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#272)
+ - Bump JS-DevTools/npm-publish from 4.1.1 to 4.1.2 (#278) @app/dependabot
+ - Fix eqeqeq and quotes rules (#279) @hardillb
+ - Convert to eslint v9 (#277) @hardillb
+
 #### 2.25.0: Release
 
  - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#269)
