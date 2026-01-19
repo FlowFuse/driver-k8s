@@ -19,7 +19,7 @@ jobs:
   publish:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    uses: 'flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml@v0.45.0'
+    uses: 'flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml@v0.46.0'
     with:
       package_name: driver-k8s
       publish_package: true
