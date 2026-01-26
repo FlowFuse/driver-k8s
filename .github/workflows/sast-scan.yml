@@ -10,4 +10,4 @@ on:
 
 jobs:
   sast:
-    uses: flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml@v0.46.0
+    uses: flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml@v0.47.0
