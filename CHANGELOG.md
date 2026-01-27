@@ -1,3 +1,16 @@
+#### 2.26.1: Release
+
+ - Bump JS-DevTools/npm-publish from 4.1.3 to 4.1.4 (#284)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml (#291)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#290)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#289)
+ - Bump actions/checkout from 6.0.1 to 6.0.2 (#288)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#286)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#285)
+ - Bump actions/setup-node from 6.1.0 to 6.2.0 (#283)
+ - Bump lodash from 4.17.21 to 4.17.23 (#287) @app/dependabot
+ - ci: Enable SAST (#281) @ppawlowski
+
 #### 2.26.0: Release
 
  - Bump JS-DevTools/npm-publish from 4.1.2 to 4.1.3 (#280)
