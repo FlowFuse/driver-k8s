@@ -696,14 +696,14 @@ const createMQTTTopicAgent = async (broker) => {
 const waitForInstance = async (endpoint) => {
     return new Promise((resolve, reject) => {
         let counter = 0
-        const interval = setInterval(() => {
-            if (counter < 20) {
+        const interval = setInterval(async () => {
+            if (counter > 20) {
                 reject(new Error('Timed Out waiting for instance to restart'))
                 clearInterval(interval)
             }
             try {
                 console.log(`polling ${endpoint}`)
-                const resp = got(`http://${endpoint}:2880/flowforge/ready`)
+                const resp = await got(`http://${endpoint}:2880/flowforge/ready`)
                 console.log(resp)
                 clearInterval(interval)
                 resolve()
