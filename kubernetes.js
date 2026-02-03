@@ -693,6 +693,27 @@ const createMQTTTopicAgent = async (broker) => {
     }
 }
 
+const waitForInstance = async (endpoint) => {
+    return new Promise((resolve, reject) => {
+        let counter = 0
+        const interval = setInterval(() => {
+            if (counter < 20) {
+                reject(new Error('Timed Out waiting for instance to restart'))
+                clearInterval(interval)
+            }
+            try {
+                console.log(`polling ${endpoint}`)
+                const resp = got(`http://${endpoint}:2880/flowforge/ready`)
+                console.log(resp)
+                clearInterval(interval)
+                resolve()
+            } catch (err) {
+                counter++
+            }
+        }, 5000)
+    })
+}
+
 module.exports = {
     /**
     * Initialises this driver
@@ -1334,15 +1355,37 @@ module.exports = {
             return { state: 'unknown' }
         }
         const endpoints = await getEndpoints(project)
-        const commands = []
-        for (const address in endpoints) {
-            commands.push(got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
+        if (endpoints.length === 1) {
+            await got.post(`http://${endpoints[0]}:2880/flowforge/command`, {
                 json: {
                     cmd: 'restart'
                 }
-            }))
+            })
+        } else {
+            // need to wiat for each instance to come back
+            for (const address in endpoints) {
+                await got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
+                    json: {
+                        cmd: 'restart'
+                    }
+                })
+                try {
+                    await waitForInstance(endpoints[address])
+                } catch (err) {
+                    console.log('timed out')
+                    console.log(err)
+                }
+            }
         }
-        await Promise.all(commands)
+        // const commands = []
+        // for (const address in endpoints) {
+        //     commands.push(got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
+        //         json: {
+        //             cmd: 'restart'
+        //         }
+        //     }))
+        // }
+        // await Promise.all(commands)
         return { state: 'okay' }
     },
     /**
