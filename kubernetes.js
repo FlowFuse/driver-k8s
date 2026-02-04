@@ -693,20 +693,16 @@ const createMQTTTopicAgent = async (broker) => {
     }
 }
 
-const waitForInstance = async (endpoint) => {
+const waitForInstanceRunning = async (endpoint) => {
     return new Promise((resolve, reject) => {
         let counter = 0
-        console.log(`starting polling of ${endpoint}`)
         const interval = setInterval(async () => {
-            console.log(`interval ${endpoint}`)
             if (counter > 10) {
-                console.log(`Time out ${endpoint}`)
                 reject(new Error('Timed Out waiting for instance to restart'))
                 clearInterval(interval)
             }
-            let status = undefined
+            let status
             try {
-                console.log(`polling ${endpoint}`)
                 const resp = await got(`http://${endpoint}:1880/`, {
                     timeout: {
                         request: 2000
@@ -716,7 +712,6 @@ const waitForInstance = async (endpoint) => {
                 status = resp.statusCode || 500
             } catch (err) {
                 status = err.response?.statusCode || 500
-                console.log(`error: ${err.response?.statusCode || 'no status code'}`)
             }
             if (status >= 200 && status < 500) {
                 clearInterval(interval)
@@ -1376,30 +1371,23 @@ module.exports = {
                 }
             })
         } else {
-            // need to wiat for each instance to come back
-            for (const address in endpoints) {
-                await got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
-                    json: {
-                        cmd: 'restart'
+            // need to return early otherwise front end will timeout
+            process.nextTick(async () => {
+                for (const address in endpoints) {
+                    await got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
+                        json: {
+                            cmd: 'restart'
+                        }
+                    })
+                    try {
+                        // need to wait for each instance to come back
+                        await waitForInstanceRunning(endpoints[address])
+                    } catch (err) {
+                        console.error(err)
                     }
-                })
-                try {
-                    await waitForInstance(endpoints[address])
-                } catch (err) {
-                    console.log('timed out')
-                    console.log(err)
                 }
-            }
+            })
         }
-        // const commands = []
-        // for (const address in endpoints) {
-        //     commands.push(got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
-        //         json: {
-        //             cmd: 'restart'
-        //         }
-        //     }))
-        // }
-        // await Promise.all(commands)
         return { state: 'okay' }
     },
     /**
