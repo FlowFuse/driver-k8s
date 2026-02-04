@@ -699,21 +699,27 @@ const waitForInstance = async (endpoint) => {
         console.log(`starting polling of ${endpoint}`)
         const interval = setInterval(async () => {
             console.log(`interval ${endpoint}`)
-            if (counter > 20) {
+            if (counter > 10) {
                 console.log(`Time out ${endpoint}`)
                 reject(new Error('Timed Out waiting for instance to restart'))
                 clearInterval(interval)
             }
             try {
                 console.log(`polling ${endpoint}`)
-                const resp = await got(`http://${endpoint}:2880/flowforge/ready`)
+                const resp = await got(`http://${endpoint}:1880/`, {
+                    timeout: {
+                        request: 2000
+                    },
+                    retry: { limit: 0 }
+                })
                 console.log(resp.statusCode)
                 clearInterval(interval)
                 resolve()
             } catch (err) {
+                console.log(`error: ${err.response?.statusCode || 'no status code'}`)
                 counter++
             }
-        }, 5000)
+        }, 7500)
     })
 }
 
