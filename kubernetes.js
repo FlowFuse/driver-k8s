@@ -704,6 +704,7 @@ const waitForInstance = async (endpoint) => {
                 reject(new Error('Timed Out waiting for instance to restart'))
                 clearInterval(interval)
             }
+            let status = undefined
             try {
                 console.log(`polling ${endpoint}`)
                 const resp = await got(`http://${endpoint}:1880/`, {
@@ -712,14 +713,18 @@ const waitForInstance = async (endpoint) => {
                     },
                     retry: { limit: 0 }
                 })
-                console.log(resp.statusCode)
+                status = resp.statusCode || 500
+            } catch (err) {
+                status = err.response?.statusCode || 500
+                console.log(`error: ${err.response?.statusCode || 'no status code'}`)
+            }
+            if (status >= 200 && status < 500) {
                 clearInterval(interval)
                 resolve()
-            } catch (err) {
-                console.log(`error: ${err.response?.statusCode || 'no status code'}`)
+            } else {
                 counter++
             }
-        }, 7500)
+        }, 5000)
     })
 }
 
