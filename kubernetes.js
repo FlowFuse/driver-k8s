@@ -1374,16 +1374,24 @@ module.exports = {
             // need to return early otherwise front end will timeout
             process.nextTick(async () => {
                 for (const address in endpoints) {
-                    await got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
-                        json: {
-                            cmd: 'restart'
-                        }
-                    })
+                    try {
+                        await got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
+                            json: {
+                                cmd: 'restart'
+                            },
+                            timeout: {
+                                request: 1000
+                            }
+                        })
+                    } catch (err) {
+                        // need to make sure we catch all errors in nextTick
+                        console.error('Error sending restart command to replica', err)
+                    }
                     try {
                         // need to wait for each instance to come back
                         await waitForInstanceRunning(endpoints[address])
                     } catch (err) {
-                        console.error(err)
+                        console.error('Error waiting on replica to restart', err)
                     }
                 }
             })
