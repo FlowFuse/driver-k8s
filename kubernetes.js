@@ -693,6 +693,36 @@ const createMQTTTopicAgent = async (broker) => {
     }
 }
 
+const waitForInstanceRunning = async (endpoint) => {
+    return new Promise((resolve, reject) => {
+        let counter = 0
+        const interval = setInterval(async () => {
+            if (counter > 10) {
+                reject(new Error('Timed Out waiting for instance to restart'))
+                clearInterval(interval)
+            }
+            let status
+            try {
+                const resp = await got(`http://${endpoint}:1880/`, {
+                    timeout: {
+                        request: 2000
+                    },
+                    retry: { limit: 0 }
+                })
+                status = resp.statusCode || 500
+            } catch (err) {
+                status = err.response?.statusCode || 500
+            }
+            if (status >= 200 && status < 500) {
+                clearInterval(interval)
+                resolve()
+            } else {
+                counter++
+            }
+        }, 5000)
+    })
+}
+
 module.exports = {
     /**
     * Initialises this driver
@@ -1334,15 +1364,38 @@ module.exports = {
             return { state: 'unknown' }
         }
         const endpoints = await getEndpoints(project)
-        const commands = []
-        for (const address in endpoints) {
-            commands.push(got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
+        if (endpoints.length === 1) {
+            await got.post(`http://${endpoints[0]}:2880/flowforge/command`, {
                 json: {
                     cmd: 'restart'
                 }
-            }))
+            })
+        } else {
+            // need to return early otherwise front end will timeout
+            process.nextTick(async () => {
+                for (const address in endpoints) {
+                    try {
+                        await got.post(`http://${endpoints[address]}:2880/flowforge/command`, {
+                            json: {
+                                cmd: 'restart'
+                            },
+                            timeout: {
+                                request: 1000
+                            }
+                        })
+                    } catch (err) {
+                        // need to make sure we catch all errors in nextTick
+                        console.error('Error sending restart command to replica', err)
+                    }
+                    try {
+                        // need to wait for each instance to come back
+                        await waitForInstanceRunning(endpoints[address])
+                    } catch (err) {
+                        console.error('Error waiting on replica to restart', err)
+                    }
+                }
+            })
         }
-        await Promise.all(commands)
         return { state: 'okay' }
     },
     /**
