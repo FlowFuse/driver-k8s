@@ -1,3 +1,12 @@
+#### 2.27.0: Release
+
+ - Bump JS-DevTools/npm-publish from 4.1.4 to 4.1.5 (#293)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#297)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml (#298)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#299)
+ - HA Instance pipeline rolling deploy (#296) @hardillb
+ - Bump fast-xml-parser and @aws-sdk/client-efs (#295) @app/dependabot
+
 #### 2.26.2: Release
 
 
