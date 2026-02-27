@@ -1,3 +1,10 @@
+#### 2.27.1: Release
+
+ - Bump flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml (#303)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#302)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#301)
+ - Bump fast-xml-parser and @aws-sdk/xml-builder (#304) @app/dependabot
+
 #### 2.27.0: Release
 
  - Bump JS-DevTools/npm-publish from 4.1.4 to 4.1.5 (#293)
