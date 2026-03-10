@@ -422,6 +422,15 @@ const createPersistentVolumeClaim = async (project, options) => {
     const pvc = JSON.parse(JSON.stringify(persistentVolumeClaimTemplate))
 
     const drvOptions = this._app.config.driver.options
+    const allowedAccessModes = new Set(['ReadWriteOnce', 'ReadOnlyMany', 'ReadWriteMany', 'ReadWriteOncePod'])
+    const configuredAccessMode = drvOptions?.storage?.accessMode
+
+    if (configuredAccessMode !== undefined) {
+        if (!allowedAccessModes.has(configuredAccessMode)) {
+            throw new Error(`Unsupported storage.accessMode '${configuredAccessMode}'. Allowed values: ${Array.from(allowedAccessModes).join(', ')}`)
+        }
+        pvc.spec.accessModes = [configuredAccessMode]
+    }
 
     if (drvOptions?.storage?.storageClass) {
         pvc.spec.storageClassName = drvOptions.storage.storageClass
