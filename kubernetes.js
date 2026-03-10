@@ -422,7 +422,7 @@ const createPersistentVolumeClaim = async (project, options) => {
     const pvc = JSON.parse(JSON.stringify(persistentVolumeClaimTemplate))
 
     const drvOptions = this._app.config.driver.options
-    const allowedAccessModes = new Set(['ReadWriteOnce', 'ReadOnlyMany', 'ReadWriteMany', 'ReadWriteOncePod'])
+    const allowedAccessModes = new Set(['ReadWriteOnce', 'ReadWriteMany', 'ReadWriteOncePod'])
     const configuredAccessMode = drvOptions?.storage?.accessMode
 
     if (configuredAccessMode !== undefined) {
