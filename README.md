@@ -64,7 +64,7 @@ AWS EKS specific annotation for ALB Ingress. or `openshift` to allow running on 
 - `storage.enabled` Mounts a persistent volume on `/data/storage` (default false)
 - `storage.storageClass` Name of StorageClass to use to allocate the volume (default not set)
 - `storage.storageClassEFSTag` Used instead of `storage.storageClass` when needing to shard across multiple EFS file systems (default not set)
-- `storage.accessMode` PersistentVolumeClaim access mode. Allowed values: `ReadWriteOnce`, `ReadOnlyMany`, `ReadWriteMany`, `ReadWriteOncePod` (default `ReadWriteMany`)
+- `storage.accessMode` PersistentVolumeClaim access mode. Allowed values: `ReadWriteOnce`, `ReadOnlyMany`, `ReadWriteMany`, `ReadWriteOncePod` (default `ReadWriteMany`). Important note: selecting different access mode affects the High Availability capabilities of Hosted Instances (projects). Change this parameter with caution and refer to Kubernetes documentation for details on access modes and their implications.
 - `storage.size` Size of the volume to request (default not set)
 - `podSecurityContext` Settings linked to the [security context of the pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 - `containerSecurityContext` Settings linked to the [security context of the container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
