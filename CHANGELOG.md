@@ -1,3 +1,17 @@
+#### 2.28.0: Release
+
+ - Bump actions/setup-node from 6.2.0 to 6.3.0 (#314)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#316)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#313)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml (#315)
+ - Bump benc-uk/workflow-dispatch from 1.2.4 to 1.3.1 (#305)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml (#308)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#309)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#310)
+ - feat: Add possibility to define custom PVC access mode (#317) @ppawlowski
+ - Bump fast-xml-parser and @aws-sdk/xml-builder (#312) @app/dependabot
+ - Bump minimatch (#307) @app/dependabot
+
 #### 2.27.1: Release
 
  - Bump flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml (#303)
