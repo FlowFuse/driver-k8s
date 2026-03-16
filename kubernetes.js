@@ -974,17 +974,20 @@ module.exports = {
         }
 
         if (this._customHostname?.enabled) {
-            try {
-                await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
-            } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()} ${err.stack}`)
-            }
-
-            if (this._customHostname?.certManagerIssuer) {
+            const customHostname = await project.getSetting('customHostname')
+            if (customHostname) {
                 try {
-                    await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
+                    await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()} ${err.stack}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()} ${err.stack}`)
+                }
+
+                if (this._customHostname?.certManagerIssuer) {
+                    try {
+                        await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
+                    } catch (err) {
+                        this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()} ${err.stack}`)
+                    }
                 }
             }
         }
@@ -1116,16 +1119,19 @@ module.exports = {
             }
         }
         if (this._customHostname?.enabled) {
-            try {
-                await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
-            } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
-            }
-            if (this._customHostname?.certManagerIssuer || this._customHostname?.certManagerAnnotations) {
+            const customHostname = await project.getSetting('customHostname')
+            if (customHostname) {
                 try {
-                    await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
+                    await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
+                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
+                }
+                if (this._customHostname?.certManagerIssuer || this._customHostname?.certManagerAnnotations) {
+                    try {
+                        await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
+                    } catch (err) {
+                        this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
+                    }
                 }
             }
         }
