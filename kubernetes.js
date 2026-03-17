@@ -732,6 +732,7 @@ const waitForInstanceRunning = async (endpoint) => {
     })
 }
 
+// functions to wrap k8s api functions in retry logic
 const retry = (api, func, args, delay, times) => {
     return func.apply(api, args).catch(err => {
         if (times > 0 && err.response && err.response.statusCode === 429) {
@@ -742,7 +743,6 @@ const retry = (api, func, args, delay, times) => {
         return Promise.reject(err)
     })
 }
-
 const wrapClient = (api, funcs) => {
     for (const f of funcs) {
         const originalFunc = api[f.name]
