@@ -737,7 +737,7 @@ const retry = (api, func, args, delay, times) => {
     return func.apply(api, args).catch(err => {
         if (times > 0 && err.response && err.response.statusCode === 429) {
             return new Promise(resolve => {
-                setTimeout(() => { resolve(retry(api, func, args, delay * 2, times - 1)) })
+                setTimeout(() => { resolve(retry(api, func, args, delay * 2, times - 1)) }, delay)
             })
         }
         return Promise.reject(err)
