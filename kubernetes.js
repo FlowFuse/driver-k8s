@@ -732,6 +732,24 @@ const waitForInstanceRunning = async (endpoint) => {
     })
 }
 
+// functions to wrap k8s api functions in retry logic
+const retry = (api, func, args, delay, times) => {
+    return func.apply(api, args).catch(err => {
+        if (times > 0 && err.response && err.response.statusCode === 429) {
+            return new Promise(resolve => {
+                setTimeout(() => { resolve(retry(api, func, args, delay * 2, times - 1)) }, delay)
+            })
+        }
+        return Promise.reject(err)
+    })
+}
+const wrapClient = (api, funcs) => {
+    for (const f of funcs) {
+        const originalFunc = api[f.name]
+        api[f.name] = function () { return retry(api, originalFunc, arguments, this._k8sRetries, this._k8sDelay) }
+    }
+}
+
 module.exports = {
     /**
     * Initialises this driver
@@ -779,6 +797,25 @@ module.exports = {
         this._k8sApi = kc.makeApiClient(k8s.CoreV1Api)
         this._k8sAppApi = kc.makeApiClient(k8s.AppsV1Api)
         this._k8sNetApi = kc.makeApiClient(k8s.NetworkingV1Api)
+
+        // add retry logic to these functions
+        wrapClient(this._k8sApi, [
+            this._k8sApi.createPersistentVolumeClaim,
+            this._k8sApi.createNamespacedService,
+            this._k8sApi.createNamespacedPod,
+            this._k8sApi.deleteNamespacedPod,
+            this._k8sApi.deleteNamespacedSecret,
+            this._k8sApi.deleteNamespacedService,
+            this._k8sApi.deleteNamespacedPersistentVolumeClaim
+        ])
+        wrapClient(this._k8sAppApi, [
+            this._k8sAppApi.createNamespacedDeployment,
+            this._k8sAppApi.deleteNamespacedDeployment
+        ])
+        wrapClient(this._k8sNetApi, [
+            this._k8sNetApi.createNamespacedIngress,
+            this._k8sNetApi.deleteNamespacedIngress
+        ])
 
         // Get a list of all projects - with the absolute minimum of fields returned
         const projects = await app.db.models.Project.findAll({
