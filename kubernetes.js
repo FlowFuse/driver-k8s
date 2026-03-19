@@ -800,7 +800,7 @@ module.exports = {
 
         // add retry logic to these functions
         wrapClient(this._k8sApi, [
-            this._k8sApi.createPersistentVolumeClaim,
+            this._k8sApi.createNamespacedPersistentVolumeClaim,
             this._k8sApi.createNamespacedService,
             this._k8sApi.createNamespacedPod,
             this._k8sApi.deleteNamespacedPod,
