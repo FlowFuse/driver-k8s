@@ -746,7 +746,7 @@ const retry = (api, func, args, delay, times) => {
 const wrapClient = (api, funcs) => {
     for (const f of funcs) {
         const originalFunc = api[f.name]
-        api[f.name] = function () { return retry(api, originalFunc, arguments, this._k8sRetries, this._k8sDelay) }
+        api[f.name] = function () { return retry(api, originalFunc, arguments, this._k8sDelay, this._k8sRetries) }
     }
 }
 
