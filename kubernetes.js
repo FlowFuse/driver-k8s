@@ -733,20 +733,21 @@ const waitForInstanceRunning = async (endpoint) => {
 }
 
 // functions to wrap k8s api functions in retry logic
-const retry = (api, func, args, delay, times) => {
+const retry = (forgeApp, api, func, args, delay, times) => {
     return func.apply(api, args).catch(err => {
+        forgeApp.log.error(`[k8s] API call to ${func.name} failed. attempt=${forgeApp._k8sRetries - times + 1}/${forgeApp._k8sRetries} statusCode=${err.response?.statusCode || 'N/A'}  ${err.toString()}`)
         if (times > 0 && err.response && err.response.statusCode === 429) {
             return new Promise(resolve => {
-                setTimeout(() => { resolve(retry(api, func, args, delay * 2, times - 1)) }, delay)
+                setTimeout(() => { resolve(retry(forgeApp, api, func, args, delay * 2, times - 1)) }, delay)
             })
         }
         return Promise.reject(err)
     })
 }
-const wrapClient = (api, funcs) => {
+const wrapClient = (api, funcs, forgeApp) => {
     for (const f of funcs) {
         const originalFunc = api[f.name]
-        api[f.name] = function () { return retry(api, originalFunc, arguments, this._k8sDelay, this._k8sRetries) }
+        api[f.name] = function () { return retry(forgeApp, api, originalFunc, arguments, this._k8sDelay, this._k8sRetries) }
     }
 }
 
@@ -807,15 +808,15 @@ module.exports = {
             this._k8sApi.deleteNamespacedSecret,
             this._k8sApi.deleteNamespacedService,
             this._k8sApi.deleteNamespacedPersistentVolumeClaim
-        ])
+        ], this._app)
         wrapClient(this._k8sAppApi, [
             this._k8sAppApi.createNamespacedDeployment,
             this._k8sAppApi.deleteNamespacedDeployment
-        ])
+        ], this._app)
         wrapClient(this._k8sNetApi, [
             this._k8sNetApi.createNamespacedIngress,
             this._k8sNetApi.deleteNamespacedIngress
-        ])
+        ], this._app)
 
         // Get a list of all projects - with the absolute minimum of fields returned
         const projects = await app.db.models.Project.findAll({
