@@ -733,21 +733,21 @@ const waitForInstanceRunning = async (endpoint) => {
 }
 
 // functions to wrap k8s api functions in retry logic
-const retry = (forgeApp, api, func, args, delay, times) => {
+const retry = (driver, api, func, args, delay, times) => {
     return func.apply(api, args).catch(err => {
-        forgeApp.log.error(`[k8s] API call to ${func.name} failed. attempt=${forgeApp._k8sRetries - times + 1}/${forgeApp._k8sRetries} statusCode=${err.response?.statusCode || 'N/A'}  ${err.toString()}`)
+        driver._app.log.error(`[k8s] API call to ${func.name} failed. attempt=${driver._k8sRetries - times + 1}/${driver._k8sRetries} statusCode=${err.response?.statusCode || 'N/A'}  ${err.toString()}`)
         if (times > 0 && err.response && err.response.statusCode === 429) {
             return new Promise(resolve => {
-                setTimeout(() => { resolve(retry(forgeApp, api, func, args, delay * 2, times - 1)) }, delay)
+                setTimeout(() => { resolve(retry(driver, api, func, args, delay * 2, times - 1)) }, delay)
             })
         }
         return Promise.reject(err)
     })
 }
-const wrapClient = (api, funcs, forgeApp) => {
+const wrapClient = (api, funcs, driver) => {
     for (const f of funcs) {
         const originalFunc = api[f.name]
-        api[f.name] = function () { return retry(forgeApp, api, originalFunc, arguments, this._k8sDelay, this._k8sRetries) }
+        api[f.name] = function () { return retry(driver, api, originalFunc, arguments, driver._k8sDelay, driver._k8sRetries) }
     }
 }
 
@@ -808,15 +808,15 @@ module.exports = {
             this._k8sApi.deleteNamespacedSecret,
             this._k8sApi.deleteNamespacedService,
             this._k8sApi.deleteNamespacedPersistentVolumeClaim
-        ], this._app)
+        ], this)
         wrapClient(this._k8sAppApi, [
             this._k8sAppApi.createNamespacedDeployment,
             this._k8sAppApi.deleteNamespacedDeployment
-        ], this._app)
+        ], this)
         wrapClient(this._k8sNetApi, [
             this._k8sNetApi.createNamespacedIngress,
             this._k8sNetApi.deleteNamespacedIngress
-        ], this._app)
+        ], this)
 
         // Get a list of all projects - with the absolute minimum of fields returned
         const projects = await app.db.models.Project.findAll({
