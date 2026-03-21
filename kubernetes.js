@@ -735,7 +735,7 @@ const waitForInstanceRunning = async (endpoint) => {
 // functions to wrap k8s api functions in retry logic
 const retry = (driver, api, func, args, delay, times) => {
     return func.apply(api, args).catch(err => {
-        driver._app.log.error(`[k8s] API call to ${func.name} failed. attempt=${driver._k8sRetries - times + 1}/${driver._k8sRetries} statusCode=${err.response?.statusCode || 'N/A'}  ${err.toString()}`)
+        driver._app.log.error(`[k8s] API call to ${func.name} failed. attempt=${driver._k8sRetries - times + 1}/${driver._k8sRetries + 1} statusCode=${err.response?.statusCode || 'N/A'}  ${err.toString()}`)
         if (times > 0 && err.response && err.response.statusCode === 429) {
             return new Promise(resolve => {
                 setTimeout(() => { resolve(retry(driver, api, func, args, delay * 2, times - 1)) }, delay)
