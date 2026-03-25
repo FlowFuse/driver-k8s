@@ -421,7 +421,8 @@ const createPersistentVolumeClaim = async (project, options) => {
     const namespace = this._app.config.driver.options?.projectNamespace || 'flowforge'
     const name = `${project.id}-pvc`
     try {
-        await this._k8sApi.readNamespacedPersistentVolumeClaim({ name, namespace })
+        const existingPVC = await this._k8sApi.readNamespacedPersistentVolumeClaim({ name, namespace })
+        console.log(existingPVC)
         // exists no need to create
         return undefined
     } catch (err) {
