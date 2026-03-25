@@ -744,8 +744,8 @@ const waitForInstanceRunning = async (endpoint) => {
 // functions to wrap k8s api functions in retry logic
 const retry = (driver, api, func, args, delay, times) => {
     return func.apply(api, args).catch(err => {
-        driver._app.log.error(`[k8s] API call to ${func.name} failed. attempt=${driver._k8sRetries - times + 1}/${driver._k8sRetries + 1} statusCode=${err.response?.statusCode || 'N/A'}  ${err.toString()}`)
-        if (times > 0 && Object.proptotype.hasOwnProperty.call(err, 'code') && err.code === 429) {
+        driver._app.log.error(`[k8s] API call to ${func.name} failed. attempt=${driver._k8sRetries - times + 1}/${driver._k8sRetries + 1} statusCode=${err.code || 'N/A'}  ${err.toString()}`)
+        if (times > 0 && err.code === 429) {
             return new Promise(resolve => {
                 setTimeout(() => { resolve(retry(driver, api, func, args, delay * 2, times - 1)) }, delay)
             })
@@ -816,7 +816,8 @@ module.exports = {
             this._k8sApi.deleteNamespacedPod,
             this._k8sApi.deleteNamespacedSecret,
             this._k8sApi.deleteNamespacedService,
-            this._k8sApi.deleteNamespacedPersistentVolumeClaim
+            this._k8sApi.deleteNamespacedPersistentVolumeClaim,
+            this._k8sApi.readNamespacedPersistentVolumeClaim
         ], this)
         wrapClient(this._k8sAppApi, [
             this._k8sAppApi.createNamespacedDeployment,
