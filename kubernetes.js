@@ -425,43 +425,47 @@ const createPersistentVolumeClaim = async (project, options) => {
         // exists no need to recreate
         return undefined
     } catch (err) {
-        const pvc = JSON.parse(JSON.stringify(persistentVolumeClaimTemplate))
+        if (err.code === 404 || err.response.statusCode === 404) {
+            const pvc = JSON.parse(JSON.stringify(persistentVolumeClaimTemplate))
 
-        const drvOptions = this._app.config.driver.options
-        const allowedAccessModes = new Set(['ReadWriteOnce', 'ReadWriteMany', 'ReadWriteOncePod'])
-        const configuredAccessMode = drvOptions?.storage?.accessMode
+            const drvOptions = this._app.config.driver.options
+            const allowedAccessModes = new Set(['ReadWriteOnce', 'ReadWriteMany', 'ReadWriteOncePod'])
+            const configuredAccessMode = drvOptions?.storage?.accessMode
 
-        if (configuredAccessMode !== undefined) {
-            if (!allowedAccessModes.has(configuredAccessMode)) {
-                throw new Error(`Unsupported storage.accessMode '${configuredAccessMode}'. Allowed values: ${Array.from(allowedAccessModes).join(', ')}`)
+            if (configuredAccessMode !== undefined) {
+                if (!allowedAccessModes.has(configuredAccessMode)) {
+                    throw new Error(`Unsupported storage.accessMode '${configuredAccessMode}'. Allowed values: ${Array.from(allowedAccessModes).join(', ')}`)
+                }
+                pvc.spec.accessModes = [configuredAccessMode]
             }
-            pvc.spec.accessModes = [configuredAccessMode]
-        }
 
-        if (drvOptions?.storage?.storageClass) {
-            pvc.spec.storageClassName = drvOptions.storage.storageClass
-        } else if (drvOptions?.storage?.storageClassEFSTag) {
-            pvc.spec.storageClassName = await awsEFS.lookupStorageClass(drvOptions?.storage?.storageClassEFSTag)
-        }
+            if (drvOptions?.storage?.storageClass) {
+                pvc.spec.storageClassName = drvOptions.storage.storageClass
+            } else if (drvOptions?.storage?.storageClassEFSTag) {
+                pvc.spec.storageClassName = await awsEFS.lookupStorageClass(drvOptions?.storage?.storageClassEFSTag)
+            }
 
-        if (drvOptions?.storage?.size) {
-            pvc.spec.resources.requests.storage = drvOptions.storage.size
-        }
+            if (drvOptions?.storage?.size) {
+                pvc.spec.resources.requests.storage = drvOptions.storage.size
+            }
 
-        pvc.metadata.namespace = namespace
-        pvc.metadata.name = name
-        pvc.metadata.labels = {
-            'ff-project-id': project.id,
-            'ff-project-name': project.safeName
-        }
-        if (this._app.config.driver.options?.projectLabels) {
+            pvc.metadata.namespace = namespace
+            pvc.metadata.name = name
             pvc.metadata.labels = {
-                ...pvc.metadata.labels,
-                ...this._app.config.driver.options.projectLabels
+                'ff-project-id': project.id,
+                'ff-project-name': project.safeName
             }
+            if (this._app.config.driver.options?.projectLabels) {
+                pvc.metadata.labels = {
+                    ...pvc.metadata.labels,
+                    ...this._app.config.driver.options.projectLabels
+                }
+            }
+            console.error(`PVC: ${JSON.stringify(pvc, null, 2)}`)
+            return pvc
+        } else {
+            throw err
         }
-        console.error(`PVC: ${JSON.stringify(pvc, null, 2)}`)
-        return pvc
     }
 }
 
