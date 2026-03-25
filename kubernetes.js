@@ -425,7 +425,7 @@ const createPersistentVolumeClaim = async (project, options) => {
         // exists no need to recreate
         return undefined
     } catch (err) {
-        if (err.code === 404 || err.response.statusCode === 404) {
+        if (err.code === 404 || err.response?.statusCode === 404) {
             const pvc = JSON.parse(JSON.stringify(persistentVolumeClaimTemplate))
 
             const drvOptions = this._app.config.driver.options
