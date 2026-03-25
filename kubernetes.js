@@ -422,7 +422,7 @@ const createPersistentVolumeClaim = async (project, options) => {
     const name = `${project.id}-pvc`
     try {
         await this._k8sApi.readNamespacedPersistentVolumeClaim({ name, namespace })
-        // exists no need to create
+        // exists no need to recreate
         return undefined
     } catch (err) {
         const pvc = JSON.parse(JSON.stringify(persistentVolumeClaimTemplate))
