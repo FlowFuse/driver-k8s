@@ -1,3 +1,9 @@
+#### 2.29.0: Release
+
+ - Checking correct error field for retry (#335) @hardillb
+ - Bump picomatch from 4.0.3 to 4.0.4 (#338) @app/dependabot
+ - Bump fast-xml-parser and @aws-sdk/xml-builder (#331) @app/dependabot
+
 #### 2.28.1: Release
 
  - Bump actions/create-github-app-token from 2.2.1 to 3.0.0 (#321)
