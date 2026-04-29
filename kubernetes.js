@@ -521,25 +521,6 @@ const createProject = async (project, options) => {
         }
     }
 
-    await new Promise((resolve, reject) => {
-        let counter = 0
-        const pollInterval = setInterval(async () => {
-            try {
-                await this._k8sAppApi.readNamespacedDeployment({ name: project.safeName, namespace: this._namespace })
-                clearInterval(pollInterval)
-                resolve()
-            } catch (err) {
-                // hmm
-                counter++
-                if (counter > this._k8sRetries) {
-                    clearInterval(pollInterval)
-                    this._app.log.error(`[k8s] Instance ${project.id} - timeout waiting for Deployment`)
-                    reject(new Error('Timed out to creating Deployment'))
-                }
-            }
-        }, this._k8sDelay)
-    })
-
     try {
         await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
@@ -552,25 +533,6 @@ const createProject = async (project, options) => {
             }
         }
     }
-
-    const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
-    await new Promise((resolve, reject) => {
-        let counter = 0
-        const pollInterval = setInterval(async () => {
-            try {
-                await this._k8sApi.readNamespacedService({ name: prefix + project.safeName, namespace: this._namespace })
-                clearInterval(pollInterval)
-                resolve()
-            } catch (err) {
-                counter++
-                if (counter > this._k8sRetries) {
-                    clearInterval(pollInterval)
-                    this._app.log.error(`[k8s] Instance ${project.id} - timeout waiting for Service`)
-                    reject(new Error('Timed out to creating Service'))
-                }
-            }
-        }, this._k8sDelay)
-    })
 
     try {
         await this._k8sNetApi.createNamespacedIngress({ namespace, body: localIngress })
@@ -602,24 +564,6 @@ const createProject = async (project, options) => {
             }
         }
     }
-
-    await new Promise((resolve, reject) => {
-        let counter = 0
-        const pollInterval = setInterval(async () => {
-            try {
-                await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
-                clearInterval(pollInterval)
-                resolve()
-            } catch (err) {
-                counter++
-                if (counter > this._k8sRetries) {
-                    clearInterval(pollInterval)
-                    this._app.log.error(`[k8s] Instance ${project.id} - timeout waiting for Ingress`)
-                    reject(new Error('Timed out to creating Ingress'))
-                }
-            }
-        }, this._k8sDelay)
-    })
 
     await project.updateSetting('k8sType', 'deployment')
 
