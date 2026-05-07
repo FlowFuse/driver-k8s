@@ -1,3 +1,16 @@
+#### 2.30.0: Release
+
+ - Remove redundant poll loops (#332)
+ - Bump actions/setup-node from 6.3.0 to 6.4.0 (#355)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml (#352)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml (#353)
+ - Bump flowfuse/github-actions-workflows/.github/workflows/sast_scan.yaml (#354)
+ - Bump actions/create-github-app-token from 3.0.0 to 3.1.1 (#348)
+ - Bump ip-address and socks (#360) @app/dependabot
+ - ci: Use new project-automation workflow (#357) @ppawlowski
+ - Bump fast-xml-parser and @aws-sdk/xml-builder (#356) @app/dependabot
+ - Bump lodash from 4.17.23 to 4.18.1 (#346) @app/dependabot
+
 #### 2.29.1: Release
 
 
