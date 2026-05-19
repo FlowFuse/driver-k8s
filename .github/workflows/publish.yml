@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    uses: 'flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml@v0.76.0'
+    uses: 'flowfuse/github-actions-workflows/.github/workflows/build_node_package.yml@build_node_package/v1'
     with:
       node: '[
               {"version": "24", "tests": false, "lint": true},
@@ -23,7 +23,7 @@ jobs:
   publish:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    uses: 'flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml@v0.76.0'
+    uses: 'flowfuse/github-actions-workflows/.github/workflows/publish_node_package.yml@publish_node_package/v1'
     with:
       package_name: driver-k8s
       publish_package: true
