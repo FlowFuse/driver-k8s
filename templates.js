@@ -223,7 +223,7 @@ const mqttSchemaAgentDeploymentTemplate = {
                 }
             },
             spec: {
-                constainers: [
+                containers: [
                     {
                         name: 'mqtt-schema-agent',
                         // image: 'flowfuse/mqtt-schema-agent',
