@@ -707,11 +707,12 @@ const createMQTTTopicAgent = async (broker) => {
     // TODO remove registry entry
     localPod.spec.containers[0].image = this._app.config.driver.options?.mqttSchemaContainer || `${this._app.config.driver.options.registry ? this._app.config.driver.options.registry + '/' : ''}flowfuse/mqtt-schema-agent`
 
-    // console.log(JSON.stringify(localPod,null,2))
+    // console.log(JSON.stringify(localDeployment,null,2))
     // console.log(JSON.stringify(localService,null,2))
     try {
         console.debug(namespace, localPod.metadata.name)
-        await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
+        // await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
+        await this._k8sAppApi.createNamespacedDeployment({ namespace, body: localDeployment })
         await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
         this._app.log.error(`[k8s] Problem creating MQTT Agent ${agent ? 'team-broker' : broker.hashid} in ${namespace} - ${err.toString()} ${err.stack}`)
