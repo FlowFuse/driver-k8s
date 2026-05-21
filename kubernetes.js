@@ -12,6 +12,7 @@ const {
     customIngressTemplate,
     persistentVolumeClaimTemplate,
     mqttSchemaAgentPodTemplate,
+    mqttSchemaAgentDeploymentTemplate,
     mqttSchemaAgentServiceTemplate
 } = require('./templates.js')
 
@@ -655,7 +656,9 @@ const getStaticFileUrl = async (instance, filePath) => {
 const createMQTTTopicAgent = async (broker) => {
     const agent = broker.constructor.name === 'TeamBrokerAgent'
     this._app.log.info(`[k8s] Starting MQTT Schema agent ${agent ? 'team-broker' : broker.hashid} for ${broker.Team.hashid}`)
-    const localPod = JSON.parse(JSON.stringify(mqttSchemaAgentPodTemplate))
+    const localDeployment = JSON.parse(JSON.stringify(mqttSchemaAgentDeploymentTemplate))
+    // const localPod = JSON.parse(JSON.stringify(mqttSchemaAgentPodTemplate))
+    const localPod = localDeployment.spec.template
     const localService = JSON.parse(JSON.stringify(mqttSchemaAgentServiceTemplate))
 
     const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
