@@ -948,7 +948,7 @@ module.exports = {
                                 this._app.log.info(`[k8s] Testing MQTT Agent ${agent ? 'team-broker' : broker.hashid} in ${namespace} deployment exists`)
                                 // await this._k8sApi.readNamespacedPodStatus({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace })
                                 await this._k8sAppApi.readNamespacedDeployment({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace })
-                                this._app.log.info(`[k8s] MQTT Agent pod ${agent ? 'team-broker' : broker.hashid} in ${namespace} found`)
+                                this._app.log.info(`[k8s] MQTT Agent deployment ${agent ? 'team-broker' : broker.hashid} in ${namespace} found`)
                             } catch (err) {
                                 this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - failed ${err.toString()}`)
                                 this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - recreating`)
