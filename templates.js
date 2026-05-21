@@ -11,6 +11,7 @@ const deploymentTemplate = {
     },
     spec: {
         replicas: 1,
+        revisionHistoryLimit: 3,
         selector: {
             matchLabels: {
                 // app: "k8s-client-test-deployment"
@@ -161,54 +162,15 @@ const persistentVolumeClaimTemplate = {
     }
 }
 
-const mqttSchemaAgentPodTemplate = {
-    apiVersion: 'v1',
-    kind: 'Pod',
-    metadata: {
-
-    },
-    spec: {
-        containers: [
-            {
-                name: 'mqtt-schema-agent',
-                // image: 'flowfuse/mqtt-schema-agent',
-                imagePullPolicy: 'Always',
-                securityContext: {
-                    allowPrivilegeEscalation: false
-                },
-                env: [
-                    { name: 'TZ', value: 'Europe/London' }
-                ],
-                ports: [
-                    { name: 'web', containerPort: 3500, protocol: 'TCP' }
-                ],
-                resources: {
-                    requests: {
-                        // 10th of a core
-                        cpu: '100m',
-                        memory: '128Mi'
-                    },
-                    limits: {
-                        cpu: '100m',
-                        memory: '128Mi'
-                    }
-                }
-            }
-        ]
-    },
-    enableServiceLinks: false
-}
-
 const mqttSchemaAgentDeploymentTemplate = {
     apiVersion: 'apps/v1',
     kind: 'Deployment',
     metadata: {
-        labels: {
-            mqttSchemaAgent: 'true'
-        }
+        labels: { }
     },
     spec: {
         replicas: 1,
+        revisionHistoryLimit: 3,
         selector: {
             matchLabels: {
 
@@ -216,9 +178,7 @@ const mqttSchemaAgentDeploymentTemplate = {
         },
         template: {
             metadata: {
-                labels: {
-                    mqttSchemaAgent: 'true'
-                }
+                labels: { }
             },
             spec: {
                 containers: [
@@ -277,7 +237,6 @@ module.exports = {
     ingressTemplate,
     customIngressTemplate,
     persistentVolumeClaimTemplate,
-    mqttSchemaAgentPodTemplate,
     mqttSchemaAgentDeploymentTemplate,
     mqttSchemaAgentServiceTemplate
 }
