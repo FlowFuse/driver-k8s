@@ -1,5 +1,3 @@
-const { resources } = require("./kubernetes")
-
 const deploymentTemplate = {
     apiVersion: 'apps/v1',
     kind: 'Deployment',

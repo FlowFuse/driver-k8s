@@ -11,7 +11,6 @@ const {
     ingressTemplate,
     customIngressTemplate,
     persistentVolumeClaimTemplate,
-    mqttSchemaAgentPodTemplate,
     mqttSchemaAgentDeploymentTemplate,
     mqttSchemaAgentServiceTemplate
 } = require('./templates.js')
@@ -933,7 +932,7 @@ module.exports = {
                 for (const broker of brokers) {
                     const agent = broker.constructor.name === 'TeamBrokerAgent'
                     if (broker.Team && broker.state === 'running') {
-                        const found = false
+                        let found = false
                         try {
                             this._app.log.info(`[k8s] Testing MQTT Agent ${agent ? 'team-broker' : broker.hashid} in ${namespace} pod exists`)
                             this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`)
@@ -943,7 +942,6 @@ module.exports = {
                         } catch (err) {
                             // this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - failed ${err.toString()}`)
                             // this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - recreating`)
-                            //await createMQTTTopicAgent(broker)
                         }
                         if (!found) {
                             try {
