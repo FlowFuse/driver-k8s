@@ -11,7 +11,7 @@ const {
     ingressTemplate,
     customIngressTemplate,
     persistentVolumeClaimTemplate,
-    mqttSchemaAgentPodTemplate,
+    mqttSchemaAgentDeploymentTemplate,
     mqttSchemaAgentServiceTemplate
 } = require('./templates.js')
 
@@ -599,7 +599,9 @@ const getStaticFileUrl = async (instance, filePath) => {
 const createMQTTTopicAgent = async (broker) => {
     const agent = broker.constructor.name === 'TeamBrokerAgent'
     this._app.log.info(`[k8s] Starting MQTT Schema agent ${agent ? 'team-broker' : broker.hashid} for ${broker.Team.hashid}`)
-    const localPod = JSON.parse(JSON.stringify(mqttSchemaAgentPodTemplate))
+    const localDeployment = JSON.parse(JSON.stringify(mqttSchemaAgentDeploymentTemplate))
+    // const localPod = JSON.parse(JSON.stringify(mqttSchemaAgentPodTemplate))
+    const localPod = localDeployment.spec.template
     const localService = JSON.parse(JSON.stringify(mqttSchemaAgentServiceTemplate))
 
     const namespace = this._app.config.driver.options.projectNamespace || 'flowforge'
@@ -623,15 +625,20 @@ const createMQTTTopicAgent = async (broker) => {
     }
 
     localPod.metadata.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`
+    localDeployment.metadata.name = localPod.metadata.name
     localPod.metadata.labels = {
-        name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${broker.hashid.toLowerCase()}`,
+        name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`,
         team: broker.Team.hashid,
-        broker: agent ? 'team-broker' : broker.hashid
+        broker: agent ? 'team-broker' : broker.hashid,
+        mqttSchemaAgent: 'true'
     }
+    localDeployment.metadata.labels = localPod.metadata.labels
+    localDeployment.spec.selector.matchLabels.name = localPod.metadata.name
     localService.metadata.name = `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`
     localService.metadata.labels = {
         team: broker.Team.hashid,
-        broker: agent ? 'team-broker' : broker.hashid
+        broker: agent ? 'team-broker' : broker.hashid,
+        mqttSchemaAgent: 'true'
     }
     if (this._app.config.driver.options?.projectLabels) {
         localPod.metadata.labels = {
@@ -648,11 +655,12 @@ const createMQTTTopicAgent = async (broker) => {
     // TODO remove registry entry
     localPod.spec.containers[0].image = this._app.config.driver.options?.mqttSchemaContainer || `${this._app.config.driver.options.registry ? this._app.config.driver.options.registry + '/' : ''}flowfuse/mqtt-schema-agent`
 
-    // console.log(JSON.stringify(localPod,null,2))
+    // console.log(JSON.stringify(localDeployment,null,2))
     // console.log(JSON.stringify(localService,null,2))
     try {
         console.debug(namespace, localPod.metadata.name)
-        await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
+        // await this._k8sApi.createNamespacedPod({ namespace, body: localPod })
+        await this._k8sAppApi.createNamespacedDeployment({ namespace, body: localDeployment })
         await this._k8sApi.createNamespacedService({ namespace, body: localService })
     } catch (err) {
         this._app.log.error(`[k8s] Problem creating MQTT Agent ${agent ? 'team-broker' : broker.hashid} in ${namespace} - ${err.toString()} ${err.stack}`)
@@ -870,15 +878,28 @@ module.exports = {
                 for (const broker of brokers) {
                     const agent = broker.constructor.name === 'TeamBrokerAgent'
                     if (broker.Team && broker.state === 'running') {
+                        let found = false
                         try {
                             this._app.log.info(`[k8s] Testing MQTT Agent ${agent ? 'team-broker' : broker.hashid} in ${namespace} pod exists`)
                             this._app.log.debug(`mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`)
                             await this._k8sApi.readNamespacedPodStatus({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace })
                             this._app.log.info(`[k8s] MQTT Agent pod ${agent ? 'team-broker' : broker.hashid} in ${namespace} found`)
+                            found = true
                         } catch (err) {
-                            this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - failed ${err.toString()}`)
-                            this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - recreating pod`)
-                            await createMQTTTopicAgent(broker)
+                            // this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - failed ${err.toString()}`)
+                            // this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - recreating`)
+                        }
+                        if (!found) {
+                            try {
+                                this._app.log.info(`[k8s] Testing MQTT Agent ${agent ? 'team-broker' : broker.hashid} in ${namespace} deployment exists`)
+                                // await this._k8sApi.readNamespacedPodStatus({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace })
+                                await this._k8sAppApi.readNamespacedDeployment({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace })
+                                this._app.log.info(`[k8s] MQTT Agent deployment ${agent ? 'team-broker' : broker.hashid} in ${namespace} found`)
+                            } catch (err) {
+                                this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - failed ${err.toString()}`)
+                                this._app.log.debug(`[k8s] MQTT Agent ${agent ? 'team-broker' : broker.hashid} - recreating`)
+                                await createMQTTTopicAgent(broker)
+                            }
                         }
                     }
                 }
@@ -1516,7 +1537,24 @@ module.exports = {
         const agent = broker.constructor.name === 'TeamBrokerAgent'
         try {
             await this._k8sApi.deleteNamespacedService({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace: this._namespace })
-            await this._k8sApi.deleteNamespacedPod({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace: this._namespace })
+            try {
+                await this._k8sApi.deleteNamespacedPod({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace: this._namespace })
+            } catch (err) {
+                if (err.code === 404 || err.response?.statusCode === 404) {
+                    // not found
+                } else {
+                    throw err
+                }
+            }
+            try {
+                await this._k8sAppApi.deleteNamespacedDeployment({ name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`, namespace: this._namespace })
+            } catch (err) {
+                if (err.code === 404 || err.response?.statusCode === 404) {
+                    // not found
+                } else {
+                    throw err
+                }
+            }
         } catch (err) {
             this._app.log.error(`[k8s] Error deleting MQTT Agent ${agent ? 'team-broker' : broker.hashid}: ${err.toString()} ${err.code}`)
         }
