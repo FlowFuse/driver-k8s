@@ -686,7 +686,7 @@ const createMQTTTopicAgent = async (broker) => {
         name: `mqtt-schema-agent-${broker.Team.hashid.toLowerCase()}-${agent ? 'team-broker' : broker.hashid.toLowerCase()}`,
         team: broker.Team.hashid,
         broker: agent ? 'team-broker' : broker.hashid,
-
+        mqttSchemaAgent: 'true'
     }
     localDeployment.metadata.labels = localPod.metadata.labels
     localDeployment.spec.selector.matchLabels.name = localPod.metadata.name
