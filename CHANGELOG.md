@@ -1,3 +1,13 @@
+#### 2.31.0: Release
+
+ - Mqtt schema deployment (#369)
+ - Bump ws from 8.18.3 to 8.20.1 (#368)
+ - Bump benc-uk/workflow-dispatch from 1.3.1 to 1.3.2 (#366)
+ - Switch internal reusable workflows to new tagging approach (#367)
+ - Bump actions/create-github-app-token from 3.1.1 to 3.2.0 (#365)
+ - ci: enable dependabot cooldown (#364) @ppawlowski
+ - Bump fast-xml-builder from 1.1.5 to 1.2.0 (#363) @app/dependabot
+
 #### 2.30.1: Release
 
 
