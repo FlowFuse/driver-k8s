@@ -1462,9 +1462,10 @@ module.exports = {
         if (cachedProject === undefined) {
             throw new Error('Instance cannot get MCP features')
         }
-        const instanceEndpoints = await getEndpoints(project)
         try {
-            const response = await got.post(`http://${instanceEndpoints[0]}:2880/flowforge/command`, {
+            const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+            const dnsUrl = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`
+            const response = await got.post(dnsUrl, {
                 json: {
                     cmd: 'mcp:get-features',
                     data: {
@@ -1491,7 +1492,6 @@ module.exports = {
         if (cachedProject === undefined) {
             throw new Error('Instance cannot call MCP tool')
         }
-        const instanceEndpoints = await getEndpoints(project)
         try {
             const data = {
                 cmd: 'mcp:call-tool',
@@ -1502,7 +1502,9 @@ module.exports = {
                 }
             }
             const json = JSON.parse(JSON.stringify(data))
-            const response = await got.post(`http://${instanceEndpoints[0]}:2880/flowforge/command`, {
+            const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+            const dnsUrl = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`
+            const response = await got.post(dnsUrl, {
                 json
             }).json()
             return response
@@ -1523,9 +1525,10 @@ module.exports = {
         if (cachedProject === undefined) {
             throw new Error('Instance cannot read MCP resource')
         }
-        const instanceEndpoints = await getEndpoints(project)
         try {
-            const response = await got.post(`http://${instanceEndpoints[0]}:2880/flowforge/command`, {
+            const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
+            const dnsUrl = `http://${prefix}${project.safeName}.${this._namespace}:2880/flowforge/command`
+            const response = await got.post(dnsUrl, {
                 json: {
                     cmd: 'mcp:read-resource',
                     data: {
