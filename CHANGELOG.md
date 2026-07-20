@@ -1,3 +1,7 @@
+#### 2.32.1: Release
+
+ - ci: Add slack notification to the release pipeline (#385)
+
 #### 2.32.0: Release
 
  - Sync changes to Insight support code across drivers (#383)
