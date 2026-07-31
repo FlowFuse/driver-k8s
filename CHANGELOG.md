@@ -1,3 +1,7 @@
+#### 2.33.1: Release
+
+ - Bump actions/setup-node from 6.4.0 to 7.0.0 (#386)
+
 #### 2.33.0: Release
 
 
