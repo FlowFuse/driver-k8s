@@ -1,3 +1,8 @@
+#### 2.33.2: Release
+
+ - Bump ip-address from 10.2.0 to 10.4.0 (#391)
+ - Bump actions/checkout from 7.0.0 to 7.0.1 (#388)
+
 #### 2.33.1: Release
 
  - Bump actions/setup-node from 6.4.0 to 7.0.0 (#386)
