@@ -1,4 +1,4 @@
-const got = require('got')
+const got = require('got').extend({ retry: { limit: 0 } })
 const FormData = require('form-data')
 // const k8s = require('@kubernetes/client-node')
 const _ = require('lodash')
