@@ -1,3 +1,8 @@
+#### 3.0.1: Release
+
+ - Force got to not retry (#396)
+ - Bump brace-expansion (#395)
+
 #### 3.0.0: Release
 
 
