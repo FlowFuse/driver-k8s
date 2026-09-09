@@ -1,3 +1,7 @@
+#### 3.0.2: Release
+
+ - Bump benc-uk/workflow-dispatch from 1.3.2 to 1.3.3 (#400)
+
 #### 3.0.1: Release
 
  - Force got to not retry (#396)
