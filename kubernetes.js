@@ -89,7 +89,7 @@ const createDeployment = async (project, options) => {
     }
 
     localPod.metadata.labels.app = project.id
-    localPod.metadata.labels.name = project.safeName
+    localPod.metadata.labels.name = project.safeName.slice(0, 63)
     localPod.spec.serviceAccount = process.env.EDITOR_SERVICE_ACCOUNT
 
     if (this._schedulerName) {
@@ -465,7 +465,7 @@ const createPersistentVolumeClaim = async (project, options) => {
             pvc.metadata.name = name
             pvc.metadata.labels = {
                 'ff-project-id': project.id,
-                'ff-project-name': project.safeName
+                'ff-project-name': project.safeName.slice(0, 63) // max label length is 64 chars
             }
             if (this._app.config.driver.options?.projectLabels) {
                 pvc.metadata.labels = {
@@ -473,7 +473,7 @@ const createPersistentVolumeClaim = async (project, options) => {
                     ...this._app.config.driver.options.projectLabels
                 }
             }
-            console.error(`PVC: ${JSON.stringify(pvc, null, 2)}`)
+            // console.error(`PVC: ${JSON.stringify(pvc, null, 2)}`)
             return pvc
         } else {
             throw err
@@ -495,7 +495,7 @@ const createProject = async (project, options) => {
             try {
                 await this._k8sApi.createNamespacedPersistentVolumeClaim({ namespace, body: localPVC })
             } catch (err) {
-                console.error(JSON.stringify(err))
+                // console.error(JSON.stringify(err))
                 if (err.code === 409) {
                     this._app.log.warn(`[k8s] PVC for instance ${project.id} already exists, proceeding...`)
                 } else {
