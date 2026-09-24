@@ -1,3 +1,9 @@
+#### 3.1.0: Release
+
+ - Cache Persistent Volume Storage Class on AWS (#404)
+ - Bump js-yaml from 4.3.1 to 4.3.2 (#403)
+ - Bump @humanfs/node from 0.16.7 to 0.16.8 (#399)
+
 #### 3.0.2: Release
 
  - Bump benc-uk/workflow-dispatch from 1.3.2 to 1.3.3 (#400)
