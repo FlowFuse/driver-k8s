@@ -228,10 +228,10 @@ const createDeployment = async (project, options) => {
             localPod.spec.containers[0].resources.limits.memory = `${parseInt(stack.memory) + 128}Mi`
         }
         if (stack.cpuRequest) {
-            localPod.spec.containers[0].resources.requests.cpu = `${stack.cpu * 10}m`
+            localPod.spec.containers[0].resources.requests.cpu = `${stack.cpuRequest}`
             localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
         } else {
-            localPod.spec.containers[0].resources.requests.cpu = `${stack.cpuRequest}`
+            localPod.spec.containers[0].resources.requests.cpu = `${stack.cpu * 10}m`
             localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
         }
         
