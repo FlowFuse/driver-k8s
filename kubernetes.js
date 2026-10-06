@@ -219,11 +219,22 @@ const createDeployment = async (project, options) => {
     }
 
     if (stack.memory && stack.cpu) {
-        localPod.spec.containers[0].resources.requests.memory = `${stack.memory}Mi`
-        // increase limit to give npm more room to run in
-        localPod.spec.containers[0].resources.limits.memory = `${parseInt(stack.memory) + 128}Mi`
-        localPod.spec.containers[0].resources.requests.cpu = `${stack.cpu * 10}m`
-        localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
+        if (stack.memoryRequest) {
+            localPod.spec.containers[0].resources.requests.memory = `${stack.memoryRequest}Mi`
+            localPod.spec.containers[0].resources.limit.memory = `${stack.memory}Mi`
+        } else {
+            localPod.spec.containers[0].resources.requests.memory = `${stack.memory}Mi`
+            // increase limit to give npm more room to run in
+            localPod.spec.containers[0].resources.limits.memory = `${parseInt(stack.memory) + 128}Mi`
+        }
+        if (stack.cpuRequest) {
+            localPod.spec.containers[0].resources.requests.cpu = `${stack.cpu * 10}m`
+            localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
+        } else {
+            localPod.spec.containers[0].resources.requests.cpu = `${stack.cpuRequest}`
+            localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
+        }
+        
     }
 
     if (this._app.config.driver.options?.projectLabels) {
@@ -922,17 +933,29 @@ module.exports = {
         return {
             stack: {
                 properties: {
-                    cpu: {
-                        label: 'CPU Cores (in 1/100th units)',
+                    cpuRequest:{
+                        label: 'Minumum CPU Cores (in 1/100th units)',
                         validate: '^([1-9][0-9]{0,2}|1000)$',
                         invalidMessage: 'Invalid value - must be a number between 1 and 1000, where 100 represents 1 CPU core',
-                        description: 'Defines the CPU resources each Project should receive, in units of 1/100th of a CPU core. 100 equates to 1 CPU core'
+                        description: 'Defines the minimum CPU resources each Project should receive, in units of 1/100th of a CPU core. 100 equates to 1 CPU core'
                     },
-                    memory: {
-                        label: 'Memory (MB)',
+                    cpu: {
+                        label: 'Max CPU Cores (in 1/100th units)',
+                        validate: '^([1-9][0-9]{0,2}|1000)$',
+                        invalidMessage: 'Invalid value - must be a number between 1 and 1000, where 100 represents 1 CPU core',
+                        description: 'Defines the maximum CPU resources each Project should receive, in units of 1/100th of a CPU core. 100 equates to 1 CPU core'
+                    },
+                    memoryRequest: {
+                        label: 'Minimum Memory (MB)',
                         validate: '^[1-9]\\d*$',
                         invalidMessage: 'Invalid value - must be a number',
-                        description: 'How much memory the container for each Project will be granted, recommended value 256'
+                        description: 'Lower limit on how much memory the container for each Project will be granted, recommended value 256'
+                    },
+                    memory: {
+                        label: 'Max Memory (MB)',
+                        validate: '^[1-9]\\d*$',
+                        invalidMessage: 'Invalid value - must be a number',
+                        description: 'Limit on how much memory the container for each Project will be granted, recommended value 256'
                     },
                     container: {
                         label: 'Container Location',
