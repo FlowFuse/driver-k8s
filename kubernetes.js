@@ -1598,8 +1598,7 @@ module.exports = {
         const properties = {
             cpuRequest: 10,
             cpu: 10,
-            memoryRequest: 256,
-            memory: 384,
+            memory: 256,
             container: 'flowfuse/node-red',
             ...this._app.config.driver.options?.default_stack
         }
