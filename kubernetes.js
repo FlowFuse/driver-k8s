@@ -234,7 +234,6 @@ const createDeployment = async (project, options) => {
             localPod.spec.containers[0].resources.requests.cpu = `${stack.cpu * 10}m`
             localPod.spec.containers[0].resources.limits.cpu = `${stack.cpu * 10}m`
         }
-        
     }
 
     if (this._app.config.driver.options?.projectLabels) {
@@ -933,7 +932,7 @@ module.exports = {
         return {
             stack: {
                 properties: {
-                    cpuRequest:{
+                    cpuRequest: {
                         label: 'Minumum CPU Cores (in 1/100th units)',
                         validate: '^([1-9][0-9]{0,2}|1000)$',
                         invalidMessage: 'Invalid value - must be a number between 1 and 1000, where 100 represents 1 CPU core',
