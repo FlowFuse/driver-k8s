@@ -1,3 +1,8 @@
+#### 3.1.1: Release
+
+ - Await file requests so launcher errors keep their status code (#409)
+ - Bump ip-address from 10.4.0 to 10.7.2 (#407)
+
 #### 3.1.0: Release
 
  - Cache Persistent Volume Storage Class on AWS (#404)
