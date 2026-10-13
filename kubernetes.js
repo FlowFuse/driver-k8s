@@ -936,7 +936,7 @@ module.exports = {
                         label: 'Minumum CPU Cores (in 1/100th units)',
                         validate: '^([1-9][0-9]{0,2}|1000)$',
                         invalidMessage: 'Invalid value - must be a number between 1 and 1000, where 100 represents 1 CPU core',
-                        description: 'Defines the minimum CPU resources each Project should receive, in units of 1/100th of a CPU core. 100 equates to 1 CPU core. Optional, must me less than Max CPU'
+                        description: 'Defines the minimum CPU resources each Project should receive, in units of 1/100th of a CPU core. 100 equates to 1 CPU core. Optional, must be less than or equal to Max CPU'
                     },
                     cpu: {
                         label: 'Max CPU Cores (in 1/100th units)',
