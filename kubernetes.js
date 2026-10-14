@@ -1666,7 +1666,7 @@ module.exports = {
 
     // Broker Agent
     startBrokerAgent: async (broker) => {
-        createMQTTTopicAgent(broker)
+        await createMQTTTopicAgent(broker)
     },
     stopBrokerAgent: async (broker) => {
         const agent = broker.constructor.name === 'TeamBrokerAgent'
