@@ -1,3 +1,11 @@
+#### 3.2.0: Release
+
+ - Bump actions/create-github-app-token from 3.2.0 to 3.3.0 (#416)
+ - Wait for the broker schema agent to launch in startBrokerAgent (#415)
+ - Allow request resources to be set as well as limits (#410)
+ - Bump actions/setup-node from 7.0.0 to 7.1.0 (#413)
+ - Bump brace-expansion (#412)
+
 #### 3.1.1: Release
 
  - Await file requests so launcher errors keep their status code (#409)
