@@ -1,3 +1,10 @@
+#### 3.3.0: Release
+
+ - Bump @aws-sdk/client-efs from 3.1161.0 to 3.1164.0 (#432)
+ - Bump @aws-sdk/client-efs from 3.981.0 to 3.1161.0 (#429)
+ - Bump ip-address from 10.7.2 to 10.7.5 (#427)
+ - chore: Group dev dependabot (#419)
+
 #### 3.2.0: Release
 
  - Bump actions/create-github-app-token from 3.2.0 to 3.3.0 (#416)
