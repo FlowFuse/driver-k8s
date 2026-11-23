@@ -1,3 +1,9 @@
+#### 3.3.1: Release
+
+ - Bump minimatch, @typescript-eslint/utils and typescript-eslint (#435)
+ - Bump actions/create-github-app-token from 3.3.0 to 3.4.0 (#437)
+ - Bump @aws-sdk/client-efs from 3.1164.0 to 3.1175.0 (#436)
+
 #### 3.3.0: Release
 
  - Bump @aws-sdk/client-efs from 3.1161.0 to 3.1164.0 (#432)
