@@ -1026,7 +1026,9 @@ module.exports = {
 
         if (this._customHostname?.enabled) {
             const customHostname = await project.getSetting('customHostname')
+            console.log('BEN', customHostname)
             if (customHostname) {
+                console.log('BEN - deleting custom hostname')
                 try {
                     await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
