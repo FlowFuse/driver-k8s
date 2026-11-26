@@ -1146,10 +1146,11 @@ module.exports = {
      * @return {Object}
      */
     remove: async (project) => {
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         try {
             const ingressObj = await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
             const serviceName = ingressObj?.spec?.rules[0].http.paths[0].backend.service.name
-            if (project.safeName === serviceName) {
+            if (`${prefix}${project.safeName}` === serviceName) {
                 await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
                 if (this._certManagerIssuer) {
                     try {
@@ -1181,7 +1182,7 @@ module.exports = {
                 try {
                     const ingressObj = await this._k8sNetApi.readNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
                     const serviceName = ingressObj?.spec?.rules[0].http.paths[0].backend.service.name
-                    if (project.safeName === serviceName) {
+                    if (`${prefix}${project.safeName}` === serviceName) {
                         await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
                         if (this._customHostname?.certManagerIssuer || this._customHostname?.certManagerAnnotations) {
                             try {
