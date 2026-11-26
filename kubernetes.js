@@ -1000,6 +1000,8 @@ module.exports = {
         await this._projects.set(project.id, cachedProject)
 
         try {
+            const ingressObj = await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
+            console.log(JSON.stringify(ingressObj,null, 2))
             await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()} ${err.stack}`)
@@ -1026,9 +1028,7 @@ module.exports = {
 
         if (this._customHostname?.enabled) {
             const customHostname = await project.getSetting('customHostname')
-            console.log('BEN', customHostname)
             if (customHostname) {
-                console.log('BEN - deleting custom hostname')
                 try {
                     await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
                 } catch (err) {
