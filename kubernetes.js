@@ -1146,43 +1146,56 @@ module.exports = {
      * @return {Object}
      */
     remove: async (project) => {
+        const prefix = project.safeName.match(/^[0-9]/) ? 'srv-' : ''
         try {
-            await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
+            const ingressObj = await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
+            const serviceName = ingressObj?.spec?.rules[0].http.paths[0].backend.service.name
+            if (`${prefix}${project.safeName}` === serviceName) {
+                await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
+                if (this._certManagerIssuer) {
+                    try {
+                        await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
+                    } catch (err) {
+                        this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+                    }
+                } else if (this._projectIngressAnnotations) {
+                    const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key =>
+                        key.startsWith('cert-manager.io/')
+                    )
+                    if (hasCertManagerAnnotation) {
+                        try {
+                            await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
+                        } catch (err) {
+                            this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
+                        }
+                    }
+                }
+            } else {
+                this._app.log.info(`[k8s] ingress does not match service ${project.safeName} != ${serviceName}`)
+            }
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()}`)
-        }
-        if (this._certManagerIssuer) {
-            try {
-                await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
-            } catch (err) {
-                this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
-            }
-        } else if (this._projectIngressAnnotations) {
-            const hasCertManagerAnnotation = Object.keys(this._projectIngressAnnotations).some(key =>
-                key.startsWith('cert-manager.io/')
-            )
-            if (hasCertManagerAnnotation) {
-                try {
-                    await this._k8sApi.deleteNamespacedSecret({ name: project.safeName, namespace: this._namespace })
-                } catch (err) {
-                    this._app.log.error(`[k8s] Instance ${project.id} - error deleting tls secret: ${err.toString()}`)
-                }
-            }
         }
         if (this._customHostname?.enabled) {
             const customHostname = await project.getSetting('customHostname')
             if (customHostname) {
                 try {
-                    await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
+                    const ingressObj = await this._k8sNetApi.readNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
+                    const serviceName = ingressObj?.spec?.rules[0].http.paths[0].backend.service.name
+                    if (`${prefix}${project.safeName}` === serviceName) {
+                        await this._k8sNetApi.deleteNamespacedIngress({ name: `${project.safeName}-custom`, namespace: this._namespace })
+                        if (this._customHostname?.certManagerIssuer || this._customHostname?.certManagerAnnotations) {
+                            try {
+                                await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
+                            } catch (err) {
+                                this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
+                            }
+                        }
+                    } else {
+                        this._app.log.info(`[k8s] custom hostname ingress does not match service ${project.safeName} != ${serviceName}`)
+                    }
                 } catch (err) {
                     this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom ingress: ${err.toString()}`)
-                }
-                if (this._customHostname?.certManagerIssuer || this._customHostname?.certManagerAnnotations) {
-                    try {
-                        await this._k8sApi.deleteNamespacedSecret({ name: `${project.safeName}-custom`, namespace: this._namespace })
-                    } catch (err) {
-                        this._app.log.error(`[k8s] Instance ${project.id} - error deleting custom tls secret: ${err.toString()}`)
-                    }
                 }
             }
         }
