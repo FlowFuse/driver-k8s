@@ -1001,7 +1001,7 @@ module.exports = {
 
         try {
             const ingressObj = await this._k8sNetApi.readNamespacedIngress({ name: project.safeName, namespace: this._namespace })
-            console.log(JSON.stringify(ingressObj,null, 2))
+            console.log('BEN', JSON.stringify(ingressObj,null, 2))
             await this._k8sNetApi.deleteNamespacedIngress({ name: project.safeName, namespace: this._namespace })
         } catch (err) {
             this._app.log.error(`[k8s] Instance ${project.id} - error deleting ingress: ${err.toString()} ${err.stack}`)
